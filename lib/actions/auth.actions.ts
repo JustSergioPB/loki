@@ -44,7 +44,8 @@ export async function login(data: LoginSchema): Promise<ActionResult<boolean>> {
     });
 
     return { success: { data: true, message: t("succeded") } };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: { message: t("failed") } };
   }
 }
@@ -97,7 +98,8 @@ export async function signUp(
     });
 
     return { success: { data: true, message: t("succeded") } };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: { message: t("failed") } };
   }
 }
@@ -130,7 +132,8 @@ export async function resendConfirmationMail(email: string) {
     return {
       success: { data: true, message: t("resendSucceded") },
     };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: { message: t("resendFailed") } };
   }
 }
@@ -180,7 +183,8 @@ export async function confirmAccount(
     });
 
     return { success: { data: true, message: t("succeded") } };
-  } catch {
+  } catch(error) {
+    console.error(error);
     return { error: { message: t("failed") } };
   }
 }
@@ -211,7 +215,8 @@ export async function forgotPassword(
     });
 
     return { success: { data: true, message: t("succeded") } };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: { message: t("failed") } };
   }
 }
@@ -254,7 +259,8 @@ export async function resetPassword(
     });
 
     return { success: { data: true, message: t("succeded") } };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: { message: t("failed") } };
   }
 }
@@ -264,7 +270,8 @@ export async function logout(): Promise<ActionResult<boolean>> {
   try {
     deleteSession();
     return { success: { data: true, message: t("logoutSucceded") } };
-  } catch {
+  } catch (error) {
+    console.error(error);
     return { error: { message: t("logoutFailed") } };
   }
 }
