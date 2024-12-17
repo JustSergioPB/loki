@@ -1,0 +1,7 @@
+import * as z from "zod";
+
+export const emailSchema = z.object({
+  email: z.string().email({ message: "invalidEmail" }),
+});
+
+export type EmailSchema = z.infer<typeof emailSchema>;

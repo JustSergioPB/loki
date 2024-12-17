@@ -1,5 +1,120 @@
 {
-  "HomePage": {
-    "title": "Hi Welcome!"
+  "Dashboard": {
+    "title": "Welcome"
+  },
+  "Home": {
+    "title": "Welcome!"
+  },
+  "Login": {
+    "title": "Welcome back!",
+    "subtitle": "Enter your credentials to access your account",
+    "alreadyHaveAccount": "Don't have an account?",
+    "forgotYourPassword": "Forgot password?",
+    "failed": "Login failed",
+    "succeded": "Login successful",
+    "logoutSucceded": "Logout successful",
+    "logoutFailed": "Logout failed"
+  },
+  "SignUp": {
+    "title": "Nice to meet you!",
+    "subtitle": "Fill the form bellow and start securing your data",
+    "alreadyHaveAccount": "Already have an account?",
+    "failed": "Sign up failed",
+    "succeded": "Sign up successful",
+    "register": "Register"
+  },
+  "User": {
+    "alreadyExists": "User already exists",
+    "notFound": "User not found",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "John Doe",
+    "user": "User",
+    "role": "Role",
+    "rolePlaceholder": "Select a role",
+    "orgAdmin": "Org admin",
+    "issuer": "Issuer",
+    "admin": "Admin",
+    "title": "Users",
+    "subtitle": "Welcome to your users page where you will find everything related to your organizations users"
+  },
+  "Certificate": {
+    "title": "Certificates",
+    "subtitle": "Handle everything related to certificate generation, rotation, revokation and deleting in here",
+    "certificate": "Certificate"
+  },
+  "Org": {
+    "alreadyExists": "Organization already exists",
+    "org": "Organization",
+    "orgPlaceholder": "Stachelabs Inc.",
+    "title": "Organizations"
+  },
+  "Hall": {
+    "title": "Welcome aboard!",
+    "subtitle": "We've sent you a confirmation email. Please check your inbox to verify your account. If yout still haven't recieved one you can request it again"
+  },
+  "Wall": {
+    "title": "Welcome!"
+  },
+  "Credential": {
+    "title": "Welcome!"
+  },
+  "Bridge": {
+    "title": "Welcome!"
+  },
+  "Schema": {
+    "title": "Welcome!"
+  },
+  "ConfirmAccount": {
+    "title": "Confirm your account",
+    "subtitle": "Click the button below to confirm your account",
+    "failed": "Account confirmation failed",
+    "succeded": "Account confirmed successfully",
+    "sendLink": "Request new confirmation link",
+    "resendSucceded": "A new confirmation link has been sent to your email",
+    "resendFailed": "Resend confirmation link failed"
+  },
+  "ForgotPassword": {
+    "title": "Forgot password",
+    "subtitle": "Enter your email address and we'll send you a link to reset your password",
+    "failed": "Password reset request failed",
+    "succeded": "Password reset instructions sent successfully",
+    "sendLink": "Send reset link"
+  },
+  "ResetPassword": {
+    "title": "Reset your password",
+    "subtitle": "Enter your new password below",
+    "failed": "Password reset failed",
+    "succeded": "Password reset successful",
+    "reset": "Reset password"
+  },
+  "UserToken": {
+    "notFound": "Token not found",
+    "expired": "Token has expired",
+    "burnt": "Token has already been used"
+  },
+  "Generic": {
+    "confirm": "Confirm",
+    "tokenMustBeAString": "Invalid token format",
+    "haveYouRemembered": "Remembered your password?",
+    "login": "Login",
+    "email": "Email",
+    "emailPlaceholder": "john.doe@stachelabs.com",
+    "signUp": "Sign up",
+    "password": "Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "credentials": "Credentials",
+    "management": "Management",
+    "orgs": "Orgs",
+    "certificates": "Certificates",
+    "users": "Users",
+    "schemas": "Schemas",
+    "bridges": "Bridges",
+    "wall": "Wall",
+    "administration": "Administration",
+    "submit": "Submit",
+    "openMenu": "Open menu"
   }
 }
