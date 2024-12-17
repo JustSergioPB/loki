@@ -15,5 +15,5 @@ export const db = drizzle({
     ...users,
     ...auditLogs,
   },
-  connection: process.env.DATABASE_URL!,
+  connection: process.env.POSTGRES_URL!,
 });

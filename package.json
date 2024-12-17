@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "drizzle-kit push:pg && next build",
+    "build:dev": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "npx drizzle-kit push"
+    "migrate": "drizzle-kit push"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
