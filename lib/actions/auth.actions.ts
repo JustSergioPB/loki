@@ -76,34 +76,24 @@ export async function signUp(
     const token = Token.create({ sentTo: data.email, context: "confirmation" });
 
     await db.transaction(async (tx) => {
-      const [{ insertedId: orgId }] = await tx
+      const [{ id: orgId }] = await tx
         .insert(orgs)
         .values({
           ...org.props,
         })
-        .returning({ insertedId: orgs.id });
-      const [{ insertedId: userId, insertedEmail }] = await tx
+        .returning();
+      const [{ id: userId }] = await tx
         .insert(users)
         .values({
           ...user.props,
           orgId,
         })
-        .returning({
-          insertedId: users.id,
-          insertedEmail: users.email,
-        });
-      const [{ insertedToken }] = await tx
-        .insert(userTokens)
-        .values({
-          ...token.props,
-          orgId,
-          userId,
-        })
-        .returning({
-          insertedToken: userTokens.token,
-        });
-
-      return { insertedEmail, insertedToken };
+        .returning();
+      await tx.insert(userTokens).values({
+        ...token.props,
+        orgId,
+        userId,
+      });
     });
 
     return { success: { data: true, message: t("succeded") } };
@@ -129,16 +119,11 @@ export async function resendConfirmationMail(email: string) {
       context: "confirmation",
     });
 
-    await db
-      .insert(userTokens)
-      .values({
-        ...token.props,
-        orgId: user.orgId,
-        userId: user.id,
-      })
-      .returning({
-        insertedToken: userTokens.token,
-      });
+    await db.insert(userTokens).values({
+      ...token.props,
+      orgId: user.orgId,
+      userId: user.id,
+    });
 
     //await this.mailProvider.sendConfirmation(user.email, insertedToken);
 
