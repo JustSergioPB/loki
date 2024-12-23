@@ -37,7 +37,7 @@ export async function login(data: LoginSchema): Promise<ActionResult<string>> {
 
     await User.fromProps(queryResult[0].users).login(data.password);
 
-    let redirect: string | undefined = undefined;
+    let redirect: string = "/dashboard";
 
     if (queryResult[0].users.status === "inactive") {
       redirect = "/inactive";
@@ -52,7 +52,7 @@ export async function login(data: LoginSchema): Promise<ActionResult<string>> {
       redirect,
     });
 
-    return { success: { data: "dashboard", message: t("succeded") } };
+    return { success: { data: redirect, message: t("succeded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("failed") } };
