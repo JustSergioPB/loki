@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "drizzle-kit generate && drizzle-kit migrate && next build",
-    "build:dev": "next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "drizzle-kit push",
+    "migrate:prod": "drizzle-kit generate && drizzle-kit migrate",
+    "migrate:dev": "drizzle-kit push",
     "seed": "npx tsx scripts/seed-db.ts"
   },
   "dependencies": {
