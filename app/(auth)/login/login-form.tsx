@@ -43,7 +43,7 @@ export default function LoginForm() {
 
     if (success) {
       toast.success(success.message);
-      router.push(success.data ? "/dashboard" : "/hall");
+      router.push(success.data);
     } else {
       toast.error(error.message);
     }

@@ -31,11 +31,29 @@
     "user": "User",
     "role": "Role",
     "rolePlaceholder": "Select a role",
-    "orgAdmin": "Org admin",
+    "org-admin": "Org admin",
     "issuer": "Issuer",
     "admin": "Admin",
+    "active": "Active",
+    "status": "Status",
+    "inactive": "Inactive",
+    "banned": "Banned",
     "title": "Users",
-    "subtitle": "Welcome to your users page where you will find everything related to your organizations users"
+    "subtitle": "Handle everything related to user management in here. You can create, activate, deactivate, ban, edit, delete and assign roles to users.",
+    "createTitle": "Create user",
+    "createDescription": "Fill the form bellow to create a new user",
+    "editTitle": "Edit user",
+    "editDescription": "Edit the form bellow to update the user",
+    "deleteTitle": "Delete user",
+    "deleteDescription": "Everything related to this user will be deleted, consider banning the user instead",
+    "deleteLabel": "Type the user's full name to confirm",
+    "confirmedAt": "Confirmed at",
+    "createSucceded": "User created successfully",
+    "createFailed": "We couldn't create the user. Please try again later",
+    "updateSucceded": "User updated successfully",
+    "updateFailed": "We couldn't update the user. Please try again later",
+    "deleteSucceded": "User deleted successfully",
+    "deleteFailed": "We couldn't delete the user. Please try again later"
   },
   "Certificate": {
     "title": "Certificates",
@@ -46,11 +64,39 @@
     "alreadyExists": "Organization already exists",
     "org": "Organization",
     "orgPlaceholder": "Stachelabs Inc.",
-    "title": "Organizations"
+    "title": "Organizations",
+    "subtitle": "Handle everything related to org management in here. You can delete and see organization's data here.",
+    "name": "Name",
+    "verifiedAt": "Verified At",
+    "deleteTitle": "Delete org",
+    "deleteDescription": "Everything related to this org will be deleted, consider banning the org instead",
+    "deleteLabel": "Type the org's name to confirm",
+    "deleteSucceded": "Org deleted successfully",
+    "deleteFailed": "We couldn't delete the org. Please try again later"
   },
   "Hall": {
     "title": "Welcome aboard!",
     "subtitle": "We've sent you a confirmation email. Please check your inbox to verify your account. If yout still haven't recieved one you can request it again"
+  },
+  "Onboarding": {
+    "title": "Verifying your organization",
+    "subtitle": "We're reviewing your details to ensure everything is in order. Once we'll done you'll receive an email letting you know you can start using our services."
+  },
+  "Inactive": {
+    "title": " Account needs activation",
+    "subtitle": "Your account is currently inactive.",
+    "content": "Let's help you get back on track. Your account has been deactivated, but don't worry reactivating is quick and simple.",
+    "reasons": {
+      "title": "A few reasons why your account might be inactive:",
+      "1": "You haven't logged in for an extended period",
+      "2": "Your subscription has expired",
+      "3": "The account was manually deactivated"
+    },
+    "howToReactivate": "To reactivate your account, just click the button below. You may need to review and update your account details.",
+    "reactivate": "Reactivate account"
+  },
+  "NeedHelp": {
+    "title": "Need help? Contact our support team at"
   },
   "Wall": {
     "title": "Welcome!"
@@ -92,6 +138,13 @@
     "expired": "Token has expired",
     "burnt": "Token has already been used"
   },
+  "Table": {
+    "noResults": "No results found"
+  },
+  "Paginator": {
+    "rowsPerPage": "Rows per page",
+    "of": "of"
+  },
   "Generic": {
     "confirm": "Confirm",
     "tokenMustBeAString": "Invalid token format",
@@ -103,6 +156,20 @@
     "password": "Password",
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
+    "submit": "Submit",
+    "openMenu": "Open menu",
+    "actions": "Actions",
+    "see": "See",
+    "delete": "Delete",
+    "edit": "Edit",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at",
+    "publicId": "Public ID",
+    "id": "ID",
+    "warning": "Warning",
+    "warningMessage": "This action is irreversible, please be sure"
+  },
+  "Navigation": {
     "home": "Home",
     "dashboard": "Dashboard",
     "credentials": "Credentials",
@@ -113,8 +180,6 @@
     "schemas": "Schemas",
     "bridges": "Bridges",
     "wall": "Wall",
-    "administration": "Administration",
-    "submit": "Submit",
-    "openMenu": "Open menu"
+    "administration": "Administration"
   }
 }

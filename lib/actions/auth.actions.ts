@@ -19,7 +19,9 @@ import { Token } from "../models/token";
 import { TokenError } from "../errors/token.error";
 import { ResetPasswordSchema } from "../schemas/reset-password.schema";
 
-export async function login(data: LoginSchema): Promise<ActionResult<boolean>> {
+//TODO: Add correct error messages on catch
+
+export async function login(data: LoginSchema): Promise<ActionResult<string>> {
   const t = await getTranslations("Login");
 
   try {
@@ -35,24 +37,29 @@ export async function login(data: LoginSchema): Promise<ActionResult<boolean>> {
 
     await User.fromProps(queryResult[0].users).login(data.password);
 
-    if (!queryResult[0].users.confirmedAt || !queryResult[0].orgs.verifiedAt) {
-      return { success: { data: false, message: t("succeded") } };
+    let redirect: string | undefined = undefined;
+
+    if (queryResult[0].users.status === "inactive") {
+      redirect = "/inactive";
+    } else if (!queryResult[0].users.confirmedAt) {
+      redirect = "/hall";
+    } else if (!queryResult[0].orgs.verifiedAt) {
+      redirect = "/onboarding";
     }
 
     await createSession({
       userId: queryResult[0].users.id,
+      redirect,
     });
 
-    return { success: { data: true, message: t("succeded") } };
+    return { success: { data: "dashboard", message: t("succeded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("failed") } };
   }
 }
 
-export async function signUp(
-  data: SignUpSchema
-): Promise<ActionResult<boolean>> {
+export async function signUp(data: SignUpSchema): Promise<ActionResult<void>> {
   const t = await getTranslations("SignUp");
 
   try {
@@ -97,14 +104,16 @@ export async function signUp(
       });
     });
 
-    return { success: { data: true, message: t("succeded") } };
+    return { success: { data: undefined, message: t("succeded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("failed") } };
   }
 }
 
-export async function resendConfirmationMail(email: string) {
+export async function resendConfirmationMail(
+  email: string
+): Promise<ActionResult<void>> {
   const t = await getTranslations("ConfirmAccount");
 
   try {
@@ -130,7 +139,7 @@ export async function resendConfirmationMail(email: string) {
     //await this.mailProvider.sendConfirmation(user.email, insertedToken);
 
     return {
-      success: { data: true, message: t("resendSucceded") },
+      success: { data: undefined, message: t("resendSucceded") },
     };
   } catch (error) {
     console.error(error);
@@ -140,7 +149,7 @@ export async function resendConfirmationMail(email: string) {
 
 export async function confirmAccount(
   token: string
-): Promise<ActionResult<boolean>> {
+): Promise<ActionResult<void>> {
   const t = await getTranslations("ConfirmAccount");
 
   try {
@@ -182,8 +191,8 @@ export async function confirmAccount(
       userId: user.id!,
     });
 
-    return { success: { data: true, message: t("succeded") } };
-  } catch(error) {
+    return { success: { data: undefined, message: t("succeded") } };
+  } catch (error) {
     console.error(error);
     return { error: { message: t("failed") } };
   }
@@ -191,7 +200,7 @@ export async function confirmAccount(
 
 export async function forgotPassword(
   email: string
-): Promise<ActionResult<boolean>> {
+): Promise<ActionResult<void>> {
   const t = await getTranslations("ForgotPassword");
 
   try {
@@ -214,7 +223,7 @@ export async function forgotPassword(
       userId: user.id,
     });
 
-    return { success: { data: true, message: t("succeded") } };
+    return { success: { data: undefined, message: t("succeded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("failed") } };
@@ -224,7 +233,7 @@ export async function forgotPassword(
 export async function resetPassword(
   data: ResetPasswordSchema,
   token: string
-): Promise<ActionResult<boolean>> {
+): Promise<ActionResult<void>> {
   const t = await getTranslations("ResetPassword");
 
   try {
@@ -258,18 +267,18 @@ export async function resetPassword(
         .where(eq(userTokens.id, resetToken.id!));
     });
 
-    return { success: { data: true, message: t("succeded") } };
+    return { success: { data: undefined, message: t("succeded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("failed") } };
   }
 }
 
-export async function logout(): Promise<ActionResult<boolean>> {
+export async function logout(): Promise<ActionResult<void>> {
   const t = await getTranslations("Login");
   try {
     deleteSession();
-    return { success: { data: true, message: t("logoutSucceded") } };
+    return { success: { data: undefined, message: t("logoutSucceded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("logoutFailed") } };

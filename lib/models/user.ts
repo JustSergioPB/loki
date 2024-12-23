@@ -1,7 +1,8 @@
 import { User as DbUser } from "@/db/schema/users";
 import { SignUpSchema } from "../schemas/sign-up.schema";
-import bcrypt from "bcrypt";
 import { AuthError } from "../errors/auth.error";
+import { Password } from "./password";
+import { UserSchema } from "../schemas/user.schema";
 
 export type UserProps = Omit<
   DbUser,
@@ -25,8 +26,21 @@ export class User {
     return new User(
       {
         ...data,
-        password: await bcrypt.hash(data.password, 10),
+        password: (await Password.create(data.password)).value,
         role: "org-admin",
+        confirmedAt: null,
+        status: "inactive",
+      },
+      undefined,
+      undefined
+    );
+  }
+
+  static async create(data: UserSchema): Promise<User> {
+    return new User(
+      {
+        ...data,
+        password: (await Password.random()).value,
         confirmedAt: null,
         status: "inactive",
       },
@@ -44,7 +58,9 @@ export class User {
   }
 
   async login(password: string): Promise<void> {
-    const isEqual = await bcrypt.compare(password, this._props.password);
+    const isEqual = await Password.fromValue(this._props.password).compare(
+      password
+    );
 
     if (!isEqual) {
       throw new AuthError("invalidCredentials");
@@ -52,10 +68,17 @@ export class User {
   }
 
   async resetPassword(password: string): Promise<void> {
-    this._props = { ...this._props, password: await bcrypt.hash(password, 10) };
+    this._props = {
+      ...this._props,
+      password: (await Password.create(password)).value,
+    };
   }
 
   confirm(): void {
-    this._props = { ...this._props, confirmedAt: new Date() };
+    this._props = { ...this._props, confirmedAt: new Date(), status: "active" };
+  }
+
+  isAdmin(): boolean {
+    return this._props.role === "admin";
   }
 }

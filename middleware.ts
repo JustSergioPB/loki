@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { decrypt } from "./lib/helpers/session";
 
 // 1. Specify protected and public routes
-const protectedRoutes = ["/dashboard", "/users", "/orgs"];
+const protectedRoutes = ["/dashboard", "/users", "/orgs", "/onboarding", "/inactive"];
+
 const publicRoutes = [
   "/login",
   "/signup",
@@ -26,11 +27,13 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
-  if (
-    isPublicRoute &&
-    session?.userId &&
-    !req.nextUrl.pathname.startsWith("/dashboard")
-  ) {
+  if (isProtectedRoute && session?.userId && session?.redirect) {
+    return NextResponse.redirect(
+      new URL(session?.redirect as string, req.nextUrl)
+    );
+  }
+
+  if (isPublicRoute && session?.userId) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 

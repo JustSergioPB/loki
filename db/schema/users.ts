@@ -59,10 +59,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 }));
 
 export type User = typeof users.$inferSelect;
-export type UserWithOrg = Pick<
-  User,
-  "id" | "fullName" | "email" | "role" | "confirmedAt"
-> & {
+export type UserCreate = typeof users.$inferInsert;
+
+export type UserWithOrg = Omit<User, "password" | "orgId"> & {
   org: { name: string };
 };
 

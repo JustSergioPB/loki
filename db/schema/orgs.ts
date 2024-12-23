@@ -28,3 +28,4 @@ export const orgsRelations = relations(orgs, ({ many }) => ({
 }));
 
 export type Org = typeof orgs.$inferSelect;
+export type OrgCreate = typeof orgs.$inferInsert;
