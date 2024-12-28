@@ -31,13 +31,17 @@
     "user": "User",
     "role": "Role",
     "rolePlaceholder": "Select a role",
-    "org-admin": "Org admin",
-    "issuer": "Issuer",
-    "admin": "Admin",
-    "active": "Active",
     "status": "Status",
-    "inactive": "Inactive",
-    "banned": "Banned",
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "banned": "Banned"
+    },
+    "roles": {
+      "org-admin": "Org admin",
+      "issuer": "Issuer",
+      "admin": "Admin"
+    },
     "title": "Users",
     "subtitle": "Handle everything related to user management in here. You can create, activate, deactivate, ban, edit, delete and assign roles to users.",
     "createTitle": "Create user",
@@ -53,7 +57,9 @@
     "updateSucceded": "User updated successfully",
     "updateFailed": "We couldn't update the user. Please try again later",
     "deleteSucceded": "User deleted successfully",
-    "deleteFailed": "We couldn't delete the user. Please try again later"
+    "deleteFailed": "We couldn't delete the user. Please try again later",
+    "seeTitle": "User details",
+    "seeDescription": "This dialog contains the information of the user and it's certificates"
   },
   "Certificate": {
     "title": "Certificates",
@@ -65,14 +71,16 @@
     "org": "Organization",
     "orgPlaceholder": "Stachelabs Inc.",
     "title": "Organizations",
-    "subtitle": "Handle everything related to org management in here. You can delete and see organization's data here.",
+    "subtitle": "Handle everything related to organization management in here. You can delete and see organization's data here.",
     "name": "Name",
     "verifiedAt": "Verified At",
-    "deleteTitle": "Delete org",
-    "deleteDescription": "Everything related to this org will be deleted, consider banning the org instead",
-    "deleteLabel": "Type the org's name to confirm",
+    "deleteTitle": "Delete organization",
+    "deleteDescription": "Everything related to this organization will be deleted, consider banning the organization instead",
+    "deleteLabel": "Type the organization's name to confirm",
     "deleteSucceded": "Org deleted successfully",
-    "deleteFailed": "We couldn't delete the org. Please try again later"
+    "deleteFailed": "We couldn't delete the organization. Please try again later",
+    "seeTitle": "Organization details",
+    "seeDescription": "This dialog contains the information of the organization and it's certificates"
   },
   "Hall": {
     "title": "Welcome aboard!",
@@ -108,7 +116,43 @@
     "title": "Welcome!"
   },
   "Schema": {
-    "title": "Welcome!"
+    "title": "Forms",
+    "subtitle": "Handle everything related to your organization's forms in here. You can create, edit, see, delete, publish and archive your forms.",
+    "schema": "Form",
+    "titleProp": "Title",
+    "titlePlaceholder": "Organization user",
+    "createTitle": "Create form",
+    "createDescription": "Fill the form bellow to create a new form",
+    "editTitle": "Edit form",
+    "editDescription": "Edit the form bellow to update it's contents",
+    "seeTitle": "Form details",
+    "seeDescription": "This dialog contains the information of the form's latest version",
+    "deleteTitle": "Delete form",
+    "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
+    "deleteLabel": "Type the form's title to confirm",
+    "publishTitle": "Publish form",
+    "publishDescription": "The latest version of this form will be published in the blockchain allowing you to emit and validate credentials based on it.",
+    "publishLabel": "Type the form's title to confirm",
+    "archiveTitle": "Archive form",
+    "archiveDescription": "This form version will be archived which means it won't be possible to emit new credentials using this one, you can still validate content using it.",
+    "archiveLabel": "Type the form's title to confirm"
+  },
+  "SchemaVersion": {
+    "version": "Version",
+    "status": "Status",
+    "description": "Description",
+    "descriptionPlaceholder": "This credential claims that the user belongs to the organization...",
+    "content": "Content",
+    "contentPlaceholder": "'{ }'",
+    "schemaNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
+    "statuses": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "latestVersion": "Latest version",
+    "publish": "Publish",
+    "archive": "Archive"
   },
   "ConfirmAccount": {
     "title": "Confirm your account",
@@ -177,7 +221,7 @@
     "orgs": "Orgs",
     "certificates": "Certificates",
     "users": "Users",
-    "schemas": "Schemas",
+    "schemas": "Forms",
     "bridges": "Bridges",
     "wall": "Wall",
     "administration": "Administration"

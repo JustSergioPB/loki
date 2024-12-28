@@ -6,6 +6,8 @@ import * as userSettings from "./schema/user-settings";
 import * as userTokens from "./schema/user-tokens";
 import * as users from "./schema/users";
 import * as auditLogs from "./schema/audit-logs";
+import * as schemaVersions from "./schema/schema-versions";
+import * as schemas from "./schema/schemas";
 
 const connectionString = process.env.DATABASE_URL!;
 export const client = postgres(connectionString, { prepare: false });
@@ -18,5 +20,7 @@ export const db = drizzle({
     ...userTokens,
     ...users,
     ...auditLogs,
+    ...schemas,
+    ...schemaVersions,
   },
 });

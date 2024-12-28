@@ -32,7 +32,7 @@ export const userColumns: ColumnDef<UserWithOrg>[] = [
       const t = useTranslations("User");
       const role = row.original.role;
 
-      return <UserRole role={role}>{t(role)}</UserRole>;
+      return <UserRole role={role}>{t(`roles.${role}`)}</UserRole>;
     },
   },
   {
@@ -52,7 +52,7 @@ export const userColumns: ColumnDef<UserWithOrg>[] = [
       const t = useTranslations("User");
       const status = row.original.status;
 
-      return <UserStatus status={status}>{t(status)}</UserStatus>;
+      return <UserStatus status={status}>{t(`statuses.${status}`)}</UserStatus>;
     },
   },
   {

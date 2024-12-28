@@ -13,21 +13,48 @@ import {
 import { useTranslations } from "next-intl";
 import UserDetails from "./details";
 import UserForm from "./form";
-import UserDelete from "./delete";
+import { useState } from "react";
+import ConfirmDialog from "@/components/app/confirm-dialog";
+import { removeUser } from "@/lib/actions/user.actions";
+import { toast } from "sonner";
 
 export default function UserDialog({ user }: { user: UserWithOrg }) {
-  const t = useTranslations("Generic");
+  const t = useTranslations("User");
+  const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const action = searchParams.get("action");
   const id = searchParams.get("id");
+  const [isLoading, setIsLoading] = useState(false);
 
   const editParams = new URLSearchParams(searchParams);
   editParams.set("action", "edit");
 
   const deleteParams = new URLSearchParams(searchParams);
   deleteParams.set("action", "delete");
+
+  function onActionTrigger(action: "see" | "edit" | "delete") {
+    const params = new URLSearchParams(searchParams);
+    params.set("id", user.id.toString());
+    params.set("action", action);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  async function onDelete() {
+    setIsLoading(true);
+
+    const { success, error } = await removeUser(user.id);
+
+    if (success) {
+      toast.success(success.message);
+      onClose();
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  }
 
   function onClose() {
     const params = new URLSearchParams(searchParams);
@@ -37,56 +64,30 @@ export default function UserDialog({ user }: { user: UserWithOrg }) {
   }
 
   return (
-    <Dialog
-      open={
-        !!action &&
-        ["see", "edit", "delete"].includes(action) &&
-        Number(id) === user.id
-      }
-      onOpenChange={onClose}
-    >
+    <Dialog open={!!action && Number(id) === user.id} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">{t("openMenu")}</span>
+            <span className="sr-only">{tGeneric("openMenu")}</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set("action", "edit");
-              params.set("id", user.id.toString());
-              router.replace(`${pathname}?${params.toString()}`);
-            }}
-          >
+          <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => onActionTrigger("edit")}>
             <Pencil />
-            {t("edit")}
+            {tGeneric("edit")}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set("id", user.id.toString());
-              params.set("action", "see");
-              router.replace(`${pathname}?${params.toString()}`);
-            }}
-          >
+          <DropdownMenuItem onClick={() => onActionTrigger("see")}>
             <ArrowRight />
-            {t("see")}
+            {tGeneric("see")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-500"
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set("id", user.id.toString());
-              params.set("action", "delete");
-              router.replace(`${pathname}?${params.toString()}`);
-            }}
+            onClick={() => onActionTrigger("delete")}
           >
             <Trash />
-            {t("delete")}
+            {tGeneric("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -99,7 +100,18 @@ export default function UserDialog({ user }: { user: UserWithOrg }) {
           />
         )}
         {action === "edit" && <UserForm user={user} onSubmit={onClose} />}
-        {action === "delete" && <UserDelete user={user} onSubmit={onClose} />}
+        {action === "delete" && (
+          <ConfirmDialog
+            keyword={user.fullName}
+            title={t("deleteTitle")}
+            description={t("deleteDescription")}
+            label={t("deleteLabel")}
+            onSubmit={onDelete}
+            loading={isLoading}
+            id={user.id}
+            variant="danger"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

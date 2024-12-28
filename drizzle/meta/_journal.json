@@ -8,6 +8,13 @@
       "when": 1734450094175,
       "tag": "0000_lame_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1735419617594,
+      "tag": "0001_aromatic_viper",
+      "breakpoints": true
     }
   ]
 }

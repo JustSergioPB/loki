@@ -9,17 +9,20 @@ import { User } from "../models/user";
 import { authorize } from "../helpers/dal";
 import { auditLogs } from "@/db/schema/audit-logs";
 import { and, eq } from "drizzle-orm";
+import { UserError } from "../errors/user.error";
 
 //TODO: Add correct error messages on catch
 
-export async function createUser(data: UserSchema): Promise<ActionResult<void>> {
+export async function createUser(
+  data: UserSchema
+): Promise<ActionResult<void>> {
   const t = await getTranslations("User");
   try {
     const authUser = await authorize(["org-admin", "admin"]);
     const user = await User.create(data);
 
     await db.transaction(async (tx) => {
-      const [{ id: userId }] = await tx
+      const [insertedUser] = await tx
         .insert(users)
         .values({
           ...user.props,
@@ -27,9 +30,9 @@ export async function createUser(data: UserSchema): Promise<ActionResult<void>> 
         })
         .returning();
       await tx.insert(auditLogs).values({
-        entityId: userId,
+        entityId: insertedUser.id,
         entityType: "user",
-        value: data,
+        value: insertedUser,
         orgId: authUser.orgId,
         userId: authUser.id,
         action: "create",
@@ -52,21 +55,28 @@ export async function updateUser(
   const t = await getTranslations("User");
   try {
     const authUser = await authorize(["org-admin", "admin"]);
+    const user = await db.query.users.findFirst({
+      where: and(eq(users.id, id), eq(users.orgId, authUser.id)),
+    });
+
+    if (!user) {
+      throw new UserError("notFound");
+    }
+
+    const updatedUser = User.fromProps(user);
+    updatedUser.update(data);
 
     await db.transaction(async (tx) => {
-      await tx
+      const [updated] = await tx
         .update(users)
-        .set({ ...data })
-        .where(
-          and(
-            eq(users.id, id),
-            authUser.role === "admin" ? undefined : eq(users.orgId, authUser.id)
-          )
-        );
+        .set({ ...updatedUser.props })
+        .where(eq(users.id, id))
+        .returning();
+
       await tx.insert(auditLogs).values({
         entityId: id,
         entityType: "user",
-        value: data,
+        value: updated,
         orgId: authUser.orgId,
         userId: authUser.id,
         action: "update",

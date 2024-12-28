@@ -11,19 +11,46 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
 import OrgDetails from "./details";
-import OrgDelete from "./delete";
 import { Org } from "@/db/schema/orgs";
+import ConfirmDialog from "@/components/app/confirm-dialog";
+import { useState } from "react";
+import { removeOrg } from "@/lib/actions/org.actions";
+import { toast } from "sonner";
 
 export default function OrgDialog({ org }: { org: Org }) {
-  const t = useTranslations("Generic");
+  const t = useTranslations("Org");
+  const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const action = searchParams.get("action");
   const id = searchParams.get("id");
+  const [isLoading, setIsLoading] = useState(false);
 
   const deleteParams = new URLSearchParams(searchParams);
   deleteParams.set("action", "delete");
+
+  function onActionTrigger(action: "see" | "edit" | "delete") {
+    const params = new URLSearchParams(searchParams);
+    params.set("id", org.id.toString());
+    params.set("action", action);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  async function onDelete() {
+    setIsLoading(true);
+
+    const { success, error } = await removeOrg(org.id);
+
+    if (success) {
+      toast.success(success.message);
+      onClose();
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  }
 
   function onClose() {
     const params = new URLSearchParams(searchParams);
@@ -33,45 +60,26 @@ export default function OrgDialog({ org }: { org: Org }) {
   }
 
   return (
-    <Dialog
-      open={
-        !!action &&
-        ["see", "edit", "delete"].includes(action) &&
-        Number(id) === org.id
-      }
-      onOpenChange={onClose}
-    >
+    <Dialog open={!!action && Number(id) === org.id} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">{t("openMenu")}</span>
+            <span className="sr-only">{tGeneric("openMenu")}</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set("id", org.id.toString());
-              params.set("action", "see");
-              router.replace(`${pathname}?${params.toString()}`);
-            }}
-          >
+          <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => onActionTrigger("see")}>
             <ArrowRight />
-            {t("see")}
+            {tGeneric("see")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-500"
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set("id", org.id.toString());
-              params.set("action", "delete");
-              router.replace(`${pathname}?${params.toString()}`);
-            }}
+            onClick={() => onActionTrigger("delete")}
           >
             <Trash />
-            {t("delete")}
+            {tGeneric("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -82,7 +90,18 @@ export default function OrgDialog({ org }: { org: Org }) {
             deleteHref={`${pathname}?${deleteParams.toString()}`}
           />
         )}
-        {action === "delete" && <OrgDelete org={org} onSubmit={onClose} />}
+        {action === "delete" && (
+          <ConfirmDialog
+            keyword={org.name}
+            title={t("deleteTitle")}
+            description={t("deleteDescription")}
+            label={t("deleteLabel")}
+            onSubmit={onDelete}
+            loading={isLoading}
+            id={org.id}
+            variant="danger"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

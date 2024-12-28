@@ -86,7 +86,7 @@ export default function AppPaginator({ page, pageSize, count }: Props) {
         </PaginationItem>
         <PaginationItem>
           <span className="mx-12 font-semibold text-sm">
-            {page * pageSize + 1} - {page * pageSize + pageSize + 1} {t("of")}{" "}
+            {page * pageSize + 1} - {page * pageSize + pageSize} {t("of")}{" "}
             {count}
           </span>
         </PaginationItem>

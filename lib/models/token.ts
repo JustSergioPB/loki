@@ -2,10 +2,7 @@ import crypto from "crypto";
 import { UserToken as DbToken } from "@/db/schema/user-tokens";
 import { TokenError } from "../errors/token.error";
 
-export type TokenProps = Omit<
-  DbToken,
-  "id" | "publicId" | "orgId" | "userId" | "createdAt" | "updatedAt"
->;
+export type TokenProps = Omit<DbToken, "id" | "publicId" | "orgId" | "userId">;
 export type CreateTokenProps = Pick<TokenProps, "sentTo" | "context">;
 export type TokenId = number | undefined;
 
@@ -26,6 +23,8 @@ export class Token {
         ...data,
         token: crypto.randomBytes(32).toString("hex"),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: null,
       },
       undefined,
       null
@@ -40,7 +39,7 @@ export class Token {
     return this._props;
   }
 
-  validate(context: string): void {
+  burn(context: string): void {
     if (new Date() > this._props.expiresAt) {
       throw new TokenError("expired");
     }
@@ -52,5 +51,7 @@ export class Token {
     if (this._props.context !== context) {
       throw new TokenError("invalidContext");
     }
+
+    this._props.updatedAt = new Date();
   }
 }

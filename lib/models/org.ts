@@ -1,9 +1,6 @@
 import { Org as DbOrg } from "@/db/schema/orgs";
 
-export type OrgProps = Omit<
-  DbOrg,
-  "id" | "publicId" | "createdAt" | "updatedAt"
->;
+export type OrgProps = Omit<DbOrg, "id" | "publicId">;
 export type OrgId = number | undefined;
 export type OrgPublicId = string | undefined;
 
@@ -23,6 +20,8 @@ export class Org {
       {
         ...data,
         verifiedAt: null,
+        createdAt: new Date(),
+        updatedAt: null,
       },
       undefined,
       undefined
@@ -38,6 +37,10 @@ export class Org {
   }
 
   verify(): void {
-    this._props = { ...this._props, verifiedAt: new Date() };
+    this._props = {
+      ...this._props,
+      verifiedAt: new Date(),
+      updatedAt: new Date(),
+    };
   }
 }

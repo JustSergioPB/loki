@@ -4,10 +4,7 @@ import { AuthError } from "../errors/auth.error";
 import { Password } from "./password";
 import { UserSchema } from "../schemas/user.schema";
 
-export type UserProps = Omit<
-  DbUser,
-  "id" | "publicId" | "orgId" | "createdAt" | "updatedAt"
->;
+export type UserProps = Omit<DbUser, "id" | "publicId" | "orgId">;
 export type UserId = number | undefined;
 export type UserPublicId = string | undefined;
 
@@ -30,6 +27,8 @@ export class User {
         role: "org-admin",
         confirmedAt: null,
         status: "inactive",
+        createdAt: new Date(),
+        updatedAt: null,
       },
       undefined,
       undefined
@@ -43,6 +42,8 @@ export class User {
         password: (await Password.random()).value,
         confirmedAt: null,
         status: "inactive",
+        createdAt: new Date(),
+        updatedAt: null,
       },
       undefined,
       undefined
@@ -71,11 +72,21 @@ export class User {
     this._props = {
       ...this._props,
       password: (await Password.create(password)).value,
+      updatedAt: new Date(),
     };
   }
 
+  update(data: UserSchema): void {
+    this._props = { ...this._props, ...data, updatedAt: new Date() };
+  }
+
   confirm(): void {
-    this._props = { ...this._props, confirmedAt: new Date(), status: "active" };
+    this._props = {
+      ...this._props,
+      confirmedAt: new Date(),
+      status: "active",
+      updatedAt: new Date(),
+    };
   }
 
   isAdmin(): boolean {

@@ -8,7 +8,6 @@ import { db } from "@/db";
 import { users } from "@/db/schema/users";
 import { orgs } from "@/db/schema/orgs";
 import { eq, sql } from "drizzle-orm";
-import bcrypt from "bcrypt";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { UserError } from "../errors/user.error";
 import { Org } from "../models/org";
@@ -168,7 +167,7 @@ export async function confirmAccount(
     const confirmationToken = Token.fromProps(queryResult[0].userTokens);
     const org = Org.fromProps(queryResult[0].orgs);
 
-    confirmationToken.validate("confirmation");
+    confirmationToken.burn("confirmation");
     user.confirm();
     org.verify();
 
@@ -179,7 +178,7 @@ export async function confirmAccount(
         .where(eq(users.id, user.id!));
       await tx
         .update(userTokens)
-        .set({ updatedAt: sql`NOW()` })
+        .set({ ...confirmationToken.props })
         .where(eq(userTokens.id, confirmationToken.id!));
       await tx
         .update(orgs)
@@ -250,20 +249,17 @@ export async function resetPassword(
     const user = User.fromProps(queryResult[0].users);
     const resetToken = Token.fromProps(queryResult[0].userTokens);
 
-    resetToken.validate("reset-password");
+    resetToken.burn("reset-password");
     await user.resetPassword(data.password);
 
     await db.transaction(async (tx) => {
       await tx
         .update(users)
-        .set({
-          updatedAt: sql`NOW()`,
-          password: await bcrypt.hash(data.password, 10),
-        })
+        .set({ ...user.props })
         .where(eq(users.id, user.id!));
       await tx
         .update(userTokens)
-        .set({ updatedAt: sql`NOW()` })
+        .set({ ...resetToken.props })
         .where(eq(userTokens.id, resetToken.id!));
     });
 

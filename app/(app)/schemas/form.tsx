@@ -12,13 +12,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import {
   DialogHeader,
@@ -26,37 +19,44 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { UserSchema, userSchema } from "@/lib/schemas/user.schema";
-import { UserWithOrg } from "@/db/schema/users";
-import { createUser, updateUser } from "@/lib/actions/user.actions";
+import { SchemaSchema, schemaSchema } from "@/lib/schemas/schema.schema";
+import { createSchema, updateSchema } from "@/lib/actions/schema.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
+import { SchemaWithVersions } from "@/db/schema/schemas";
+import { Schema } from "@/lib/models/schema";
+import { Textarea } from "@/components/ui/textarea";
+import InfoPanel from "@/components/app/info-panel";
 
 type Props = {
-  user?: UserWithOrg;
+  schema?: SchemaWithVersions;
   onSubmit: () => void;
 };
 
-export default function UserForm({ user, onSubmit }: Props) {
+export default function SchemaForm({ schema, onSubmit }: Props) {
+  const t = useTranslations("Schema");
+  const tVersion = useTranslations("SchemaVersion");
   const tGeneric = useTranslations("Generic");
-  const t = useTranslations("User");
   const [isLoading, setIsLoading] = useState(false);
+  const latestVersion = schema
+    ? Schema.fromProps(schema).getLatestVersion()
+    : undefined;
 
-  const form = useForm<UserSchema>({
-    resolver: zodResolver(userSchema),
+  const form = useForm<SchemaSchema>({
+    resolver: zodResolver(schemaSchema),
     defaultValues: {
-      fullName: user?.fullName ?? "",
-      email: user?.email ?? "",
-      role: user?.role ?? "issuer",
+      title: schema?.title ?? "",
+      description: latestVersion?.description ?? "",
+      content: JSON.stringify(latestVersion?.credentialSubject, null, 1) ?? "",
     },
   });
 
-  async function handleSubmit(values: UserSchema) {
+  async function handleSubmit(values: SchemaSchema) {
     setIsLoading(true);
 
-    const { success, error } = user
-      ? await updateUser(user.id, values)
-      : await createUser(values);
+    const { success, error } = schema
+      ? await updateSchema(schema.id, values)
+      : await createSchema(values);
 
     if (success) {
       toast.success(success.message);
@@ -71,26 +71,34 @@ export default function UserForm({ user, onSubmit }: Props) {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t(user ? "editTitle" : "createTitle")}</DialogTitle>
+        <DialogTitle>{t(schema ? "editTitle" : "createTitle")}</DialogTitle>
         <DialogDescription>
-          {t(user ? "editDescription" : "createDescription")}
+          {t(schema ? "editDescription" : "createDescription")}
         </DialogDescription>
       </DialogHeader>
+      {latestVersion && latestVersion.props.status !== "draft" && (
+        <InfoPanel
+          variant="warning"
+          type="vertical"
+          label={tGeneric("warning")}
+          message={tVersion("schemaNotInDraft")}
+        />
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-6"
-          id={user ? `user-form-${user.id}` : "new"}
+          id={schema ? `schema-form-${schema.id}` : "new"}
         >
           <FormField
             control={form.control}
-            name="fullName"
+            name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("fullName")}</FormLabel>
+                <FormLabel>{t("titleProp")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder={t("fullNamePlaceholder")}
+                    placeholder={t("titlePlaceholder")}
                     type="text"
                     required
                     {...field}
@@ -102,43 +110,37 @@ export default function UserForm({ user, onSubmit }: Props) {
           />
           <FormField
             control={form.control}
-            name="email"
+            name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{tGeneric("email")}</FormLabel>
+                <FormLabel>{tVersion("description")}</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder={tGeneric("emailPlaceholder")}
-                    type="email"
-                    required
+                  <Textarea
+                    placeholder={tVersion("descriptionPlaceholder")}
+                    className="resize-none"
+                    rows={4}
                     {...field}
                   />
                 </FormControl>
-
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="role"
+            name="content"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("role")}</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("rolePlaceholder")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="org-admin">{t("org-admin")}</SelectItem>
-                    <SelectItem value="issuer">{t("issuer")}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormLabel>{tVersion("content")}</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder={tVersion("contentPlaceholder")}
+                    className="resize-none"
+                    rows={12}
+                    required
+                    {...field}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

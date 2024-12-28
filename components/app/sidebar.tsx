@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -16,9 +17,9 @@ import {
    * BrickWall,
   Cable,
   FileArchive,
-  FileJson,
   FilePenLine,
   */
+  FileJson,
   LayoutGrid,
   User,
   Building,
@@ -77,12 +78,13 @@ export default function AppSidebar({
           url: "/users",
           icon: User,
         },
-        /*
         {
           title: t("schemas"),
           url: "/schemas",
           icon: FileJson,
         },
+        /*
+        
         {
           title: t("bridges"),
           url: "/bridges",
