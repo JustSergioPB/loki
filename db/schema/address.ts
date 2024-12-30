@@ -22,5 +22,5 @@ export const addressRelations = relations(address, ({ one }) => ({
   }),
 }));
 
-export type Pki = typeof address.$inferSelect;
-export type PkiCreate = typeof address.$inferInsert;
+export type Address = typeof address.$inferSelect;
+export type AddressCreate = typeof address.$inferInsert;

@@ -29,6 +29,7 @@ export class User {
         status: "inactive",
         createdAt: new Date(),
         updatedAt: null,
+        title: null,
       },
       undefined,
       undefined
@@ -80,9 +81,10 @@ export class User {
     this._props = { ...this._props, ...data, updatedAt: new Date() };
   }
 
-  confirm(): void {
+  confirm(title: string): void {
     this._props = {
       ...this._props,
+      title,
       confirmedAt: new Date(),
       status: "active",
       updatedAt: new Date(),

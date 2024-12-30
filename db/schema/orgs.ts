@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   integer,
+  pgEnum,
   pgTable,
   timestamp,
   uuid,
@@ -12,11 +13,18 @@ import { auditLogs } from "./audit-logs";
 import { userSettings } from "./user-settings";
 import { certificates } from "./certificate";
 
+export const orgStatus = pgEnum("orgStatus", [
+  "onboarding",
+  "verifying",
+  "verified",
+]);
+
 export const orgs = pgTable("orgs", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   name: varchar({ length: 255 }).notNull().unique(),
   publicId: uuid().notNull().defaultRandom(),
   verifiedAt: timestamp({ withTimezone: true }),
+  status: orgStatus().notNull().default("onboarding"),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }),
 });

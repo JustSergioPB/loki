@@ -7,6 +7,11 @@ import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { ActionResult } from "../generics/action-result";
 import { authorize } from "../helpers/dal";
+import { AddressSchema } from "../schemas/address.schema";
+import { address } from "@/db/schema/address";
+import { OrgError } from "../errors/org.error";
+import { Org } from "../models/org";
+import { Address } from "../models/address";
 
 //TODO: Add correct error messages on catch
 
@@ -34,5 +39,67 @@ export async function removeOrg(id: number): Promise<ActionResult<void>> {
   } catch (error) {
     console.error(error);
     return { error: { message: t("deleteFailed") } };
+  }
+}
+
+export async function addAddressToOrg(
+  data: AddressSchema
+): Promise<ActionResult<void>> {
+  const t = await getTranslations("Address");
+  try {
+    const authUser = await authorize(["admin", "org-admin"]);
+
+    const org = await db.query.orgs.findFirst({
+      where: eq(orgs.id, authUser.orgId),
+    });
+
+    if (!org) {
+      throw new OrgError("notFound");
+    }
+
+    const updatedOrg = Org.fromProps(org);
+    const newAddress = Address.create(data);
+
+    updatedOrg.addAddress(newAddress);
+
+    await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(orgs)
+        .set({ ...updatedOrg.props })
+        .where(eq(orgs.id, updatedOrg.id!))
+        .returning();
+
+      const [inserted] = await tx
+        .insert(address)
+        .values({
+          ...newAddress.props,
+          orgId: authUser.id,
+        })
+        .returning();
+
+      await tx.insert(auditLogs).values([
+        {
+          entityId: inserted.id,
+          entityType: "address",
+          value: inserted,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "create",
+        },
+        {
+          entityId: updated.id,
+          entityType: "org",
+          value: updated,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "update",
+        },
+      ]);
+    });
+
+    return { success: { data: undefined, message: t("creationSucceded") } };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("creationFailed") } };
   }
 }

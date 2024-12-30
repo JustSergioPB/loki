@@ -32,6 +32,8 @@
     "role": "Role",
     "rolePlaceholder": "Select a role",
     "status": "Status",
+    "title": "Position within the organization",
+    "titlePlaceholder": "Developer",
     "statuses": {
       "active": "Active",
       "inactive": "Inactive",
@@ -42,7 +44,7 @@
       "issuer": "Issuer",
       "admin": "Admin"
     },
-    "title": "Users",
+    "users": "Users",
     "subtitle": "Handle everything related to user management in here. You can create, activate, deactivate, ban, edit, delete and assign roles to users.",
     "createTitle": "Create user",
     "createDescription": "Fill the form bellow to create a new user",
@@ -86,9 +88,13 @@
     "title": "Welcome aboard!",
     "subtitle": "We've sent you a confirmation email. Please check your inbox to verify your account. If yout still haven't recieved one you can request it again"
   },
-  "Onboarding": {
+  "Verifying": {
     "title": "Verifying your organization",
     "subtitle": "We're reviewing your details to ensure everything is in order. Once we'll done you'll receive an email letting you know you can start using our services."
+  },
+  "Onboarding": {
+    "title": "Organization address",
+    "subtitle": "We need the address of your organization in order to emit the certificates for signing. Please fill the form bellow."
   },
   "Inactive": {
     "title": " Account needs activation",
@@ -158,9 +164,17 @@
     "validityTitle": "Validity",
     "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered."
   },
+  "Address": {
+    "country": "Country",
+    "countryPlaceholder": "Spain",
+    "stateProvince": "State/Province",
+    "stateProvincePlaceholder": "La Rioja",
+    "location": "Location",
+    "locationPlaceholder": "Logroño"
+  },
   "ConfirmAccount": {
     "title": "Confirm your account",
-    "subtitle": "Click the button below to confirm your account",
+    "subtitle": "Fill the form below and start issuing credentials",
     "failed": "Account confirmation failed",
     "succeded": "Account confirmed successfully",
     "sendLink": "Request new confirmation link",

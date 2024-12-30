@@ -24,6 +24,9 @@ export const auditableEntity = pgEnum("auditableEntity", [
   "bridge",
   "emailBridge",
   "userSettings",
+  "address",
+  "pki",
+  "crl",
 ]);
 
 export const auditLogs = pgTable("auditLogs", {

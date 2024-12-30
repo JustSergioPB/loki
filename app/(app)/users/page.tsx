@@ -36,6 +36,7 @@ export default async function Users({
       role: users.role,
       status: users.status,
       confirmedAt: users.confirmedAt,
+      title: users.title,
       updatedAt: users.updatedAt,
       createdAt: users.createdAt,
       org: {

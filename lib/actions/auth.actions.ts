@@ -17,6 +17,7 @@ import { userTokens } from "@/db/schema/user-tokens";
 import { Token } from "../models/token";
 import { TokenError } from "../errors/token.error";
 import { ResetPasswordSchema } from "../schemas/reset-password.schema";
+import { ConfirmAccountSchema } from "../schemas/confirm-account.schema";
 
 //TODO: Add correct error messages on catch
 
@@ -42,8 +43,10 @@ export async function login(data: LoginSchema): Promise<ActionResult<string>> {
       redirect = "/inactive";
     } else if (!queryResult[0].users.confirmedAt) {
       redirect = "/hall";
-    } else if (!queryResult[0].orgs.verifiedAt) {
+    } else if (queryResult[0].orgs.status === "onboarding") {
       redirect = "/onboarding";
+    } else {
+      redirect = "/verifying";
     }
 
     await createSession({
@@ -147,6 +150,7 @@ export async function resendConfirmationMail(
 }
 
 export async function confirmAccount(
+  data: ConfirmAccountSchema,
   token: string
 ): Promise<ActionResult<void>> {
   const t = await getTranslations("ConfirmAccount");
@@ -168,8 +172,7 @@ export async function confirmAccount(
     const org = Org.fromProps(queryResult[0].orgs);
 
     confirmationToken.burn("confirmation");
-    user.confirm();
-    org.verify();
+    user.confirm(data.title);
 
     await db.transaction(async (tx) => {
       await tx

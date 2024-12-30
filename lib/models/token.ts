@@ -4,35 +4,26 @@ import { TokenError } from "../errors/token.error";
 
 export type TokenProps = Omit<DbToken, "id" | "publicId" | "orgId" | "userId">;
 export type CreateTokenProps = Pick<TokenProps, "sentTo" | "context">;
-export type TokenId = number | undefined;
 
 export class Token {
   private _props: TokenProps;
-  private updatedAt: Date | null;
-  public readonly id: TokenId;
 
-  private constructor(props: TokenProps, id: TokenId, updatedAt: Date | null) {
+  private constructor(props: TokenProps) {
     this._props = props;
-    this.id = id;
-    this.updatedAt = updatedAt;
   }
 
   static create(data: CreateTokenProps): Token {
-    return new Token(
-      {
-        ...data,
-        token: crypto.randomBytes(32).toString("hex"),
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-        createdAt: new Date(),
-        updatedAt: null,
-      },
-      undefined,
-      null
-    );
+    return new Token({
+      ...data,
+      token: crypto.randomBytes(32).toString("hex"),
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      createdAt: new Date(),
+      updatedAt: null,
+    });
   }
 
   static fromProps(data: DbToken): Token {
-    return new Token(data, data.id, data.updatedAt);
+    return new Token(data);
   }
 
   get props(): TokenProps {
@@ -44,7 +35,7 @@ export class Token {
       throw new TokenError("expired");
     }
 
-    if (this.updatedAt) {
+    if (this._props.updatedAt) {
       throw new TokenError("burnt");
     }
 

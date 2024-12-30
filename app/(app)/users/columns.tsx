@@ -23,6 +23,13 @@ export const userColumns: ColumnDef<UserWithOrg>[] = [
     },
   },
   {
+    accessorKey: "title",
+    header: function CellHeader() {
+      const t = useTranslations("User");
+      return t("title");
+    },
+  },
+  {
     accessorKey: "role",
     header: function CellHeader() {
       const t = useTranslations("User");
