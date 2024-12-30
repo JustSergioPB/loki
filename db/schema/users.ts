@@ -12,6 +12,7 @@ import { auditLogs } from "./audit-logs";
 import { orgs } from "./orgs";
 import { userSettings } from "./user-settings";
 import { userTokens } from "./user-tokens";
+import { certificates } from "./certificate";
 
 export const userRole = pgEnum("userRole", ["admin", "org-admin", "issuer"]);
 export const userStatus = pgEnum("userStatus", [
@@ -31,6 +32,7 @@ export const users = pgTable(
     role: userRole().notNull().default("issuer"),
     status: userStatus().notNull().default("inactive"),
     fullName: varchar({ length: 255 }).notNull(),
+    title: varchar(),
     email: varchar({ length: 255 }).notNull().unique(),
     password: varchar({ length: 255 }).notNull(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -56,6 +58,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   tokens: many(userTokens),
   auditLogs: many(auditLogs),
+  certificates: many(certificates),
 }));
 
 export type User = typeof users.$inferSelect;

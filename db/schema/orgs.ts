@@ -10,6 +10,7 @@ import { users } from "./users";
 import { userTokens } from "./user-tokens";
 import { auditLogs } from "./audit-logs";
 import { userSettings } from "./user-settings";
+import { certificates } from "./certificate";
 
 export const orgs = pgTable("orgs", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
@@ -25,6 +26,7 @@ export const orgsRelations = relations(orgs, ({ many }) => ({
   userTokens: many(userTokens),
   userSettings: many(userSettings),
   auditLogs: many(auditLogs),
+  certificates: many(certificates),
 }));
 
 export type Org = typeof orgs.$inferSelect;
