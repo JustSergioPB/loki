@@ -18,8 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
-import SchemaDetails from "./details";
-import SchemaForm from "./form";
 import { Schema } from "@/lib/models/schema";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
@@ -47,9 +45,6 @@ export default function SchemaDialog({
   const latest = schema.getLatestVersion();
   const [isLoading, setIsLoading] = useState(false);
 
-  const editParams = new URLSearchParams(searchParams);
-  editParams.set("action", "edit");
-
   const deleteParams = new URLSearchParams(searchParams);
   deleteParams.set("action", "delete");
 
@@ -59,13 +54,15 @@ export default function SchemaDialog({
   const archiveParams = new URLSearchParams(searchParams);
   archiveParams.set("action", "archive");
 
-  function onActionTrigger(
-    action: "see" | "edit" | "delete" | "publish" | "archive"
-  ) {
+  function onActionTrigger(action: "delete" | "publish" | "archive") {
     const params = new URLSearchParams(searchParams);
     params.set("id", schemaWithVersions.id.toString());
     params.set("action", action);
     router.push(`${pathname}?${params.toString()}`);
+  }
+
+  async function onActionNavigate(action: "see" | "edit") {
+    router.push(`${pathname}/${schema.id}?action=${action}`);
   }
 
   async function onDelete() {
@@ -131,11 +128,11 @@ export default function SchemaDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => onActionTrigger("edit")}>
+          <DropdownMenuItem onClick={() => onActionNavigate("edit")}>
             <Pencil />
             {tGeneric("edit")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onActionTrigger("see")}>
+          <DropdownMenuItem onClick={() => onActionNavigate("see")}>
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
@@ -161,24 +158,12 @@ export default function SchemaDialog({
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent className="max-h-[95vh] overflow-y-auto">
-        {action === "see" && (
-          <SchemaDetails
-            schemaWithVersions={schemaWithVersions}
-            editHref={`${pathname}?${editParams.toString()}`}
-            deleteHref={`${pathname}?${deleteParams.toString()}`}
-            publishHref={`${pathname}?${publishParams.toString()}`}
-            archiveHref={`${pathname}?${archiveParams.toString()}`}
-          />
-        )}
-        {action === "edit" && (
-          <SchemaForm schema={schemaWithVersions} onSubmit={onClose} />
-        )}
         {action === "publish" && (
           <ConfirmDialog
             keyword={schemaWithVersions.title}
-            title={t("publishTitle")}
-            description={t("publishDescription")}
-            label={t("publishLabel")}
+            title={tVersion("publishTitle")}
+            description={tVersion("publishDescription")}
+            label={tVersion("publishLabel")}
             onSubmit={onPublish}
             loading={isLoading}
             id={schemaWithVersions.id}
@@ -188,9 +173,9 @@ export default function SchemaDialog({
         {action === "archive" && (
           <ConfirmDialog
             keyword={schemaWithVersions.title}
-            title={t("archiveTitle")}
-            description={t("archiveDescription")}
-            label={t("archiveLabel")}
+            title={tVersion("archiveTitle")}
+            description={tVersion("archiveDescription")}
+            label={tVersion("archiveLabel")}
             onSubmit={onArchive}
             loading={isLoading}
             id={schemaWithVersions.id}

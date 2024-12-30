@@ -87,19 +87,14 @@ export async function updateSchema(
       ...queryResult[0].schemas,
       versions: queryResult.map((row) => row.schemaVersions),
     });
-    
+
     schema.update(data);
     const latestVersion = schema.getLatestVersion();
 
     if (latestVersion.id) {
-      await updateSchemaVersion(
-        latestVersion.id,
-        authUser,
-        schema,
-        latestVersion
-      );
+      await updateSchemaVersion(authUser, schema, latestVersion);
     } else {
-      await createSchemaVersion(id, authUser, schema, latestVersion);
+      await createSchemaVersion(authUser, schema, latestVersion);
     }
 
     return { success: { data: undefined, message: t("updateSucceded") } };
@@ -139,7 +134,6 @@ export async function removeSchema(id: number): Promise<ActionResult<void>> {
 }
 
 async function createSchemaVersion(
-  id: number,
   authUser: AuthUser,
   schema: Schema,
   version: SchemaVersion
@@ -150,11 +144,11 @@ async function createSchemaVersion(
       .set({
         ...schema.props,
       })
-      .where(eq(schemas.id, id))
+      .where(eq(schemas.id, schema.id!))
       .returning();
 
     await tx.insert(auditLogs).values({
-      entityId: id,
+      entityId: schema.id!,
       entityType: "schema",
       action: "update",
       userId: authUser.id,
@@ -166,7 +160,7 @@ async function createSchemaVersion(
       .insert(schemaVersions)
       .values({
         ...version.props,
-        schemaId: id,
+        schemaId: schema.id!,
         orgId: authUser.orgId,
       })
       .returning();
@@ -183,7 +177,6 @@ async function createSchemaVersion(
 }
 
 async function updateSchemaVersion(
-  id: number,
   authUser: AuthUser,
   schema: Schema,
   version: SchemaVersion
@@ -194,11 +187,11 @@ async function updateSchemaVersion(
       .set({
         ...schema.props,
       })
-      .where(eq(schemas.id, id))
+      .where(eq(schemas.id, schema.id!))
       .returning();
 
     await tx.insert(auditLogs).values({
-      entityId: id,
+      entityId: schema.id!,
       entityType: "schema",
       action: "update",
       userId: authUser.id,
@@ -211,7 +204,7 @@ async function updateSchemaVersion(
       .set({
         ...version.props,
       })
-      .where(eq(schemaVersions.id, id))
+      .where(eq(schemaVersions.id, version.id!))
       .returning();
 
     await tx.insert(auditLogs).values({

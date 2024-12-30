@@ -10,8 +10,8 @@ import { redirect } from "next/navigation";
 import { eq, count, desc, inArray } from "drizzle-orm";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
-import NewSchema from "./new";
 import { schemaVersions } from "@/db/schema/schema-versions";
+import NewSchema from "./new";
 
 export default async function Schemas({
   searchParams,
@@ -46,13 +46,12 @@ export default async function Schemas({
       : [];
 
   // Combine the results
-  const combinedResults = paginatedSchemas
-    .map((schema) => ({
-      ...schema,
-      versions: versionsForSchemas.filter(
-        (version) => version.schemaId === schema.id
-      ),
-    }));
+  const combinedResults = paginatedSchemas.map((schema) => ({
+    ...schema,
+    versions: versionsForSchemas.filter(
+      (version) => version.schemaId === schema.id
+    ),
+  }));
 
   const [{ count: countResult }] = await db
     .select({ count: count() })
@@ -62,7 +61,7 @@ export default async function Schemas({
   return (
     <Page>
       <PageHeader title={t("title")} subtitle={t("subtitle")}>
-        <NewSchema>{t("schema")}</NewSchema>
+        <NewSchema />
       </PageHeader>
       <DataTable
         columns={schemaColumns}

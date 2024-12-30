@@ -18,7 +18,7 @@ export default async function AppLayout({
   return (
     <SidebarProvider>
       <AppSidebar user={user!} />
-      <SidebarInset>
+      <SidebarInset className="h-screen flex flex-col">
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-3">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
@@ -27,7 +27,7 @@ export default async function AppLayout({
           </div>
           <ThemeToggle />
         </header>
-        {children}
+        <section className="flex-1 min-h-0 overflow-y-auto">{children}</section>
       </SidebarInset>
     </SidebarProvider>
   );

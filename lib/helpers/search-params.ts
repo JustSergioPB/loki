@@ -14,3 +14,10 @@ export async function getParams(
 
   return { page, pageSize };
 }
+
+export async function getAction(
+  searchParams: SearchParams
+): Promise<string | null> {
+  const params = await searchParams;
+  return !params.action || Array.isArray(params.action) ? null : params.action;
+}

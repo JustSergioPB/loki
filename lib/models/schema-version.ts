@@ -49,6 +49,12 @@ export type CredentialSchemaProperties = {
   description?: { const: string };
   type: { const: ["VerifiableCredential"] };
   issuer: { type: "string"; format: "uri" };
+  validFrom?: {
+    const: string;
+  };
+  validUntil?: {
+    const: string;
+  };
   credentialSubject: {
     properties: {
       id: { type: "string" };
@@ -95,7 +101,7 @@ export class SchemaVersion {
   static create(data: SchemaSchema): SchemaVersion {
     return new SchemaVersion(
       {
-        content: this.buildSchema(data.title, data.content, data.description),
+        content: this.buildSchema(data),
         createdAt: new Date(),
         updatedAt: null,
         status: "draft",
@@ -122,16 +128,20 @@ export class SchemaVersion {
     return this._props.content.description;
   }
 
+  get validFrom(): string | undefined {
+    return this._props.content.properties.validFrom?.const;
+  }
+
+  get validUntil(): string | undefined {
+    return this._props.content.properties.validUntil?.const;
+  }
+
   get credentialSubject(): object {
     return this._props.content.properties.credentialSubject.properties.content;
   }
 
   update(data: SchemaSchema): void {
-    this._props.content = SchemaVersion.buildSchema(
-      data.title,
-      data.content,
-      data.description
-    );
+    this._props.content = SchemaVersion.buildSchema(data);
     this._props.updatedAt = new Date();
   }
 
@@ -151,11 +161,7 @@ export class SchemaVersion {
     this._props.updatedAt = new Date();
   }
 
-  private static buildSchema(
-    title: string,
-    content: JsonSchema,
-    description?: string
-  ): CredentialSchema {
+  private static buildSchema(data: SchemaSchema): CredentialSchema {
     const required = [
       "@context",
       "title",
@@ -167,13 +173,13 @@ export class SchemaVersion {
 
     const properties: CredentialSchemaProperties = {
       "@context": { const: ["https://www.w3.org/ns/credentials/v2"] },
-      title: { const: title },
+      title: { const: data.title },
       type: { const: ["VerifiableCredential"] },
       issuer: { type: "string", format: "uri" },
       credentialSubject: {
         properties: {
           id: { type: "string" },
-          content,
+          content: data.content,
         },
         type: "object",
         required: ["id", "content"],
@@ -221,15 +227,25 @@ export class SchemaVersion {
       },
     };
 
-    if (description) {
+    if (data.validFrom) {
+      required.push("validFrom");
+      properties.validFrom = { const: data.validFrom.toISOString() };
+    }
+
+    if (data.validUntil) {
+      required.push("validUntil");
+      properties.validUntil = { const: data.validUntil.toISOString() };
+    }
+
+    if (data.description) {
       required.push("description");
-      properties.description = { const: description };
+      properties.description = { const: data.description };
     }
 
     return {
       $schema: "https://json-schema.org/draft/2020-12/schema",
-      title,
-      description,
+      title: data.title,
+      description: data.description,
       properties,
       required,
       type: "object",

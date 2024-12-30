@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import {
   Pencil,
-  Trash,
   Calendar,
   Clock,
   Database,
@@ -11,79 +10,56 @@ import {
   Text,
   Heading1,
   FileJson,
-  Archive,
+  Timer,
+  TimerOff,
 } from "lucide-react";
 import Field from "@/components/app/field";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { SchemaWithVersions } from "@/db/schema/schemas";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslations } from "next-intl";
 import { Schema } from "@/lib/models/schema";
 import SchemaVersionStatus from "@/components/app/schema-version-status";
 import { Badge } from "@/components/ui/badge";
-import { DialogDescription } from "@radix-ui/react-dialog";
+import PageHeader from "@/components/app/page-header";
+import ArchiveSchemaVersion from "./archive";
+import DeleteSchemaVersion from "./delete";
+import PublishSchemaVersion from "./publish";
 
 type Props = {
   schemaWithVersions: SchemaWithVersions;
-  editHref: string;
-  publishHref: string;
-  archiveHref: string;
-  deleteHref: string;
 };
 
-export default function SchemaDetails({
-  schemaWithVersions,
-  editHref,
-  publishHref,
-  archiveHref,
-  deleteHref,
-}: Props) {
+export default function SchemaDetails({ schemaWithVersions }: Props) {
   const t = useTranslations("SchemaVersion");
   const tSchema = useTranslations("Schema");
   const tGeneric = useTranslations("Generic");
   const schema = Schema.fromProps(schemaWithVersions);
   const latest = schema.getLatestVersion();
+  const UNDEF_DATETIME = "--/--/----, --:--:-- --";
 
   return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{tSchema("seeTitle")}</DialogTitle>
-        <DialogDescription>{tSchema("seeDescription")}</DialogDescription>
-      </DialogHeader>
+    <section className="p-6 h-full lg:w-[620px] space-y-6">
+      <PageHeader
+        title={tSchema("seeTitle")}
+        subtitle={tSchema("seeDescription")}
+        className="p-0"
+      />
       <div className="flex items-center gap-4">
-        <Link href={editHref} className={cn(buttonVariants({ size: "sm" }))}>
+        <Link
+          href={`/forms/${schemaWithVersions.id}?action=edit`}
+          className={cn(buttonVariants({ size: "sm" }))}
+        >
           <Pencil className="size-3" />
           {tGeneric("edit")}
         </Link>
         {latest.props.status === "draft" && (
-          <Link
-            href={publishHref}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            <Rss className="size-3" />
-            {t("publish")}
-          </Link>
+          <PublishSchemaVersion schemaWithVersions={schemaWithVersions} />
         )}
         {latest.props.status === "published" && (
-          <Link
-            href={archiveHref}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            <Archive className="size-3" />
-            {t("archive")}
-          </Link>
+          <ArchiveSchemaVersion schemaWithVersions={schemaWithVersions} />
         )}
-        <Link
-          href={deleteHref}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "text-red-500"
-          )}
-        >
-          <Trash className="size-3" />
-          {tGeneric("delete")}
-        </Link>
+        <DeleteSchemaVersion schemaWithVersions={schemaWithVersions} />
       </div>
       <section className="space-y-4">
         <Field
@@ -99,6 +75,16 @@ export default function SchemaDetails({
           type="vertical"
         >
           <p className="text-sm line-clamp-4">{latest.description}</p>
+        </Field>
+        <Field icon={<Timer className="size-4" />} label={t("validFrom")}>
+          {latest.validFrom
+            ? new Date(latest.validFrom).toLocaleString()
+            : UNDEF_DATETIME}
+        </Field>
+        <Field icon={<TimerOff className="size-4" />} label={t("validUntil")}>
+          {latest.validUntil
+            ? new Date(latest.validUntil).toLocaleString()
+            : UNDEF_DATETIME}
         </Field>
         <Field
           icon={<FileJson className="size-4" />}
@@ -138,6 +124,6 @@ export default function SchemaDetails({
           {schema.props.createdAt.toLocaleString()}
         </Field>
       </section>
-    </>
+    </section>
   );
 }

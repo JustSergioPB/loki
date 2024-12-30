@@ -13,12 +13,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
-import {
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { SchemaSchema, schemaSchema } from "@/lib/schemas/schema.schema";
 import { createSchema, updateSchema } from "@/lib/actions/schema.actions";
 import { useState } from "react";
@@ -27,16 +21,19 @@ import { SchemaWithVersions } from "@/db/schema/schemas";
 import { Schema } from "@/lib/models/schema";
 import { Textarea } from "@/components/ui/textarea";
 import InfoPanel from "@/components/app/info-panel";
+import { DatetimePicker } from "@/components/ui/datetime-picker";
+import { redirect } from "next/navigation";
+import PageHeader from "@/components/app/page-header";
 
 type Props = {
   schema?: SchemaWithVersions;
-  onSubmit: () => void;
 };
 
-export default function SchemaForm({ schema, onSubmit }: Props) {
+export default function SchemaForm({ schema }: Props) {
   const t = useTranslations("Schema");
   const tVersion = useTranslations("SchemaVersion");
   const tGeneric = useTranslations("Generic");
+  
   const [isLoading, setIsLoading] = useState(false);
   const latestVersion = schema
     ? Schema.fromProps(schema).getLatestVersion()
@@ -48,6 +45,14 @@ export default function SchemaForm({ schema, onSubmit }: Props) {
       title: schema?.title ?? "",
       description: latestVersion?.description ?? "",
       content: JSON.stringify(latestVersion?.credentialSubject, null, 1) ?? "",
+      validFrom:
+        latestVersion && latestVersion.validFrom
+          ? new Date(latestVersion.validFrom)
+          : undefined,
+      validUntil:
+        latestVersion && latestVersion.validUntil
+          ? new Date(latestVersion.validUntil)
+          : undefined,
     },
   });
 
@@ -60,7 +65,7 @@ export default function SchemaForm({ schema, onSubmit }: Props) {
 
     if (success) {
       toast.success(success.message);
-      onSubmit();
+      redirect(schema ? `/forms/${schema.id}?action=see` : "/forms");
     } else {
       toast.error(error.message);
     }
@@ -69,13 +74,12 @@ export default function SchemaForm({ schema, onSubmit }: Props) {
   }
 
   return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{t(schema ? "editTitle" : "createTitle")}</DialogTitle>
-        <DialogDescription>
-          {t(schema ? "editDescription" : "createDescription")}
-        </DialogDescription>
-      </DialogHeader>
+    <section className="p-6 space-y-6 lg:w-[640px]">
+      <PageHeader
+        title={t(schema ? "editTitle" : "createTitle")}
+        subtitle={t(schema ? "editDescription" : "createDescription")}
+        className="p-0"
+      />
       {latestVersion && latestVersion.props.status !== "draft" && (
         <InfoPanel
           variant="warning"
@@ -126,6 +130,55 @@ export default function SchemaForm({ schema, onSubmit }: Props) {
               </FormItem>
             )}
           />
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">
+              {tVersion("validityTitle")}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {tVersion("validitySubtitle")}
+            </p>
+          </div>
+          <div className="flex items-end justify-between">
+            <FormField
+              control={form.control}
+              name="validFrom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{tVersion("validFrom")}</FormLabel>
+                  <FormControl>
+                    <DatetimePicker
+                      {...field}
+                      format={[
+                        ["days", "months", "years"],
+                        ["hours", "minutes", "am/pm"],
+                      ]}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <span className="text-sm font-semibold mb-3">-</span>
+            <FormField
+              control={form.control}
+              name="validUntil"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{tVersion("validUntil")}</FormLabel>
+                  <FormControl>
+                    <DatetimePicker
+                      {...field}
+                      format={[
+                        ["days", "months", "years"],
+                        ["hours", "minutes", "am/pm"],
+                      ]}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="content"
@@ -145,13 +198,11 @@ export default function SchemaForm({ schema, onSubmit }: Props) {
               </FormItem>
             )}
           />
-          <DialogFooter>
-            <LoadingButton loading={isLoading} type="submit">
-              {tGeneric("submit")}
-            </LoadingButton>
-          </DialogFooter>
+          <LoadingButton loading={isLoading} type="submit">
+            {tGeneric("submit")}
+          </LoadingButton>
         </form>
       </Form>
-    </>
+    </section>
   );
 }

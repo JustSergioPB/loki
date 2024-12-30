@@ -79,8 +79,8 @@ export default function AppSidebar({
           icon: User,
         },
         {
-          title: t("schemas"),
-          url: "/schemas",
+          title: t("forms"),
+          url: "/forms",
           icon: FileJson,
         },
         /*

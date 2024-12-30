@@ -135,8 +135,8 @@ export default function UserForm({ user, onSubmit }: Props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="org-admin">{t("org-admin")}</SelectItem>
-                    <SelectItem value="issuer">{t("issuer")}</SelectItem>
+                    <SelectItem value="org-admin">{t("roles.org-admin")}</SelectItem>
+                    <SelectItem value="issuer">{t("roles.issuer")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

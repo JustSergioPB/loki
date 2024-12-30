@@ -126,16 +126,10 @@
     "editTitle": "Edit form",
     "editDescription": "Edit the form bellow to update it's contents",
     "seeTitle": "Form details",
-    "seeDescription": "This dialog contains the information of the form's latest version",
+    "seeDescription": "This page contains the information of the form's latest version",
     "deleteTitle": "Delete form",
     "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
-    "deleteLabel": "Type the form's title to confirm",
-    "publishTitle": "Publish form",
-    "publishDescription": "The latest version of this form will be published in the blockchain allowing you to emit and validate credentials based on it.",
-    "publishLabel": "Type the form's title to confirm",
-    "archiveTitle": "Archive form",
-    "archiveDescription": "This form version will be archived which means it won't be possible to emit new credentials using this one, you can still validate content using it.",
-    "archiveLabel": "Type the form's title to confirm"
+    "deleteLabel": "Type the form's title to confirm"
   },
   "SchemaVersion": {
     "version": "Version",
@@ -152,7 +146,17 @@
     },
     "latestVersion": "Latest version",
     "publish": "Publish",
-    "archive": "Archive"
+    "archive": "Archive",
+    "publishTitle": "Publish form",
+    "publishDescription": "The latest version of this form will be published in the blockchain allowing you to emit and validate credentials based on it.",
+    "publishLabel": "Type the form's title to confirm",
+    "archiveTitle": "Archive form",
+    "archiveDescription": "This form version will be archived which means it won't be possible to emit new credentials using this one, you can still validate content using it.",
+    "archiveLabel": "Type the form's title to confirm",
+    "validFrom": "Valid from",
+    "validUntil": "Valid until",
+    "validityTitle": "Validity",
+    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered."
   },
   "ConfirmAccount": {
     "title": "Confirm your account",
@@ -221,7 +225,7 @@
     "orgs": "Orgs",
     "certificates": "Certificates",
     "users": "Users",
-    "schemas": "Forms",
+    "forms": "Forms",
     "bridges": "Bridges",
     "wall": "Wall",
     "administration": "Administration"
