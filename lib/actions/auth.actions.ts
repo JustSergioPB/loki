@@ -182,7 +182,7 @@ export async function confirmAccount(
       await tx
         .update(userTokens)
         .set({ ...confirmationToken.props })
-        .where(eq(userTokens.id, confirmationToken.id!));
+        .where(eq(userTokens.token, confirmationToken.props.token));
       await tx
         .update(orgs)
         .set({ ...org.props })
@@ -263,7 +263,7 @@ export async function resetPassword(
       await tx
         .update(userTokens)
         .set({ ...resetToken.props })
-        .where(eq(userTokens.id, resetToken.id!));
+        .where(eq(userTokens.token, resetToken.props.token));
     });
 
     return { success: { data: undefined, message: t("succeded") } };

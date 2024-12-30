@@ -12,6 +12,7 @@ import { userTokens } from "./user-tokens";
 import { auditLogs } from "./audit-logs";
 import { userSettings } from "./user-settings";
 import { certificates } from "./certificate";
+import { Address } from "./address";
 
 export const orgStatus = pgEnum("orgStatus", [
   "onboarding",
@@ -39,3 +40,4 @@ export const orgsRelations = relations(orgs, ({ many }) => ({
 
 export type Org = typeof orgs.$inferSelect;
 export type OrgCreate = typeof orgs.$inferInsert;
+export type OrgWithAddress = Org & { address: Address | null };

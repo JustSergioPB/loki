@@ -5,6 +5,9 @@ import {
   Globe,
   CalendarCheck,
   Trash,
+  Pin,
+  Badge,
+  BadgeCheck,
 } from "lucide-react";
 import Field from "@/components/app/field";
 import {
@@ -13,19 +16,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslations } from "next-intl";
-import { Org } from "@/db/schema/orgs";
+import { OrgWithAddress } from "@/db/schema/orgs";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFullInitials } from "@/lib/helpers/user";
+import Address from "@/components/app/address";
+import OrgStatus from "@/components/app/org-status";
 
 type Props = {
-  org: Org;
+  org: OrgWithAddress;
+  verifyHref: string;
   deleteHref: string;
 };
 
-export default function OrgDetails({ org, deleteHref }: Props) {
+export default function OrgDetails({ org, deleteHref, verifyHref }: Props) {
   const t = useTranslations("Org");
   const tGeneric = useTranslations("Generic");
 
@@ -49,6 +55,15 @@ export default function OrgDetails({ org, deleteHref }: Props) {
         </div>
       </div>
       <div>
+        {org.status === "verifying" && (
+          <Link
+            href={verifyHref}
+            className={cn(buttonVariants({ size: "sm" }))}
+          >
+            <BadgeCheck className="size-3" />
+            {tGeneric("verify")}
+          </Link>
+        )}
         <Link
           href={deleteHref}
           className={cn(
@@ -61,6 +76,14 @@ export default function OrgDetails({ org, deleteHref }: Props) {
         </Link>
       </div>
       <section className="space-y-4">
+        <Field icon={<Pin className="size-4" />} label={t("address")}>
+          <Address address={org.address} />
+        </Field>
+        <Field icon={<Badge className="size-4" />} label={t("status")}>
+          <OrgStatus status={org.status}>
+            {t(`statuses.${org.status}`)}
+          </OrgStatus>
+        </Field>
         <Field
           icon={<CalendarCheck className="size-4" />}
           label={t("verifiedAt")}

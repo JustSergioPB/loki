@@ -42,6 +42,47 @@ export async function removeOrg(id: number): Promise<ActionResult<void>> {
   }
 }
 
+export async function verifyOrg(id: number): Promise<ActionResult<void>> {
+  const t = await getTranslations("Org");
+  try {
+    const authUser = await authorize(["admin"]);
+
+    const org = await db.query.orgs.findFirst({
+      where: eq(orgs.id, id),
+    });
+
+    if (!org) {
+      throw new OrgError("notFound");
+    }
+
+    const updatedOrg = Org.fromProps(org);
+    updatedOrg.verify();
+
+    await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(orgs)
+        .set({ ...updatedOrg.props })
+        .where(eq(orgs.id, updatedOrg.id!))
+        .returning();
+      await tx.insert(auditLogs).values({
+        entityId: id,
+        entityType: "org",
+        value: updated,
+        orgId: authUser.orgId,
+        userId: authUser.id,
+        action: "update",
+      });
+    });
+
+    return {
+      success: { data: undefined, message: t("verificationSucceded") },
+    };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("verificationFailed") } };
+  }
+}
+
 export async function addAddressToOrg(
   data: AddressSchema
 ): Promise<ActionResult<void>> {
@@ -97,9 +138,11 @@ export async function addAddressToOrg(
       ]);
     });
 
-    return { success: { data: undefined, message: t("creationSucceded") } };
+    return {
+      success: { data: undefined, message: t("addressAdditionSucceded") },
+    };
   } catch (error) {
     console.error(error);
-    return { error: { message: t("creationFailed") } };
+    return { error: { message: t("addressAdditionFailed") } };
   }
 }

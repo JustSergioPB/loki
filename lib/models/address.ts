@@ -27,4 +27,19 @@ export class Address {
   get props(): AddressProps {
     return this._props;
   }
+
+  toString(): string {
+    let addressString = this._props.country;
+    const { location, stateProvince } = this._props;
+    
+    if (stateProvince) {
+      addressString = `${stateProvince}, ${addressString}`;
+    }
+
+    if (location) {
+      addressString = `${location}, ${addressString}`;
+    }
+
+    return addressString;
+  }
 }

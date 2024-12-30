@@ -82,7 +82,17 @@
     "deleteSucceded": "Org deleted successfully",
     "deleteFailed": "We couldn't delete the organization. Please try again later",
     "seeTitle": "Organization details",
-    "seeDescription": "This dialog contains the information of the organization and it's certificates"
+    "seeDescription": "This dialog contains the information of the organization and it's certificates",
+    "status": "Status",
+    "statuses": {
+      "onboarding": "Onboarding",
+      "verifying": "Verifying",
+      "verified": "Verified"
+    },
+    "address": "Address",
+    "verifyTitle": "Verify organization",
+    "verifyDescription": "This organization will be able to perform operations using the platform",
+    "verifyLabel": "Type the organization's name to verify"
   },
   "Hall": {
     "title": "Welcome aboard!",
@@ -229,7 +239,8 @@
     "publicId": "Public ID",
     "id": "ID",
     "warning": "Warning",
-    "warningMessage": "This action is irreversible, please be sure"
+    "warningMessage": "This action is irreversible, please be sure",
+    "verify": "Verify"
   },
   "Navigation": {
     "home": "Home",

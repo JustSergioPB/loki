@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import UserRole from "@/components/app/user-role";
 import {
-  UserCheck,
   Pencil,
   Trash,
   Shield,
@@ -9,6 +8,7 @@ import {
   Clock,
   Database,
   Globe,
+  Badge,
 } from "lucide-react";
 import Field from "@/components/app/field";
 import UserStatus from "@/components/app/user-status";
@@ -73,7 +73,7 @@ export default function UserDetails({ user, editHref, deleteHref }: Props) {
         </Link>
       </div>
       <section className="space-y-4">
-        <Field icon={<UserCheck className="size-4" />} label={t("status")}>
+        <Field icon={<Badge className="size-4" />} label={t("status")}>
           <UserStatus status={user.status}>
             {t(`statuses.${user.status}`)}
           </UserStatus>
