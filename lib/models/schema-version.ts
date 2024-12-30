@@ -128,12 +128,14 @@ export class SchemaVersion {
     return this._props.content.description;
   }
 
-  get validFrom(): string | undefined {
-    return this._props.content.properties.validFrom?.const;
+  get validFrom(): Date | undefined {
+    const validFrom = this._props.content.properties.validFrom?.const;
+    return validFrom ? new Date(validFrom) : undefined;
   }
 
-  get validUntil(): string | undefined {
-    return this._props.content.properties.validUntil?.const;
+  get validUntil(): Date | undefined {
+    const validUntil = this._props.content.properties.validUntil?.const;
+    return validUntil ? new Date(validUntil) : undefined;
   }
 
   get credentialSubject(): object {

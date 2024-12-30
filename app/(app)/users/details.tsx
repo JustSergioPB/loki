@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslations } from "next-intl";
+import Date from "@/components/app/date";
 
 type Props = {
   user: UserWithOrg;
@@ -82,7 +83,7 @@ export default function UserDetails({ user, editHref, deleteHref }: Props) {
           <UserRole role={user.role}>{t(`roles.${user.role}`)}</UserRole>
         </Field>
         <Field icon={<Clock className="size-4" />} label={t("confirmedAt")}>
-          {user.confirmedAt?.toLocaleString()}
+          <Date date={user.confirmedAt} />
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
           {user.id}
@@ -94,13 +95,13 @@ export default function UserDetails({ user, editHref, deleteHref }: Props) {
           icon={<Calendar className="size-4" />}
           label={tGeneric("createdAt")}
         >
-          {user.createdAt.toLocaleString()}
+          <Date date={user.createdAt} />
         </Field>
         <Field
           icon={<Clock className="size-4" />}
           label={tGeneric("updatedAt")}
         >
-          {user.updatedAt?.toLocaleString()}
+          <Date date={user.updatedAt} />
         </Field>
       </section>
     </>

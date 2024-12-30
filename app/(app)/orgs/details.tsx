@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFullInitials } from "@/lib/helpers/user";
 import Address from "@/components/app/address";
 import OrgStatus from "@/components/app/org-status";
+import Date from "@/components/app/date";
 
 type Props = {
   org: OrgWithAddress;
@@ -88,7 +89,7 @@ export default function OrgDetails({ org, deleteHref, verifyHref }: Props) {
           icon={<CalendarCheck className="size-4" />}
           label={t("verifiedAt")}
         >
-          {org.verifiedAt?.toLocaleString()}
+          <Date date={org.verifiedAt} />
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
           {org.id}
@@ -100,13 +101,13 @@ export default function OrgDetails({ org, deleteHref, verifyHref }: Props) {
           icon={<Calendar className="size-4" />}
           label={tGeneric("createdAt")}
         >
-          {org.createdAt.toLocaleString()}
+          <Date date={org.createdAt} />
         </Field>
         <Field
           icon={<Clock className="size-4" />}
           label={tGeneric("updatedAt")}
         >
-          {org.updatedAt?.toLocaleString()}
+          <Date date={org.updatedAt} />
         </Field>
       </section>
     </>
