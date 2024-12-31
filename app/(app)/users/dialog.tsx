@@ -1,4 +1,4 @@
-import { UserWithOrg } from "@/db/schema/users";
+import { User } from "@/db/schema/users";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +18,7 @@ import ConfirmDialog from "@/components/app/confirm-dialog";
 import { removeUser } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 
-export default function UserDialog({ user }: { user: UserWithOrg }) {
+export default function UserDialog({ user }: { user: User }) {
   const t = useTranslations("User");
   const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();

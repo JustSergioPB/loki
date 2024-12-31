@@ -12,9 +12,9 @@ export class Token {
     this._props = props;
   }
 
-  static create(data: CreateTokenProps): Token {
+  static create(props: CreateTokenProps): Token {
     return new Token({
-      ...data,
+      ...props,
       token: crypto.randomBytes(32).toString("hex"),
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       createdAt: new Date(),
@@ -22,8 +22,8 @@ export class Token {
     });
   }
 
-  static fromProps(data: DbToken): Token {
-    return new Token(data);
+  static fromProps(props: DbToken): Token {
+    return new Token(props);
   }
 
   get props(): TokenProps {

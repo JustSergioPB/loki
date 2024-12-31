@@ -3,12 +3,12 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import SchemaDialog from "./dialog";
-import { SchemaWithVersions } from "@/db/schema/schemas";
-import { Schema } from "@/lib/models/schema";
+import { Schema } from "@/db/schema/schemas";
+import { Schema as SchemaEntity } from "@/lib/models/schema";
 import { Badge } from "@/components/ui/badge";
 import SchemaVersionStatus from "@/components/app/schema-version-status";
 
-export const schemaColumns: ColumnDef<SchemaWithVersions>[] = [
+export const schemaColumns: ColumnDef<Schema>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
@@ -23,7 +23,7 @@ export const schemaColumns: ColumnDef<SchemaWithVersions>[] = [
       return t("version");
     },
     cell: function CellComponent({ row }) {
-      return <Badge>V{row.original.versions.length}</Badge>;
+      return <Badge>V{row.original.versions?.length}</Badge>;
     },
   },
   {
@@ -34,9 +34,9 @@ export const schemaColumns: ColumnDef<SchemaWithVersions>[] = [
     },
     cell: function CellComponent({ row }) {
       const t = useTranslations("SchemaVersion");
-      const schema = Schema.fromProps(row.original);
-      const latest = schema.getLatestVersion();
-      const status = latest.props.status;
+      const {
+        props: { status },
+      } = SchemaEntity.fromProps(row.original).getLatestVersion();
 
       return (
         <SchemaVersionStatus status={status}>
@@ -48,7 +48,7 @@ export const schemaColumns: ColumnDef<SchemaWithVersions>[] = [
   {
     id: "actions",
     cell: function CellComponent({ row }) {
-      return <SchemaDialog schemaWithVersions={row.original} />;
+      return <SchemaDialog schema={row.original} />;
     },
   },
 ];

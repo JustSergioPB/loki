@@ -12,6 +12,7 @@ import { orgs } from "./orgs";
 export const userTokenContext = pgEnum("userTokenContext", [
   "confirmation",
   "reset-password",
+  "invitation",
 ]);
 
 export const userTokens = pgTable("userTokens", {

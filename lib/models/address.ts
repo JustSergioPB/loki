@@ -10,18 +10,18 @@ export class Address {
     this._props = props;
   }
 
-  static create(data: AddressSchema): Address {
+  static create(props: AddressSchema): Address {
     return new Address({
-      location: data.location ?? null,
-      stateProvince: data.stateProvince ?? null,
-      country: data.country,
+      location: props.location ?? null,
+      stateProvince: props.stateProvince ?? null,
+      country: props.country,
       createdAt: new Date(),
       updatedAt: null,
     });
   }
 
-  static fromProps(data: DbAddress): Address {
-    return new Address(data);
+  static fromProps(props: DbAddress): Address {
+    return new Address(props);
   }
 
   get props(): AddressProps {

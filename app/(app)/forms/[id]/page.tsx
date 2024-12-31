@@ -45,7 +45,7 @@ export default async function Schema({
     />
   ) : (
     <SchemaDetails
-      schemaWithVersions={{
+      schema={{
         ...queryResult[0].schemas,
         versions: queryResult.map((row) => row.schemaVersions),
       }}

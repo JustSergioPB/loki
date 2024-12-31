@@ -2,12 +2,12 @@
 
 import UserRole from "@/components/app/user-role";
 import UserStatus from "@/components/app/user-status";
-import { UserWithOrg } from "@/db/schema/users";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import UserDialog from "./dialog";
+import { User } from "@/db/schema/users";
 
-export const userColumns: ColumnDef<UserWithOrg>[] = [
+export const userColumns: ColumnDef<User>[] = [
   {
     accessorKey: "fullName",
     header: function CellHeader() {

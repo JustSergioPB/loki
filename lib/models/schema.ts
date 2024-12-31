@@ -1,65 +1,63 @@
-import { Schema as DbSchema, SchemaWithVersions } from "@/db/schema/schemas";
+import { Schema as DbSchema } from "@/db/schema/schemas";
 import { SchemaSchema } from "../schemas/schema.schema";
 import { SchemaVersion } from "./schema-version";
 
 export type SchemaProps = Omit<DbSchema, "id" | "publicId" | "orgId">;
 export type SchemaId = number | undefined;
-export type SchemaPublicId = string | undefined;
 
 export class Schema {
   private _props: SchemaProps;
   public readonly id: SchemaId;
-  public readonly publicId: SchemaPublicId;
   public readonly versions: SchemaVersion[];
 
   private constructor(
     props: SchemaProps,
     id: SchemaId,
-    publicId: SchemaPublicId,
     versions: SchemaVersion[]
   ) {
     this._props = props;
     this.id = id;
-    this.publicId = publicId;
     this.versions = versions;
   }
 
-  static create(data: SchemaSchema): Schema {
-    const version = SchemaVersion.create(data);
+  static create(props: SchemaSchema): Schema {
+    const version = SchemaVersion.create(props);
     return new Schema(
       {
-        title: data.title,
+        title: props.title,
         createdAt: new Date(),
         updatedAt: null,
       },
-      undefined,
       undefined,
       [version]
     );
   }
 
-  static fromProps(data: SchemaWithVersions): Schema {
-    const versions = data.versions.map((v) => SchemaVersion.fromProps(v));
-    return new Schema(data, data.id, data.publicId, versions);
+  static fromProps(props: DbSchema): Schema {
+    const { versions: versionProps, id, ...rest } = props;
+    const versions = versionProps
+      ? versionProps.map((v) => SchemaVersion.fromProps(v))
+      : [];
+    return new Schema(rest, id, versions);
   }
 
   get props(): SchemaProps {
     return this._props;
   }
 
-  update(data: SchemaSchema): void {
+  update(props: SchemaSchema): void {
     const latestVersion = this.getLatestVersion();
 
     if (latestVersion.props.status === "draft") {
-      latestVersion.update(data);
+      latestVersion.update(props);
     } else {
-      const newVersion = SchemaVersion.create(data);
+      const newVersion = SchemaVersion.create(props);
       this.versions.push(newVersion);
     }
 
     this._props = {
       ...this._props,
-      title: data.title,
+      title: props.title,
       updatedAt: new Date(),
     };
   }

@@ -35,6 +35,7 @@ export const schemasRelations = relations(schemas, ({ one, many }) => ({
   versions: many(schemaVersions),
 }));
 
-export type Schema = typeof schemas.$inferSelect;
+export type Schema = typeof schemas.$inferSelect & {
+  versions?: SchemaVersion[];
+};
 export type SchemaCreate = typeof schemas.$inferInsert;
-export type SchemaWithVersions = Schema & { versions: SchemaVersion[] };

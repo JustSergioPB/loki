@@ -40,7 +40,7 @@ export default async function Orgs({
 
   const mapped = queryResult.map(({ orgs, address }) => ({
     ...orgs,
-    address: address,
+    address: address ?? undefined,
   }));
 
   return (

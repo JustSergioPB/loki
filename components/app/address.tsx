@@ -3,7 +3,7 @@ import { Address as AddressEntity } from "@/lib/models/address";
 import { HTMLAttributes } from "react";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
-  address: DbAdress | null;
+  address: DbAdress | undefined;
 }
 
 export default function Address({ address: addressProps, className }: Props) {

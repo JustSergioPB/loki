@@ -39,6 +39,7 @@ export default async function Users({
       title: users.title,
       updatedAt: users.updatedAt,
       createdAt: users.createdAt,
+      orgId: users.orgId,
       org: {
         name: orgs.name,
       },
@@ -56,7 +57,10 @@ export default async function Users({
     countQuery.where(eq(users.orgId, user.orgId));
   }
 
-  const queryResult = await query;
+  const queryResult = (await query).map((user) => ({
+    ...user,
+    password: "potato",
+  }));
   const [{ count: countResult }] = await countQuery;
 
   return (

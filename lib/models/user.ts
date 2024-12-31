@@ -3,27 +3,31 @@ import { SignUpSchema } from "../schemas/sign-up.schema";
 import { AuthError } from "../errors/auth.error";
 import { Password } from "./password";
 import { UserSchema } from "../schemas/user.schema";
+import { Certificate } from "./certificate";
 
 export type UserProps = Omit<DbUser, "id" | "publicId" | "orgId">;
 export type UserId = number | undefined;
-export type UserPublicId = string | undefined;
 
 export class User {
   private _props: UserProps;
+  private _certificates: Certificate[];
   public readonly id: UserId;
-  public readonly publicId: UserPublicId;
 
-  private constructor(props: UserProps, id: UserId, publicId: UserPublicId) {
+  private constructor(
+    props: UserProps,
+    certificates: Certificate[],
+    id: UserId
+  ) {
     this._props = props;
+    this._certificates = certificates;
     this.id = id;
-    this.publicId = publicId;
   }
 
-  static async signUp(data: SignUpSchema): Promise<User> {
+  static async signUp(props: SignUpSchema): Promise<User> {
     return new User(
       {
-        ...data,
-        password: (await Password.create(data.password)).value,
+        ...props,
+        password: (await Password.create(props.password)).value,
         role: "org-admin",
         confirmedAt: null,
         status: "inactive",
@@ -31,28 +35,38 @@ export class User {
         updatedAt: null,
         title: null,
       },
-      undefined,
+      [],
       undefined
     );
   }
 
-  static async create(data: UserSchema): Promise<User> {
+  static async create(props: UserSchema): Promise<User> {
     return new User(
       {
-        ...data,
+        ...props,
         password: (await Password.random()).value,
         confirmedAt: null,
         status: "inactive",
         createdAt: new Date(),
         updatedAt: null,
       },
-      undefined,
+      [],
       undefined
     );
   }
 
-  static fromProps(data: DbUser): User {
-    return new User(data, data.id, data.publicId);
+  static fromProps(props: DbUser): User {
+    const { certificates: certificateProps, id, ...rest } = props;
+
+    const certificates = certificateProps
+      ? certificateProps.map((certProps) => Certificate.fromProps(certProps))
+      : [];
+
+    return new User(rest, certificates, id);
+  }
+
+  get certificates(): Certificate[] {
+    return this._certificates;
   }
 
   get props(): UserProps {
@@ -77,8 +91,10 @@ export class User {
     };
   }
 
-  update(data: UserSchema): void {
-    this._props = { ...this._props, ...data, updatedAt: new Date() };
+  generateCertificate(): void {}
+
+  update(props: UserSchema): void {
+    this._props = { ...this._props, ...props, updatedAt: new Date() };
   }
 
   confirm(title: string): void {

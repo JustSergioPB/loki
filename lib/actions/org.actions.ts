@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { auditLogs } from "@/db/schema/audit-logs";
+import { AuditLogCreate, auditLogs } from "@/db/schema/audit-logs";
 import { orgs } from "@/db/schema/orgs";
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
@@ -12,6 +12,8 @@ import { address } from "@/db/schema/address";
 import { OrgError } from "../errors/org.error";
 import { Org } from "../models/org";
 import { Address } from "../models/address";
+import { certificates } from "@/db/schema/certificates";
+import { users } from "@/db/schema/users";
 
 //TODO: Add correct error messages on catch
 
@@ -44,34 +46,71 @@ export async function removeOrg(id: number): Promise<ActionResult<void>> {
 
 export async function verifyOrg(id: number): Promise<ActionResult<void>> {
   const t = await getTranslations("Org");
+
   try {
     const authUser = await authorize(["admin"]);
 
-    const org = await db.query.orgs.findFirst({
-      where: eq(orgs.id, id),
-    });
+    const [{ orgs: org, address: orgAddress, users: orgUser }] = await db
+      .select()
+      .from(orgs)
+      .where(eq(orgs.id, id))
+      .leftJoin(address, eq(address.orgId, id))
+      .innerJoin(users, eq(users.orgId, id));
 
     if (!org) {
       throw new OrgError("notFound");
     }
 
-    const updatedOrg = Org.fromProps(org);
-    updatedOrg.verify();
+    const orgEntity = Org.fromProps({
+      ...org,
+      address: orgAddress ?? undefined,
+      users: [orgUser],
+      certificates: [],
+    });
+
+    orgEntity.verify();
+    orgEntity.generateCertificateChain();
+
+    const orgCertificates = orgEntity.certificates.map((cert) => ({
+      ...cert.props,
+      orgId: orgEntity.id!,
+    }));
 
     await db.transaction(async (tx) => {
       const [updated] = await tx
         .update(orgs)
-        .set({ ...updatedOrg.props })
-        .where(eq(orgs.id, updatedOrg.id!))
+        .set({ ...orgEntity.props })
+        .where(eq(orgs.id, orgEntity.id!))
         .returning();
-      await tx.insert(auditLogs).values({
-        entityId: id,
-        entityType: "org",
-        value: updated,
-        orgId: authUser.orgId,
-        userId: authUser.id,
-        action: "update",
-      });
+
+      const inserted = await tx
+        .insert(certificates)
+        .values(orgCertificates)
+        .returning();
+
+      const logs: AuditLogCreate[] = [
+        {
+          entityId: updated.id,
+          entityType: "org",
+          value: updated,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "update",
+        },
+      ];
+
+      inserted.forEach((cert) =>
+        logs.push({
+          entityId: cert.id,
+          entityType: "certificate",
+          value: cert,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "create",
+        })
+      );
+
+      await tx.insert(auditLogs).values(logs);
     });
 
     return {
@@ -98,16 +137,16 @@ export async function addAddressToOrg(
       throw new OrgError("notFound");
     }
 
-    const updatedOrg = Org.fromProps(org);
+    const orgEntity = Org.fromProps(org);
     const newAddress = Address.create(data);
 
-    updatedOrg.addAddress(newAddress);
+    orgEntity.addAddress(newAddress);
 
     await db.transaction(async (tx) => {
       const [updated] = await tx
         .update(orgs)
-        .set({ ...updatedOrg.props })
-        .where(eq(orgs.id, updatedOrg.id!))
+        .set({ ...orgEntity.props })
+        .where(eq(orgs.id, orgEntity.id!))
         .returning();
 
       const [inserted] = await tx

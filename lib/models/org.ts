@@ -1,52 +1,80 @@
 import { Org as DbOrg } from "@/db/schema/orgs";
 import { Address } from "./address";
+import { User } from "./user";
+import { OrgError } from "../errors/org.error";
+import { Certificate } from "./certificate";
 
 export type OrgProps = Omit<DbOrg, "id" | "publicId">;
+export type CreateOrgProps = { name: string };
 export type OrgId = number | undefined;
-export type OrgPublicId = string | undefined;
 
 export class Org {
   private _props: OrgProps;
-  private _address: Address | undefined;
+  private _address: Address | null;
+  private _certificates: Certificate[];
+  private _users: User[];
   public readonly id: OrgId;
-  public readonly publicId: OrgPublicId;
 
   private constructor(
     props: OrgProps,
-    id: OrgId,
-    publicId: OrgPublicId,
-    address?: Address
+    certificates: Certificate[],
+    users: User[],
+    address: Address | null,
+    id: OrgId
   ) {
     this._props = props;
     this.id = id;
-    this.publicId = publicId;
     this._address = address;
+    this._certificates = certificates;
+    this._users = users;
   }
 
-  static create(data: { name: string }): Org {
+  static create(props: CreateOrgProps): Org {
     return new Org(
       {
-        ...data,
+        ...props,
         verifiedAt: null,
         createdAt: new Date(),
         updatedAt: null,
         status: "onboarding",
       },
-      undefined,
+      [],
+      [],
+      null,
       undefined
     );
   }
 
-  static fromProps(data: DbOrg, address?: Address): Org {
-    return new Org(data, data.id, data.publicId, address);
+  static fromProps(props: DbOrg): Org {
+    const {
+      address: addressProps,
+      certificates: certificateProps,
+      users: userProps,
+      id,
+      ...rest
+    } = props;
+
+    const address = addressProps ? Address.fromProps(addressProps) : null;
+    const certificates = certificateProps
+      ? certificateProps.map((certProps) => Certificate.fromProps(certProps))
+      : [];
+    const users = userProps
+      ? userProps.map((userProps) => User.fromProps(userProps))
+      : [];
+
+    return new Org(rest, certificates, users, address, id);
   }
 
   get props(): OrgProps {
     return this._props;
   }
 
-  get adress(): Address | undefined {
+  get adress(): Address | null {
     return this._address;
+  }
+
+  get certificates(): Certificate[] {
+    return this._certificates;
   }
 
   addAddress(address: Address): void {
@@ -65,5 +93,15 @@ export class Org {
       verifiedAt: new Date(),
       updatedAt: new Date(),
     };
+  }
+
+  generateCertificateChain(): void {
+    if (!this._address) {
+      throw new OrgError("missingAddress");
+    }
+
+    if (!this._users.length) {
+      throw new OrgError("missingUsers");
+    }
   }
 }

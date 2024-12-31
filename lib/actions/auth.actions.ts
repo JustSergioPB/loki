@@ -18,6 +18,7 @@ import { Token } from "../models/token";
 import { TokenError } from "../errors/token.error";
 import { ResetPasswordSchema } from "../schemas/reset-password.schema";
 import { ConfirmAccountSchema } from "../schemas/confirm-account.schema";
+import { certificates } from "@/db/schema/certificates";
 
 //TODO: Add correct error messages on catch
 
@@ -169,7 +170,6 @@ export async function confirmAccount(
 
     const user = User.fromProps(queryResult[0].users);
     const confirmationToken = Token.fromProps(queryResult[0].userTokens);
-    const org = Org.fromProps(queryResult[0].orgs);
 
     confirmationToken.burn("confirmation");
     user.confirm(data.title);
@@ -183,10 +183,57 @@ export async function confirmAccount(
         .update(userTokens)
         .set({ ...confirmationToken.props })
         .where(eq(userTokens.token, confirmationToken.props.token));
+    });
+
+    await createSession({
+      userId: user.id!,
+    });
+
+    return { success: { data: undefined, message: t("succeded") } };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("failed") } };
+  }
+}
+
+export async function confirmInvitation(
+  token: string
+): Promise<ActionResult<void>> {
+  const t = await getTranslations("ConfirmInvitation");
+
+  try {
+    const queryResult = await db
+      .select()
+      .from(users)
+      .innerJoin(userTokens, eq(users.id, userTokens.userId))
+      .innerJoin(orgs, eq(users.orgId, orgs.id))
+      .where(eq(userTokens.token, token));
+
+    if (queryResult.length == 0) {
+      throw new TokenError("notFound");
+    }
+
+    const user = User.fromProps(queryResult[0].users);
+    const confirmationToken = Token.fromProps(queryResult[0].userTokens);
+
+    confirmationToken.burn("invitation");
+    user.generateCertificate();
+
+    await db.transaction(async (tx) => {
       await tx
-        .update(orgs)
-        .set({ ...org.props })
-        .where(eq(orgs.id, org.id!));
+        .update(users)
+        .set({ ...user.props })
+        .where(eq(users.id, user.id!));
+      await tx
+        .insert(certificates)
+        .values({
+          ...user.certificates[0].props,
+          orgId: queryResult[0].orgs.id,
+        });
+      await tx
+        .update(userTokens)
+        .set({ ...confirmationToken.props })
+        .where(eq(userTokens.token, confirmationToken.props.token));
     });
 
     await createSession({

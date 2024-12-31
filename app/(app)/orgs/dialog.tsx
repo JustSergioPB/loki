@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
 import OrgDetails from "./details";
-import { OrgWithAddress } from "@/db/schema/orgs";
+import { Org } from "@/db/schema/orgs";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
 import { removeOrg, verifyOrg } from "@/lib/actions/org.actions";
 import { toast } from "sonner";
 
-export default function OrgDialog({ org }: { org: OrgWithAddress }) {
+export default function OrgDialog({ org }: { org: Org }) {
   const t = useTranslations("Org");
   const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();

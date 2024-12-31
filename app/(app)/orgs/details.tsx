@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslations } from "next-intl";
-import { OrgWithAddress } from "@/db/schema/orgs";
+import { Org } from "@/db/schema/orgs";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import OrgStatus from "@/components/app/org-status";
 import Date from "@/components/app/date";
 
 type Props = {
-  org: OrgWithAddress;
+  org: Org;
   verifyHref: string;
   deleteHref: string;
 };

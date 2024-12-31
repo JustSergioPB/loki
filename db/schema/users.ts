@@ -12,7 +12,7 @@ import { auditLogs } from "./audit-logs";
 import { orgs } from "./orgs";
 import { userSettings } from "./user-settings";
 import { userTokens } from "./user-tokens";
-import { certificates } from "./certificate";
+import { Certificate, certificates } from "./certificates";
 
 export const userRole = pgEnum("userRole", ["admin", "org-admin", "issuer"]);
 export const userStatus = pgEnum("userStatus", [
@@ -61,12 +61,12 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   certificates: many(certificates),
 }));
 
-export type User = typeof users.$inferSelect;
-export type UserCreate = typeof users.$inferInsert;
-
-export type UserWithOrg = Omit<User, "password" | "orgId"> & {
-  org: { name: string };
+export type User = typeof users.$inferSelect & {
+  org?: { name: string };
+  certificates?: Certificate[];
 };
+
+export type UserCreate = typeof users.$inferInsert;
 
 export type AuthUser = Pick<
   User,

@@ -16,9 +16,9 @@ import {
 import Field from "@/components/app/field";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { SchemaWithVersions } from "@/db/schema/schemas";
+import { Schema } from "@/db/schema/schemas";
 import { useTranslations } from "next-intl";
-import { Schema } from "@/lib/models/schema";
+import { Schema as SchemaEntity } from "@/lib/models/schema";
 import SchemaVersionStatus from "@/components/app/schema-version-status";
 import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/app/page-header";
@@ -28,15 +28,14 @@ import PublishSchemaVersion from "./publish";
 import Date from "@/components/app/date";
 
 type Props = {
-  schemaWithVersions: SchemaWithVersions;
+  schema: Schema;
 };
 
-export default function SchemaDetails({ schemaWithVersions }: Props) {
+export default function SchemaDetails({ schema }: Props) {
   const t = useTranslations("SchemaVersion");
-  const tSchema = useTranslations("Schema");
+  const tSchema = useTranslations("schema");
   const tGeneric = useTranslations("Generic");
-  const schema = Schema.fromProps(schemaWithVersions);
-  const latest = schema.getLatestVersion();
+  const latest = SchemaEntity.fromProps(schema).getLatestVersion();
 
   return (
     <section className="p-6 h-full lg:w-[620px] space-y-6">
@@ -47,19 +46,19 @@ export default function SchemaDetails({ schemaWithVersions }: Props) {
       />
       <div className="flex items-center gap-4">
         <Link
-          href={`/forms/${schemaWithVersions.id}?action=edit`}
+          href={`/forms/${schema.id}?action=edit`}
           className={cn(buttonVariants({ size: "sm" }))}
         >
           <Pencil className="size-3" />
           {tGeneric("edit")}
         </Link>
         {latest.props.status === "draft" && (
-          <PublishSchemaVersion schemaWithVersions={schemaWithVersions} />
+          <PublishSchemaVersion schema={schema} />
         )}
         {latest.props.status === "published" && (
-          <ArchiveSchemaVersion schemaWithVersions={schemaWithVersions} />
+          <ArchiveSchemaVersion schema={schema} />
         )}
-        <DeleteSchemaVersion schemaWithVersions={schemaWithVersions} />
+        <DeleteSchemaVersion schema={schema} />
       </div>
       <section className="space-y-4">
         <Field
@@ -67,7 +66,7 @@ export default function SchemaDetails({ schemaWithVersions }: Props) {
           label={tSchema("titleProp")}
           type="vertical"
         >
-          <p className="text-sm line-clamp-2">{schema.props.title}</p>
+          <p className="text-sm line-clamp-2">{schema.title}</p>
         </Field>
         <Field
           icon={<Text className="size-4" />}
@@ -99,7 +98,7 @@ export default function SchemaDetails({ schemaWithVersions }: Props) {
           </SchemaVersionStatus>
         </Field>
         <Field icon={<History className="size-4" />} label={t("version")}>
-          <Badge>V{schemaWithVersions.versions.length}</Badge>
+          <Badge>V{schema.versions?.length}</Badge>
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
           {schema.id}
@@ -111,13 +110,13 @@ export default function SchemaDetails({ schemaWithVersions }: Props) {
           icon={<Calendar className="size-4" />}
           label={tGeneric("updatedAt")}
         >
-          <Date date={schema.props.updatedAt} />
+          <Date date={schema.updatedAt} />
         </Field>
         <Field
           icon={<Clock className="size-4" />}
           label={tGeneric("createdAt")}
         >
-          <Date date={schema.props.createdAt} />
+          <Date date={schema.createdAt} />
         </Field>
       </section>
     </section>

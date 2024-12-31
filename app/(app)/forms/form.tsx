@@ -17,8 +17,8 @@ import { SchemaSchema, schemaSchema } from "@/lib/schemas/schema.schema";
 import { createSchema, updateSchema } from "@/lib/actions/schema.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
-import { SchemaWithVersions } from "@/db/schema/schemas";
-import { Schema } from "@/lib/models/schema";
+import { Schema } from "@/db/schema/schemas";
+import { Schema as SchemaEntity } from "@/lib/models/schema";
 import { Textarea } from "@/components/ui/textarea";
 import InfoPanel from "@/components/app/info-panel";
 import { DatetimePicker } from "@/components/ui/datetime-picker";
@@ -26,17 +26,17 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 
 type Props = {
-  schema?: SchemaWithVersions;
+  schema?: Schema;
 };
 
 export default function SchemaForm({ schema }: Props) {
   const t = useTranslations("Schema");
   const tVersion = useTranslations("SchemaVersion");
   const tGeneric = useTranslations("Generic");
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const latestVersion = schema
-    ? Schema.fromProps(schema).getLatestVersion()
+    ? SchemaEntity.fromProps(schema).getLatestVersion()
     : undefined;
 
   const form = useForm<SchemaSchema>({

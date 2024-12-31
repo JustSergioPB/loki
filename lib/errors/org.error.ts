@@ -1,4 +1,9 @@
-export const orgErrorMessages = ["notFound", "alreadyExists"] as const;
+export const orgErrorMessages = [
+  "notFound",
+  "alreadyExists",
+  "missingAddress",
+  "missingUsers",
+] as const;
 export type OrgErrorMessage = (typeof orgErrorMessages)[number];
 
 export class OrgError extends Error {

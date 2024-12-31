@@ -3,11 +3,11 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import OrgDialog from "./dialog";
-import { OrgWithAddress } from "@/db/schema/orgs";
+import { Org } from "@/db/schema/orgs";
 import OrgStatus from "@/components/app/org-status";
 import Address from "@/components/app/address";
 
-export const userColumns: ColumnDef<OrgWithAddress>[] = [
+export const userColumns: ColumnDef<Org>[] = [
   {
     accessorKey: "name",
     header: function CellHeader() {

@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFullInitials } from "@/lib/helpers/user";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { UserWithOrg } from "@/db/schema/users";
+import { User } from "@/db/schema/users";
 import {
   DialogDescription,
   DialogHeader,
@@ -26,7 +26,7 @@ import { useTranslations } from "next-intl";
 import Date from "@/components/app/date";
 
 type Props = {
-  user: UserWithOrg;
+  user: User;
   editHref: string;
   deleteHref: string;
 };

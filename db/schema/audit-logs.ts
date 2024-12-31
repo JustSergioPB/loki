@@ -51,3 +51,5 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
     references: [orgs.id],
   }),
 }));
+
+export type AuditLogCreate = typeof auditLogs.$inferInsert;

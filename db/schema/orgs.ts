@@ -7,11 +7,11 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { users } from "./users";
+import { User, users } from "./users";
 import { userTokens } from "./user-tokens";
 import { auditLogs } from "./audit-logs";
 import { userSettings } from "./user-settings";
-import { certificates } from "./certificate";
+import { Certificate, certificates } from "./certificates";
 import { Address } from "./address";
 
 export const orgStatus = pgEnum("orgStatus", [
@@ -38,6 +38,10 @@ export const orgsRelations = relations(orgs, ({ many }) => ({
   certificates: many(certificates),
 }));
 
-export type Org = typeof orgs.$inferSelect;
+export type Org = typeof orgs.$inferSelect & {
+  address?: Address;
+  certificates?: Certificate[];
+  users?: User[];
+};
+
 export type OrgCreate = typeof orgs.$inferInsert;
-export type OrgWithAddress = Org & { address: Address | null };
