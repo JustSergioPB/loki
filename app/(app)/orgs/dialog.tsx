@@ -92,10 +92,12 @@ export default function OrgDialog({ org }: { org: Org }) {
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onActionTrigger("verify")}>
-            <BadgeCheck />
-            {tGeneric("verify")}
-          </DropdownMenuItem>
+          {org.status === "verifying" && (
+            <DropdownMenuItem onClick={() => onActionTrigger("verify")}>
+              <BadgeCheck />
+              {tGeneric("verify")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="text-red-500"
             onClick={() => onActionTrigger("delete")}

@@ -7,7 +7,7 @@ import { createSession, deleteSession } from "../helpers/session";
 import { db } from "@/db";
 import { users } from "@/db/schema/users";
 import { orgs } from "@/db/schema/orgs";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { UserError } from "../errors/user.error";
 import { Org } from "../models/org";
@@ -19,6 +19,8 @@ import { TokenError } from "../errors/token.error";
 import { ResetPasswordSchema } from "../schemas/reset-password.schema";
 import { ConfirmAccountSchema } from "../schemas/confirm-account.schema";
 import { certificates } from "@/db/schema/certificates";
+import { Certificate } from "../models/certificate";
+import { CertificateError } from "../errors/certificate.error";
 
 //TODO: Add correct error messages on catch
 
@@ -46,7 +48,7 @@ export async function login(data: LoginSchema): Promise<ActionResult<string>> {
       redirect = "/hall";
     } else if (queryResult[0].orgs.status === "onboarding") {
       redirect = "/onboarding";
-    } else {
+    } else if (queryResult[0].orgs.status === "verifying") {
       redirect = "/verifying";
     }
 
@@ -209,27 +211,40 @@ export async function confirmInvitation(
       .innerJoin(orgs, eq(users.orgId, orgs.id))
       .where(eq(userTokens.token, token));
 
-    if (queryResult.length == 0) {
+    if (!queryResult[0]) {
       throw new TokenError("notFound");
+    }
+
+    const certQueryResult = await db.query.certificates.findFirst({
+      where: and(
+        eq(certificates.level, "intermediate"),
+        eq(certificates.orgId, queryResult[0].orgs.id)
+      ),
+    });
+
+    if (!certQueryResult) {
+      throw new CertificateError("intermediateNotFound");
     }
 
     const user = User.fromProps(queryResult[0].users);
     const confirmationToken = Token.fromProps(queryResult[0].userTokens);
+    const org = Org.fromProps(queryResult[0].orgs);
+    const intermediateCert = Certificate.fromProps(certQueryResult);
+
+    const userEndCert = Certificate.createEnd(org, intermediateCert, user);
 
     confirmationToken.burn("invitation");
-    user.generateCertificate();
+    user.confirm(user.props.title!);
 
     await db.transaction(async (tx) => {
       await tx
         .update(users)
         .set({ ...user.props })
         .where(eq(users.id, user.id!));
-      await tx
-        .insert(certificates)
-        .values({
-          ...user.certificates[0].props,
-          orgId: queryResult[0].orgs.id,
-        });
+      await tx.insert(certificates).values({
+        ...userEndCert.props,
+        orgId: queryResult[0].orgs.id,
+      });
       await tx
         .update(userTokens)
         .set({ ...confirmationToken.props })

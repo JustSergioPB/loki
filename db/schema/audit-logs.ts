@@ -17,7 +17,10 @@ export const auditAction = pgEnum("auditAction", [
 export const auditableEntity = pgEnum("auditableEntity", [
   "org",
   "user",
-  "certificate",
+  "root-certificate",
+  "intermediate-certificate",
+  "user-end-certificate",
+  "org-end-certificate",
   "schema",
   "schemaVersion",
   "credential",

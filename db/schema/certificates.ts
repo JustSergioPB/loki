@@ -35,14 +35,12 @@ export const certificates = pgTable("certificates", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   level: certificateLevel().notNull().default("entity"),
   isActive: boolean().notNull().default(true),
-  privateKeyPem: text().notNull(),
   certPem: text().notNull(),
   serialNumber: varchar().notNull().unique(),
   orgId: integer()
     .notNull()
     .references(() => orgs.id, { onDelete: "cascade" }),
-  userId: integer()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer().references(() => users.id, { onDelete: "cascade" }),
   revocationReason: certificateRevocationReason(),
   revokedAt: timestamp({ withTimezone: true }),
   expiresAt: timestamp({ withTimezone: true }).notNull(),

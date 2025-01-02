@@ -1,7 +1,6 @@
 import { Org as DbOrg } from "@/db/schema/orgs";
 import { Address } from "./address";
 import { User } from "./user";
-import { OrgError } from "../errors/org.error";
 import { Certificate } from "./certificate";
 
 export type OrgProps = Omit<DbOrg, "id" | "publicId">;
@@ -69,12 +68,16 @@ export class Org {
     return this._props;
   }
 
-  get adress(): Address | null {
+  get address(): Address | null {
     return this._address;
   }
 
   get certificates(): Certificate[] {
     return this._certificates;
+  }
+
+  get users(): User[] {
+    return this._users;
   }
 
   addAddress(address: Address): void {
@@ -93,15 +96,5 @@ export class Org {
       verifiedAt: new Date(),
       updatedAt: new Date(),
     };
-  }
-
-  generateCertificateChain(): void {
-    if (!this._address) {
-      throw new OrgError("missingAddress");
-    }
-
-    if (!this._users.length) {
-      throw new OrgError("missingUsers");
-    }
   }
 }

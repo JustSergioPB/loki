@@ -91,8 +91,6 @@ export class User {
     };
   }
 
-  generateCertificate(): void {}
-
   update(props: UserSchema): void {
     this._props = { ...this._props, ...props, updatedAt: new Date() };
   }
