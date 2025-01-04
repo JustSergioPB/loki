@@ -2,32 +2,26 @@ import { relations } from "drizzle-orm";
 import {
   pgEnum,
   pgTable,
-  integer,
   uuid,
   varchar,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { auditLogs } from "./audit-logs";
-import { orgs } from "./orgs";
-import { userSettings } from "./user-settings";
-import { userTokens } from "./user-tokens";
+import { auditLogTable } from "./audit-logs";
+import { orgTable } from "./orgs";
+import { userTokenTable } from "./user-tokens";
+import { userRoles, userStatuses } from "@/lib/models/user";
 
-export const userRole = pgEnum("userRole", ["admin", "org-admin", "issuer"]);
-export const userStatus = pgEnum("userStatus", [
-  "active",
-  "inactive",
-  "banned",
-]);
+export const userRole = pgEnum("userRole", userRoles);
+export const userStatus = pgEnum("userStatus", userStatuses);
 
-export const users = pgTable(
+export const userTable = pgTable(
   "users",
   {
-    id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    publicId: uuid().notNull().defaultRandom(),
-    orgId: integer()
+    id: uuid().primaryKey().notNull().defaultRandom(),
+    orgId: uuid()
       .notNull()
-      .references(() => orgs.id, { onDelete: "cascade" }),
+      .references(() => orgTable.id, { onDelete: "cascade" }),
     role: userRole().notNull().default("issuer"),
     status: userStatus().notNull().default("inactive"),
     fullName: varchar({ length: 255 }).notNull(),
@@ -45,27 +39,22 @@ export const users = pgTable(
   })
 );
 
-export const usersRelations = relations(users, ({ one, many }) => ({
-  org: one(orgs, {
-    fields: [users.orgId],
-    references: [orgs.id],
+export const userTableRelations = relations(userTable, ({ one, many }) => ({
+  org: one(orgTable, {
+    fields: [userTable.orgId],
+    references: [orgTable.id],
   }),
-  settings: one(userSettings, {
-    fields: [users.id],
-    references: [userSettings.userId],
-  }),
-  tokens: many(userTokens),
-  auditLogs: many(auditLogs),
+  tokens: many(userTokenTable),
+  auditLogs: many(auditLogTable),
 }));
 
-export type User = typeof users.$inferSelect;
-export type UserCreate = typeof users.$inferInsert;
-
-export type UserWithOrg = Omit<User, "password" | "orgId"> & {
-  org: { name: string };
+export type DbUser = typeof userTable.$inferSelect & {
+  org?: { name: string };
 };
 
+export type DbUserCreate = typeof userTable.$inferInsert;
+
 export type AuthUser = Pick<
-  User,
+  DbUser,
   "id" | "fullName" | "email" | "role" | "orgId"
 >;

@@ -3,12 +3,12 @@ import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
 import { db } from "@/db";
-import { users } from "@/db/schema/users";
+import { userTable } from "@/db/schema/users";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getParams } from "@/lib/helpers/search-params";
 import { redirect } from "next/navigation";
 import { eq, count } from "drizzle-orm";
-import { orgs } from "@/db/schema/orgs";
+import { orgTable } from "@/db/schema/orgs";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
 import NewUser from "./new";
@@ -29,33 +29,36 @@ export default async function Users({
 
   const query = db
     .select({
-      id: users.id,
-      publicId: users.publicId,
-      fullName: users.fullName,
-      email: users.email,
-      role: users.role,
-      status: users.status,
-      confirmedAt: users.confirmedAt,
-      updatedAt: users.updatedAt,
-      createdAt: users.createdAt,
+      id: userTable.id,
+      fullName: userTable.fullName,
+      email: userTable.email,
+      role: userTable.role,
+      status: userTable.status,
+      confirmedAt: userTable.confirmedAt,
+      updatedAt: userTable.updatedAt,
+      createdAt: userTable.createdAt,
+      orgId: userTable.orgId,
       org: {
-        name: orgs.name,
+        name: orgTable.name,
       },
     })
-    .from(users)
+    .from(userTable)
     .limit(pageSize)
     .offset(page * pageSize)
-    .innerJoin(orgs, eq(users.orgId, orgs.id))
-    .orderBy(users.orgId);
+    .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
+    .orderBy(userTable.orgId);
 
-  const countQuery = db.select({ count: count() }).from(users);
+  const countQuery = db.select({ count: count() }).from(userTable);
 
   if (user.role !== "admin") {
-    query.where(eq(users.orgId, user.orgId));
-    countQuery.where(eq(users.orgId, user.orgId));
+    query.where(eq(userTable.orgId, user.orgId));
+    countQuery.where(eq(userTable.orgId, user.orgId));
   }
 
-  const queryResult = await query;
+  const queryResult = (await query).map((row) => ({
+    ...row,
+    password: "********",
+  }));
   const [{ count: countResult }] = await countQuery;
 
   return (

@@ -5,18 +5,20 @@ import { ActionResult } from "../generics/action-result";
 import { LoginSchema } from "../schemas/login.schema";
 import { createSession, deleteSession } from "../helpers/session";
 import { db } from "@/db";
-import { users } from "@/db/schema/users";
-import { orgs } from "@/db/schema/orgs";
+import { userTable } from "@/db/schema/users";
+import { orgTable } from "@/db/schema/orgs";
 import { eq, sql } from "drizzle-orm";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { UserError } from "../errors/user.error";
 import { Org } from "../models/org";
 import { User } from "../models/user";
 import { OrgError } from "../errors/org.error";
-import { userTokens } from "@/db/schema/user-tokens";
 import { Token } from "../models/token";
 import { TokenError } from "../errors/token.error";
 import { ResetPasswordSchema } from "../schemas/reset-password.schema";
+import { userTokenTable } from "@/db/schema/user-tokens";
+import { PasswordProvider } from "@/providers/password.provider";
+import { AuthError } from "../errors/auth.error";
 
 //TODO: Add correct error messages on catch
 
@@ -26,15 +28,22 @@ export async function login(data: LoginSchema): Promise<ActionResult<string>> {
   try {
     const queryResult = await db
       .select()
-      .from(users)
-      .where(eq(sql`lower(${users.email})`, data.email.toLowerCase()))
-      .innerJoin(orgs, eq(users.orgId, orgs.id));
+      .from(userTable)
+      .where(eq(sql`lower(${userTable.email})`, data.email.toLowerCase()))
+      .innerJoin(orgTable, eq(userTable.orgId, orgTable.id));
 
     if (queryResult.length == 0) {
       throw new UserError("notFound");
     }
 
-    await User.fromProps(queryResult[0].users).login(data.password);
+    const passwordsMatch = PasswordProvider.compare(
+      data.password,
+      queryResult[0].users.password
+    );
+
+    if (!passwordsMatch) {
+      throw new AuthError("invalidCredentials");
+    }
 
     let redirect: string = "/dashboard";
 
@@ -62,41 +71,42 @@ export async function signUp(data: SignUpSchema): Promise<ActionResult<void>> {
   const t = await getTranslations("SignUp");
 
   try {
-    const existingUser = await db.query.users.findFirst({
-      where: eq(sql`lower(${users.email})`, data.email.toLowerCase()),
+    const existingUser = await db.query.userTable.findFirst({
+      where: eq(sql`lower(${userTable.email})`, data.email.toLowerCase()),
     });
 
     if (existingUser) {
       throw new UserError("alreadyExists");
     }
 
-    const existingOrg = await db.query.orgs.findFirst({
-      where: eq(orgs.name, data.orgName),
+    const existingOrg = await db.query.orgTable.findFirst({
+      where: eq(orgTable.name, data.orgName),
     });
 
     if (existingOrg) {
       throw new OrgError("alreadyExists");
     }
 
-    const org = Org.create({ name: data.orgName });
-    const user = await User.signUp(data);
+    const org = Org.create({ name: data.orgName, tier: "starter" });
+    const encryptedPassword = await PasswordProvider.encrypt(data.password);
+    const user = User.signUp({ ...data, password: encryptedPassword });
     const token = Token.create({ sentTo: data.email, context: "confirmation" });
 
     await db.transaction(async (tx) => {
       const [{ id: orgId }] = await tx
-        .insert(orgs)
+        .insert(orgTable)
         .values({
           ...org.props,
         })
         .returning();
       const [{ id: userId }] = await tx
-        .insert(users)
+        .insert(userTable)
         .values({
           ...user.props,
           orgId,
         })
         .returning();
-      await tx.insert(userTokens).values({
+      await tx.insert(userTokenTable).values({
         ...token.props,
         orgId,
         userId,
@@ -116,8 +126,8 @@ export async function resendConfirmationMail(
   const t = await getTranslations("ConfirmAccount");
 
   try {
-    const user = await db.query.users.findFirst({
-      where: eq(sql`lower(${users.email})`, email.toLowerCase()),
+    const user = await db.query.userTable.findFirst({
+      where: eq(sql`lower(${userTable.email})`, email.toLowerCase()),
     });
 
     if (!user) {
@@ -129,7 +139,7 @@ export async function resendConfirmationMail(
       context: "confirmation",
     });
 
-    await db.insert(userTokens).values({
+    await db.insert(userTokenTable).values({
       ...token.props,
       orgId: user.orgId,
       userId: user.id,
@@ -154,10 +164,10 @@ export async function confirmAccount(
   try {
     const queryResult = await db
       .select()
-      .from(users)
-      .innerJoin(userTokens, eq(users.id, userTokens.userId))
-      .innerJoin(orgs, eq(users.orgId, orgs.id))
-      .where(eq(userTokens.token, token));
+      .from(userTable)
+      .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId))
+      .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
+      .where(eq(userTokenTable.token, token));
 
     if (queryResult.length == 0) {
       throw new TokenError("notFound");
@@ -173,17 +183,17 @@ export async function confirmAccount(
 
     await db.transaction(async (tx) => {
       await tx
-        .update(users)
+        .update(userTable)
         .set({ ...user.props })
-        .where(eq(users.id, user.id!));
+        .where(eq(userTable.id, user.id!));
       await tx
-        .update(userTokens)
+        .update(userTokenTable)
         .set({ ...confirmationToken.props })
-        .where(eq(userTokens.id, confirmationToken.id!));
+        .where(eq(userTokenTable.id, confirmationToken.id!));
       await tx
-        .update(orgs)
+        .update(orgTable)
         .set({ ...org.props })
-        .where(eq(orgs.id, org.id!));
+        .where(eq(orgTable.id, org.id!));
     });
 
     await createSession({
@@ -203,8 +213,8 @@ export async function forgotPassword(
   const t = await getTranslations("ForgotPassword");
 
   try {
-    const user = await db.query.users.findFirst({
-      where: eq(sql`lower(${users.email})`, email.toLowerCase()),
+    const user = await db.query.userTable.findFirst({
+      where: eq(sql`lower(${userTable.email})`, email.toLowerCase()),
     });
 
     if (!user) {
@@ -216,7 +226,7 @@ export async function forgotPassword(
       context: "reset-password",
     });
 
-    await db.insert(userTokens).values({
+    await db.insert(userTokenTable).values({
       ...token.props,
       orgId: user.orgId,
       userId: user.id,
@@ -238,9 +248,9 @@ export async function resetPassword(
   try {
     const queryResult = await db
       .select()
-      .from(users)
-      .innerJoin(userTokens, eq(users.id, userTokens.userId))
-      .where(eq(userTokens.token, token));
+      .from(userTable)
+      .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId))
+      .where(eq(userTokenTable.token, token));
 
     if (queryResult.length == 0) {
       throw new TokenError("notFound");
@@ -250,17 +260,18 @@ export async function resetPassword(
     const resetToken = Token.fromProps(queryResult[0].userTokens);
 
     resetToken.burn("reset-password");
-    await user.resetPassword(data.password);
+    const encryptedPassword = await PasswordProvider.encrypt(data.password);
+    user.resetPassword(encryptedPassword);
 
     await db.transaction(async (tx) => {
       await tx
-        .update(users)
+        .update(userTable)
         .set({ ...user.props })
-        .where(eq(users.id, user.id!));
+        .where(eq(userTable.id, user.id!));
       await tx
-        .update(userTokens)
+        .update(userTokenTable)
         .set({ ...resetToken.props })
-        .where(eq(userTokens.id, resetToken.id!));
+        .where(eq(userTokenTable.id, resetToken.id!));
     });
 
     return { success: { data: undefined, message: t("succeded") } };

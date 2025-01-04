@@ -1,11 +1,4 @@
-import {
-  Calendar,
-  Clock,
-  Database,
-  Globe,
-  CalendarCheck,
-  Trash,
-} from "lucide-react";
+import { Calendar, Clock, Database, CalendarCheck, Trash, Banknote } from "lucide-react";
 import Field from "@/components/app/field";
 import {
   DialogDescription,
@@ -13,15 +6,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslations } from "next-intl";
-import { Org } from "@/db/schema/orgs";
+import { DbOrg } from "@/db/schema/orgs";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFullInitials } from "@/lib/helpers/user";
+import OrgTier from "@/components/app/org-tier";
 
 type Props = {
-  org: Org;
+  org: DbOrg;
   deleteHref: string;
 };
 
@@ -62,6 +56,12 @@ export default function OrgDetails({ org, deleteHref }: Props) {
       </div>
       <section className="space-y-4">
         <Field
+          icon={<Banknote className="size-4" />}
+          label={t("tier")}
+        >
+          <OrgTier tier={org.tier}>{t(`tiers.${org.tier}`)}</OrgTier>
+        </Field>
+        <Field
           icon={<CalendarCheck className="size-4" />}
           label={t("verifiedAt")}
         >
@@ -69,9 +69,6 @@ export default function OrgDetails({ org, deleteHref }: Props) {
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
           {org.id}
-        </Field>
-        <Field icon={<Globe className="size-4" />} label={tGeneric("publicId")}>
-          {org.publicId}
         </Field>
         <Field
           icon={<Calendar className="size-4" />}

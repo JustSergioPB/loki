@@ -1,8 +1,9 @@
+import { UserStatus as UserStatuses } from "@/lib/models/user";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  status: "active" | "banned" | "inactive";
+  status: UserStatuses;
 }
 
 export default function UserStatus({ status, children }: Props) {

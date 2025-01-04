@@ -28,7 +28,7 @@ type Props = {
   description: string;
   label: string;
   loading: boolean;
-  id: number;
+  id: string;
   variant: "warning" | "danger";
   onSubmit: () => void;
 };

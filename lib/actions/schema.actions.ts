@@ -2,9 +2,9 @@
 
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { schemas } from "@/db/schema/schemas";
-import { schemaVersions } from "@/db/schema/schema-versions";
-import { auditLogs } from "@/db/schema/audit-logs";
+import { schemaTable } from "@/db/schema/schemas";
+import { schemaVersionTable } from "@/db/schema/schema-versions";
+import { auditLogTable } from "@/db/schema/audit-logs";
 import { SchemaSchema } from "../schemas/schema.schema";
 import { ActionResult } from "../generics/action-result";
 import { authorize } from "../helpers/dal";
@@ -27,7 +27,7 @@ export async function createSchema(
 
     await db.transaction(async (tx) => {
       const [insertedSchema] = await tx
-        .insert(schemas)
+        .insert(schemaTable)
         .values({
           ...schema.props,
           orgId: authUser.orgId,
@@ -35,7 +35,7 @@ export async function createSchema(
         .returning();
 
       const [insertedSchemaVersion] = await tx
-        .insert(schemaVersions)
+        .insert(schemaVersionTable)
         .values({
           ...schemaVersion.props,
           schemaId: insertedSchema.id,
@@ -43,7 +43,7 @@ export async function createSchema(
         })
         .returning();
 
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: insertedSchema.id,
         entityType: "schema",
         action: "create",
@@ -52,7 +52,7 @@ export async function createSchema(
         value: insertedSchema,
       });
 
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: insertedSchemaVersion.id,
         entityType: "schemaVersion",
         action: "create",
@@ -69,7 +69,7 @@ export async function createSchema(
 }
 
 export async function updateSchema(
-  id: number,
+  id: string,
   data: SchemaSchema
 ): Promise<ActionResult<void>> {
   const t = await getTranslations("Schema");
@@ -79,9 +79,9 @@ export async function updateSchema(
 
     const queryResult = await db
       .select()
-      .from(schemas)
-      .where(eq(schemas.id, id))
-      .innerJoin(schemaVersions, eq(schemaVersions.schemaId, id));
+      .from(schemaTable)
+      .where(eq(schemaTable.id, id))
+      .innerJoin(schemaVersionTable, eq(schemaVersionTable.schemaId, id));
 
     const schema = Schema.fromProps({
       ...queryResult[0].schemas,
@@ -105,18 +105,18 @@ export async function updateSchema(
 }
 
 //TODO: Reevaluate if an schema could be deleted once there's a published version
-export async function removeSchema(id: number): Promise<ActionResult<void>> {
+export async function removeSchema(id: string): Promise<ActionResult<void>> {
   const t = await getTranslations("Schema");
   try {
     const authUser = await authorize(["org-admin", "admin"]);
 
     await db.transaction(async (tx) => {
       const [deleted] = await tx
-        .delete(schemas)
-        .where(eq(schemas.id, id))
+        .delete(schemaTable)
+        .where(eq(schemaTable.id, id))
         .returning();
 
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: id,
         entityType: "schema",
         action: "delete",
@@ -140,14 +140,14 @@ async function createSchemaVersion(
 ): Promise<void> {
   await db.transaction(async (tx) => {
     const [updatedSchema] = await tx
-      .update(schemas)
+      .update(schemaTable)
       .set({
         ...schema.props,
       })
-      .where(eq(schemas.id, schema.id!))
+      .where(eq(schemaTable.id, schema.id!))
       .returning();
 
-    await tx.insert(auditLogs).values({
+    await tx.insert(auditLogTable).values({
       entityId: schema.id!,
       entityType: "schema",
       action: "update",
@@ -157,7 +157,7 @@ async function createSchemaVersion(
     });
 
     const [insertedSchema] = await tx
-      .insert(schemaVersions)
+      .insert(schemaVersionTable)
       .values({
         ...version.props,
         schemaId: schema.id!,
@@ -165,7 +165,7 @@ async function createSchemaVersion(
       })
       .returning();
 
-    await tx.insert(auditLogs).values({
+    await tx.insert(auditLogTable).values({
       entityId: insertedSchema.id,
       entityType: "schemaVersion",
       action: "create",
@@ -183,14 +183,14 @@ async function updateSchemaVersion(
 ): Promise<void> {
   await db.transaction(async (tx) => {
     const [updatedSchema] = await tx
-      .update(schemas)
+      .update(schemaTable)
       .set({
         ...schema.props,
       })
-      .where(eq(schemas.id, schema.id!))
+      .where(eq(schemaTable.id, schema.id!))
       .returning();
 
-    await tx.insert(auditLogs).values({
+    await tx.insert(auditLogTable).values({
       entityId: schema.id!,
       entityType: "schema",
       action: "update",
@@ -200,14 +200,14 @@ async function updateSchemaVersion(
     });
 
     const [updatedVersion] = await tx
-      .update(schemaVersions)
+      .update(schemaVersionTable)
       .set({
         ...version.props,
       })
-      .where(eq(schemaVersions.id, version.id!))
+      .where(eq(schemaVersionTable.id, version.id!))
       .returning();
 
-    await tx.insert(auditLogs).values({
+    await tx.insert(auditLogTable).values({
       entityId: updatedVersion.id,
       entityType: "schemaVersion",
       action: "update",

@@ -27,13 +27,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { UserSchema, userSchema } from "@/lib/schemas/user.schema";
-import { UserWithOrg } from "@/db/schema/users";
+import { DbUser } from "@/db/schema/users";
 import { createUser, updateUser } from "@/lib/actions/user.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
 
 type Props = {
-  user?: UserWithOrg;
+  user?: DbUser;
   onSubmit: () => void;
 };
 

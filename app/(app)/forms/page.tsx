@@ -3,14 +3,14 @@ import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
 import { db } from "@/db";
-import { schemas } from "@/db/schema/schemas";
+import { schemaTable } from "@/db/schema/schemas";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getParams } from "@/lib/helpers/search-params";
 import { redirect } from "next/navigation";
 import { eq, count, desc, inArray } from "drizzle-orm";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
-import { schemaVersions } from "@/db/schema/schema-versions";
+import { schemaVersionTable } from "@/db/schema/schema-versions";
 import NewSchema from "./new";
 
 export default async function Schemas({
@@ -29,11 +29,11 @@ export default async function Schemas({
 
   const paginatedSchemas = await db
     .select()
-    .from(schemas)
-    .where(eq(schemas.orgId, user.orgId))
+    .from(schemaTable)
+    .where(eq(schemaTable.orgId, user.orgId))
     .limit(pageSize)
     .offset(page * pageSize)
-    .orderBy(desc(schemas.createdAt));
+    .orderBy(desc(schemaTable.createdAt));
 
   const schemaIds = paginatedSchemas.map((schema) => schema.id);
 
@@ -41,8 +41,8 @@ export default async function Schemas({
     schemaIds.length > 0
       ? await db
           .select()
-          .from(schemaVersions)
-          .where(inArray(schemaVersions.schemaId, schemaIds))
+          .from(schemaVersionTable)
+          .where(inArray(schemaVersionTable.schemaId, schemaIds))
       : [];
 
   // Combine the results
@@ -55,8 +55,8 @@ export default async function Schemas({
 
   const [{ count: countResult }] = await db
     .select({ count: count() })
-    .from(schemas)
-    .where(eq(schemas.orgId, user.orgId));
+    .from(schemaTable)
+    .where(eq(schemaTable.orgId, user.orgId));
 
   return (
     <Page>

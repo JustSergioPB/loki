@@ -2,7 +2,7 @@
 
 import { ChevronsUpDown, Cog, LogOut } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,17 +22,9 @@ import { logout } from "@/lib/actions/auth.actions";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
 import { getFullInitials } from "@/lib/helpers/user";
+import { AuthUser } from "@/db/schema/users";
 
-export default function NavUser({
-  user,
-}: {
-  user: {
-    fullName: string;
-    email: string;
-    avatar: string;
-    role: string;
-  };
-}) {
+export default function NavUser({ user }: { user: AuthUser }) {
   const { isMobile } = useSidebar();
 
   async function onLogout() {
@@ -56,7 +48,6 @@ export default function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.fullName} />
                 <AvatarFallback className="rounded-lg">
                   {getFullInitials(user.fullName)}
                 </AvatarFallback>
@@ -77,7 +68,6 @@ export default function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="size-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.fullName} />
                   <AvatarFallback className="rounded-lg">
                     {getFullInitials(user.fullName)}
                   </AvatarFallback>

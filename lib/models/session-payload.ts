@@ -1,4 +1,4 @@
 export type SessionPayload = {
-  userId: number;
+  userId: string;
   redirect?: string;
 };

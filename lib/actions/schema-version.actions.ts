@@ -5,24 +5,24 @@ import { ActionResult } from "../generics/action-result";
 import { authorize } from "../helpers/dal";
 import { db } from "@/db";
 import { and, eq } from "drizzle-orm";
-import { schemaVersions } from "@/db/schema/schema-versions";
+import { schemaVersionTable } from "@/db/schema/schema-versions";
 import { SchemaVersionError } from "../errors/schema-version.error";
 import { SchemaVersion } from "../models/schema-version";
-import { auditLogs } from "@/db/schema/audit-logs";
+import { auditLogTable } from "@/db/schema/audit-logs";
 
 const ALLOWED_ROLES = ["admin", "org-admin"];
 
 export async function archiveSchemaVersion(
-  id: number
+  id: string
 ): Promise<ActionResult<boolean>> {
   const t = await getTranslations("SchemaVersions");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
-    const version = await db.query.schemaVersions.findFirst({
+    const version = await db.query.schemaVersionTable.findFirst({
       where: and(
-        eq(schemaVersions.id, id),
-        eq(schemaVersions.orgId, authUser.orgId)
+        eq(schemaVersionTable.id, id),
+        eq(schemaVersionTable.orgId, authUser.orgId)
       ),
     });
 
@@ -35,14 +35,14 @@ export async function archiveSchemaVersion(
 
     await db.transaction(async (tx) => {
       const [updated] = await tx
-        .update(schemaVersions)
+        .update(schemaVersionTable)
         .set({
           ...schemaVersion.props,
         })
-        .where(eq(schemaVersions.id, id))
+        .where(eq(schemaVersionTable.id, id))
         .returning();
 
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: id,
         entityType: "schemaVersion",
         action: "update",
@@ -60,16 +60,16 @@ export async function archiveSchemaVersion(
 }
 
 export async function publishSchemaVersion(
-  id: number
+  id: string
 ): Promise<ActionResult<boolean>> {
   const t = await getTranslations("SchemaVersions");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
-    const version = await db.query.schemaVersions.findFirst({
+    const version = await db.query.schemaVersionTable.findFirst({
       where: and(
-        eq(schemaVersions.id, id),
-        eq(schemaVersions.orgId, authUser.orgId)
+        eq(schemaVersionTable.id, id),
+        eq(schemaVersionTable.orgId, authUser.orgId)
       ),
     });
 
@@ -82,14 +82,14 @@ export async function publishSchemaVersion(
 
     await db.transaction(async (tx) => {
       const [updated] = await tx
-        .update(schemaVersions)
+        .update(schemaVersionTable)
         .set({
           ...schemaVersion.props,
         })
-        .where(eq(schemaVersions.id, id))
+        .where(eq(schemaVersionTable.id, id))
         .returning();
 
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: id,
         entityType: "schemaVersion",
         action: "update",

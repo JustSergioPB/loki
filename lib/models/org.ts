@@ -1,21 +1,19 @@
-import { Org as DbOrg } from "@/db/schema/orgs";
+import { DbOrg } from "@/db/schema/orgs";
 
-export type OrgProps = Omit<DbOrg, "id" | "publicId">;
-export type OrgId = number | undefined;
-export type OrgPublicId = string | undefined;
+export type OrgProps = Omit<DbOrg, "id">;
+export type OrgId = string | undefined;
+export type CreateOrgProps = Pick<DbOrg, "name" | "tier">;
 
 export class Org {
   private _props: OrgProps;
   public readonly id: OrgId;
-  public readonly publicId: OrgPublicId;
 
-  private constructor(props: OrgProps, id: OrgId, publicId: OrgPublicId) {
+  private constructor(props: OrgProps, id: OrgId) {
     this._props = props;
     this.id = id;
-    this.publicId = publicId;
   }
 
-  static create(data: { name: string }): Org {
+  static create(data: CreateOrgProps): Org {
     return new Org(
       {
         ...data,
@@ -23,13 +21,12 @@ export class Org {
         createdAt: new Date(),
         updatedAt: null,
       },
-      undefined,
       undefined
     );
   }
 
   static fromProps(data: DbOrg): Org {
-    return new Org(data, data.id, data.publicId);
+    return new Org(data, data.id);
   }
 
   get props(): OrgProps {

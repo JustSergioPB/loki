@@ -1,26 +1,22 @@
-import { Schema as DbSchema, SchemaWithVersions } from "@/db/schema/schemas";
+import { DbSchema } from "@/db/schema/schemas";
 import { SchemaSchema } from "../schemas/schema.schema";
 import { SchemaVersion } from "./schema-version";
 
-export type SchemaProps = Omit<DbSchema, "id" | "publicId" | "orgId">;
-export type SchemaId = number | undefined;
-export type SchemaPublicId = string | undefined;
+export type SchemaProps = Omit<DbSchema, "id" | "orgId" | "versions">;
+export type SchemaId = string | undefined;
 
 export class Schema {
   private _props: SchemaProps;
   public readonly id: SchemaId;
-  public readonly publicId: SchemaPublicId;
   public readonly versions: SchemaVersion[];
 
   private constructor(
     props: SchemaProps,
     id: SchemaId,
-    publicId: SchemaPublicId,
     versions: SchemaVersion[]
   ) {
     this._props = props;
     this.id = id;
-    this.publicId = publicId;
     this.versions = versions;
   }
 
@@ -33,14 +29,13 @@ export class Schema {
         updatedAt: null,
       },
       undefined,
-      undefined,
       [version]
     );
   }
 
-  static fromProps(data: SchemaWithVersions): Schema {
+  static fromProps(data: DbSchema): Schema {
     const versions = data.versions.map((v) => SchemaVersion.fromProps(v));
-    return new Schema(data, data.id, data.publicId, versions);
+    return new Schema(data, data.id, versions);
   }
 
   get props(): SchemaProps {

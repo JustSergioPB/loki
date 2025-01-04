@@ -1,4 +1,4 @@
-import { SchemaWithVersions } from "@/db/schema/schemas";
+import { DbSchema } from "@/db/schema/schemas";
 import { Button } from "@/components/ui/button";
 import {
   Archive,
@@ -28,11 +28,7 @@ import {
   publishSchemaVersion,
 } from "@/lib/actions/schema-version.actions";
 
-export default function SchemaDialog({
-  schemaWithVersions,
-}: {
-  schemaWithVersions: SchemaWithVersions;
-}) {
+export default function SchemaDialog({ schema }: { schema: DbSchema }) {
   const t = useTranslations("Schema");
   const tGeneric = useTranslations("Generic");
   const tVersion = useTranslations("SchemaVersion");
@@ -41,8 +37,7 @@ export default function SchemaDialog({
   const pathname = usePathname();
   const action = searchParams.get("action");
   const id = searchParams.get("id");
-  const schema = Schema.fromProps(schemaWithVersions);
-  const latest = schema.getLatestVersion();
+  const latest = Schema.fromProps(schema).getLatestVersion();
   const [isLoading, setIsLoading] = useState(false);
 
   const deleteParams = new URLSearchParams(searchParams);
@@ -56,7 +51,7 @@ export default function SchemaDialog({
 
   function onActionTrigger(action: "delete" | "publish" | "archive") {
     const params = new URLSearchParams(searchParams);
-    params.set("id", schemaWithVersions.id.toString());
+    params.set("id", schema.id.toString());
     params.set("action", action);
     router.push(`${pathname}?${params.toString()}`);
   }
@@ -68,7 +63,7 @@ export default function SchemaDialog({
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeSchema(schemaWithVersions.id);
+    const { success, error } = await removeSchema(schema.id);
 
     if (success) {
       toast.success(success.message);
@@ -118,7 +113,7 @@ export default function SchemaDialog({
   }
 
   return (
-    <Dialog open={!!action && Number(id) === schema.id} onOpenChange={onClose}>
+    <Dialog open={!!action && id === schema.id} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -160,37 +155,37 @@ export default function SchemaDialog({
       <DialogContent className="max-h-[95vh] overflow-y-auto">
         {action === "publish" && (
           <ConfirmDialog
-            keyword={schemaWithVersions.title}
+            keyword={schema.title}
             title={tVersion("publishTitle")}
             description={tVersion("publishDescription")}
             label={tVersion("publishLabel")}
             onSubmit={onPublish}
             loading={isLoading}
-            id={schemaWithVersions.id}
+            id={schema.id}
             variant="warning"
           />
         )}
         {action === "archive" && (
           <ConfirmDialog
-            keyword={schemaWithVersions.title}
+            keyword={schema.title}
             title={tVersion("archiveTitle")}
             description={tVersion("archiveDescription")}
             label={tVersion("archiveLabel")}
             onSubmit={onArchive}
             loading={isLoading}
-            id={schemaWithVersions.id}
+            id={schema.id}
             variant="warning"
           />
         )}
         {action === "delete" && (
           <ConfirmDialog
-            keyword={schemaWithVersions.title}
+            keyword={schema.title}
             title={t("deleteTitle")}
             description={t("deleteDescription")}
             label={t("deleteLabel")}
             onSubmit={onDelete}
             loading={isLoading}
-            id={schemaWithVersions.id}
+            id={schema.id}
             variant="danger"
           />
         )}

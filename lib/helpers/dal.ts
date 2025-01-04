@@ -5,7 +5,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
-import { AuthUser, users } from "@/db/schema/users";
+import { AuthUser, userTable } from "@/db/schema/users";
 import { decrypt } from "./session";
 import { AuthError } from "../errors/auth.error";
 
@@ -18,7 +18,7 @@ export const verifySession = cache(async () => {
   }
 
   return session
-    ? { isAuth: true, userId: session.userId as number }
+    ? { isAuth: true, userId: session.userId as string }
     : undefined;
 });
 
@@ -27,8 +27,8 @@ export const getUser = cache(async () => {
   if (!session) return null;
 
   try {
-    return await db.query.users.findFirst({
-      where: eq(users.id, session.userId),
+    return await db.query.userTable.findFirst({
+      where: eq(userTable.id, session.userId),
       // Explicitly return the columns you need rather than the whole user object
       columns: {
         id: true,

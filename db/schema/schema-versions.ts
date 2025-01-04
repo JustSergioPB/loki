@@ -1,47 +1,44 @@
 import { relations } from "drizzle-orm";
+import { jsonb, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { orgTable } from "./orgs";
+import { schemaTable } from "./schemas";
 import {
-  integer,
-  jsonb,
-  pgEnum,
-  pgTable,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
-import { orgs } from "./orgs";
-import { schemas } from "./schemas";
-import { CredentialSchema } from "@/lib/models/schema-version";
+  CredentialSchema,
+  schemaVersionStatuses,
+} from "@/lib/models/schema-version";
 
-export const schemaVersionStatus = pgEnum("schemaVersionStatus", [
-  "draft",
-  "published",
-  "archived",
-]);
+export const schemaVersionStatus = pgEnum(
+  "schemaVersionStatus",
+  schemaVersionStatuses
+);
 
-export const schemaVersions = pgTable("schemaVersions", {
-  id: integer().primaryKey().generatedByDefaultAsIdentity(),
-  publicId: uuid().notNull().defaultRandom(),
+export const schemaVersionTable = pgTable("schemaVersions", {
+  id: uuid().primaryKey().notNull().defaultRandom(),
   content: jsonb().notNull().$type<CredentialSchema>(),
   status: schemaVersionStatus().notNull().default("draft"),
-  schemaId: integer()
-    .references(() => schemas.id, { onDelete: "cascade" })
+  schemaId: uuid()
+    .references(() => schemaTable.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }),
-  orgId: integer()
-    .references(() => orgs.id, { onDelete: "cascade" })
+  orgId: uuid()
+    .references(() => orgTable.id, { onDelete: "cascade" })
     .notNull(),
 });
 
-export const schemaVersionsRelations = relations(schemaVersions, ({ one }) => ({
-  org: one(orgs, {
-    fields: [schemaVersions.orgId],
-    references: [orgs.id],
-  }),
-  schema: one(schemas, {
-    fields: [schemaVersions.schemaId],
-    references: [schemas.id],
-  }),
-}));
+export const schemaVersionTableRelations = relations(
+  schemaVersionTable,
+  ({ one }) => ({
+    org: one(orgTable, {
+      fields: [schemaVersionTable.orgId],
+      references: [orgTable.id],
+    }),
+    schema: one(schemaTable, {
+      fields: [schemaVersionTable.schemaId],
+      references: [schemaTable.id],
+    }),
+  })
+);
 
-export type SchemaVersion = typeof schemaVersions.$inferSelect;
-export type SchemaVersionCreate = typeof schemaVersions.$inferInsert;
+export type DbSchemaVersion = typeof schemaVersionTable.$inferSelect;
+export type DbSchemaVersionCreate = typeof schemaVersionTable.$inferInsert;

@@ -1,82 +1,72 @@
-import { User as DbUser } from "@/db/schema/users";
-import { SignUpSchema } from "../schemas/sign-up.schema";
-import { AuthError } from "../errors/auth.error";
-import { Password } from "./password";
-import { UserSchema } from "../schemas/user.schema";
+import { DbUser } from "@/db/schema/users";
 
-export type UserProps = Omit<DbUser, "id" | "publicId" | "orgId">;
-export type UserId = number | undefined;
-export type UserPublicId = string | undefined;
+export type UserProps = Omit<DbUser, "id" | "orgId" | "org">;
+export type CreateUserProps = Pick<
+  DbUser,
+  "fullName" | "email" | "password" | "role"
+>;
+export type UpdateUserProps = Partial<CreateUserProps>;
+export type UserId = string | undefined;
+
+export const userRoles = ["admin", "org-admin", "issuer"] as const;
+export type UserRole = (typeof userRoles)[number];
+
+export const userStatuses = ["active", "inactive", "banned"] as const;
+export type UserStatus = (typeof userStatuses)[number];
 
 export class User {
   private _props: UserProps;
   public readonly id: UserId;
-  public readonly publicId: UserPublicId;
 
-  private constructor(props: UserProps, id: UserId, publicId: UserPublicId) {
+  private constructor(props: UserProps, id: UserId) {
     this._props = props;
     this.id = id;
-    this.publicId = publicId;
   }
 
-  static async signUp(data: SignUpSchema): Promise<User> {
+  static signUp(data: Omit<CreateUserProps, "role">): User {
     return new User(
       {
         ...data,
-        password: (await Password.create(data.password)).value,
         role: "org-admin",
         confirmedAt: null,
         status: "inactive",
         createdAt: new Date(),
         updatedAt: null,
       },
-      undefined,
       undefined
     );
   }
 
-  static async create(data: UserSchema): Promise<User> {
+  static create(data: CreateUserProps): User {
     return new User(
       {
         ...data,
-        password: (await Password.random()).value,
         confirmedAt: null,
         status: "inactive",
         createdAt: new Date(),
         updatedAt: null,
       },
-      undefined,
       undefined
     );
   }
 
   static fromProps(data: DbUser): User {
-    return new User(data, data.id, data.publicId);
+    return new User(data, data.id);
   }
 
   get props(): UserProps {
     return this._props;
   }
 
-  async login(password: string): Promise<void> {
-    const isEqual = await Password.fromValue(this._props.password).compare(
-      password
-    );
-
-    if (!isEqual) {
-      throw new AuthError("invalidCredentials");
-    }
-  }
-
-  async resetPassword(password: string): Promise<void> {
+  resetPassword(password: string): void {
     this._props = {
       ...this._props,
-      password: (await Password.create(password)).value,
+      password,
       updatedAt: new Date(),
     };
   }
 
-  update(data: UserSchema): void {
+  update(data: UpdateUserProps): void {
     this._props = { ...this._props, ...data, updatedAt: new Date() };
   }
 
@@ -91,5 +81,29 @@ export class User {
 
   isAdmin(): boolean {
     return this._props.role === "admin";
+  }
+
+  ban(): void {
+    this._props = {
+      ...this._props,
+      status: "banned",
+      updatedAt: new Date(),
+    };
+  }
+
+  activate(): void {
+    this._props = {
+      ...this._props,
+      status: "active",
+      updatedAt: new Date(),
+    };
+  }
+
+  deactivate(): void {
+    this._props = {
+      ...this._props,
+      status: "inactive",
+      updatedAt: new Date(),
+    };
   }
 }

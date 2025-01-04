@@ -1,26 +1,18 @@
 import { relations } from "drizzle-orm";
-import {
-  pgTable,
-  integer,
-  varchar,
-  timestamp,
-  pgEnum,
-} from "drizzle-orm/pg-core";
-import { users } from "./users";
-import { orgs } from "./orgs";
+import { pgTable, varchar, timestamp, pgEnum, uuid } from "drizzle-orm/pg-core";
+import { userTable } from "./users";
+import { orgTable } from "./orgs";
+import { tokenContexts } from "@/lib/models/token";
 
-export const userTokenContext = pgEnum("userTokenContext", [
-  "confirmation",
-  "reset-password",
-]);
+export const userTokenContext = pgEnum("userTokenContext", tokenContexts);
 
-export const userTokens = pgTable("userTokens", {
-  id: integer().primaryKey().generatedByDefaultAsIdentity(),
-  userId: integer()
-    .references(() => users.id, { onDelete: "cascade" })
+export const userTokenTable = pgTable("userTokens", {
+  id: uuid().primaryKey().notNull().defaultRandom(),
+  userId: uuid()
+    .references(() => userTable.id, { onDelete: "cascade" })
     .notNull(),
-  orgId: integer()
-    .references(() => orgs.id)
+  orgId: uuid()
+    .references(() => orgTable.id)
     .notNull(),
   token: varchar({ length: 255 }).notNull().unique(),
   context: userTokenContext().notNull(),
@@ -30,15 +22,15 @@ export const userTokens = pgTable("userTokens", {
   updatedAt: timestamp({ withTimezone: true }),
 });
 
-export const userTokensRelations = relations(userTokens, ({ one }) => ({
-  user: one(users, {
-    fields: [userTokens.userId],
-    references: [users.id],
+export const userTokenTableRelations = relations(userTokenTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [userTokenTable.userId],
+    references: [userTable.id],
   }),
-  org: one(orgs, {
-    fields: [userTokens.orgId],
-    references: [orgs.id],
+  org: one(orgTable, {
+    fields: [userTokenTable.orgId],
+    references: [orgTable.id],
   }),
 }));
 
-export type UserToken = typeof userTokens.$inferSelect;
+export type DbUserToken = typeof userTokenTable.$inferSelect;

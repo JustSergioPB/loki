@@ -1,4 +1,4 @@
-import { UserWithOrg } from "@/db/schema/users";
+import { DbUser } from "@/db/schema/users";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +18,7 @@ import ConfirmDialog from "@/components/app/confirm-dialog";
 import { removeUser } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 
-export default function UserDialog({ user }: { user: UserWithOrg }) {
+export default function UserDialog({ user }: { user: DbUser }) {
   const t = useTranslations("User");
   const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();
@@ -64,7 +64,7 @@ export default function UserDialog({ user }: { user: UserWithOrg }) {
   }
 
   return (
-    <Dialog open={!!action && Number(id) === user.id} onOpenChange={onClose}>
+    <Dialog open={!!action && id === user.id} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">

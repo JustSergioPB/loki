@@ -1,13 +1,12 @@
-import { SchemaVersion as DbSchemaVersion } from "@/db/schema/schema-versions";
+import { DbSchemaVersion } from "@/db/schema/schema-versions";
 import { SchemaSchema } from "../schemas/schema.schema";
 import { SchemaVersionError } from "../errors/schema-version.error";
 
 export type SchemaVersionProps = Omit<
   DbSchemaVersion,
-  "id" | "publicId" | "orgId" | "schemaId"
+  "id" | "orgId" | "schemaId"
 >;
-export type SchemaVersionId = number | undefined;
-export type SchemaVersionPublicId = string | undefined;
+export type SchemaVersionId = string | undefined;
 export type JsonSchema = object;
 export type CredentialSchemaProof = {
   properties: {
@@ -83,19 +82,20 @@ export type CredentialSchema = {
   type: "object";
 };
 
+export const schemaVersionStatuses = [
+  "draft",
+  "published",
+  "archived",
+] as const;
+export type SchemaVersionStatus = (typeof schemaVersionStatuses)[number];
+
 export class SchemaVersion {
   private _props: SchemaVersionProps;
   public readonly id: SchemaVersionId;
-  public readonly publicId: SchemaVersionPublicId;
 
-  private constructor(
-    props: SchemaVersionProps,
-    id: SchemaVersionId,
-    publicId: SchemaVersionPublicId
-  ) {
+  private constructor(props: SchemaVersionProps, id: SchemaVersionId) {
     this._props = props;
     this.id = id;
-    this.publicId = publicId;
   }
 
   static create(data: SchemaSchema): SchemaVersion {
@@ -106,7 +106,6 @@ export class SchemaVersion {
         updatedAt: null,
         status: "draft",
       },
-      undefined,
       undefined
     );
   }
@@ -115,8 +114,7 @@ export class SchemaVersion {
     const { content, ...rest } = data;
     return new SchemaVersion(
       { ...rest, content: content as CredentialSchema },
-      data.id,
-      data.publicId
+      data.id
     );
   }
 

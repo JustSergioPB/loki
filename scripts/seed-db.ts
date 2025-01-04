@@ -1,136 +1,188 @@
 import { db } from "@/db";
-import { OrgCreate, orgs } from "@/db/schema/orgs";
-import {
-  SchemaVersionCreate,
-  schemaVersions,
-} from "@/db/schema/schema-versions";
-import { SchemaCreate, schemas } from "@/db/schema/schemas";
-import { UserCreate, users } from "@/db/schema/users";
-import { SchemaVersion } from "@/lib/models/schema-version";
+import { orgTable } from "@/db/schema/orgs";
+import { schemaVersionTable } from "@/db/schema/schema-versions";
+import { schemaTable } from "@/db/schema/schemas";
+import { userTable } from "@/db/schema/users";
+import { CreateOrgProps, Org } from "@/lib/models/org";
+import { orgTierTypes, TIER_MAP } from "@/lib/models/org-tier";
+import { Schema } from "@/lib/models/schema";
+import { CreateUserProps, User, userRoles } from "@/lib/models/user";
 import { faker } from "@faker-js/faker";
-import { eq } from "drizzle-orm";
 import { exit } from "process";
 
-function generateRandomUser(orgId: number): UserCreate {
+type Tenant = {
+  org: Org;
+  users: User[];
+  schemas: Schema[];
+};
+
+function generateRandomUser(): CreateUserProps {
   return {
-    createdAt: faker.date.recent(),
-    updatedAt: faker.date.recent(),
-    orgId: orgId,
-    role: faker.helpers.arrayElement(["org-admin", "issuer"]),
-    status: faker.helpers.arrayElement(["active", "inactive", "banned"]),
+    role: faker.helpers.arrayElement(userRoles.slice(1)),
     fullName: faker.person.fullName(),
     email: faker.internet.email(),
     password: faker.internet.password(),
-    confirmedAt: faker.date.recent(),
   };
 }
 
-function generateRandomOrg(): OrgCreate {
+function generateRandomOrg(): CreateOrgProps {
   return {
-    createdAt: faker.date.recent(),
-    updatedAt: faker.date.recent(),
     name: faker.company.name(),
-    verifiedAt: faker.date.recent(),
+    tier: faker.helpers.arrayElement(orgTierTypes.slice(1)),
   };
 }
 
-function generateRandomSchema(orgId: number): SchemaCreate {
-  return {
-    title: faker.lorem.words(faker.number.int({ min: 1, max: 4 })),
-    orgId,
-    createdAt: faker.date.recent(),
-    updatedAt: faker.date.recent(),
-  };
+function generateRandomSchemaVersion(): Schema {
+  const randValidity = Math.random();
+  const schema = Schema.create({
+    title: faker.lorem.words({ min: 2, max: 4 }),
+    description:
+      Math.random() > 0.5
+        ? faker.lorem.sentences({ min: 1, max: 3 })
+        : undefined,
+    validFrom: randValidity ? faker.date.recent() : undefined,
+    validUntil: randValidity ? faker.date.future() : undefined,
+    content: {
+      type: "string",
+      title: faker.animal.type(),
+      format: faker.helpers.arrayElement([
+        "email",
+        "date",
+        "datetime",
+        "time",
+        "uri",
+      ]),
+    },
+  });
+  const rand = Math.random();
+  const latest = schema.getLatestVersion();
+
+  if (rand > 0.4) {
+    latest.publish();
+  } else if (rand > 0.9) {
+    latest.archive();
+  }
+
+  return schema;
 }
 
-function generateRandomSchemaVersion(
-  title: string,
-  orgId: number,
-  schemaId: number
-): SchemaVersionCreate {
+function generateStachelabs(): Tenant {
+  const org = Org.create({ name: process.env.ORG_NAME!, tier: "unbound" });
+
+  org.verify();
+
+  const user = User.create({
+    email: process.env.USER_EMAIL!,
+    fullName: process.env.USER_FULLNAME!,
+    role: "admin",
+    password: process.env.USER_PASSWORD!,
+  });
+
+  user.confirm();
+
   return {
-    content: SchemaVersion.create({
-      title,
-      description: faker.lorem.paragraph({ min: 1, max: 3 }),
-      content: {
-        type: "string",
-        title: faker.animal.type(),
-        format: faker.helpers.arrayElement([
-          "email",
-          "date",
-          "datetime",
-          "time",
-          "uri",
-        ]),
+    org,
+    users: [user],
+    schemas: Array.from(
+      {
+        length: faker.number.int({ min: 1, max: 20 }),
       },
-    }).props.content,
-    orgId,
-    schemaId,
-    status: faker.helpers.arrayElement(["archived", "published"]),
-    createdAt: faker.date.recent(),
-    updatedAt: faker.date.recent(),
+      () => generateRandomSchemaVersion()
+    ),
+  };
+}
+
+function generateTenant(): Tenant {
+  const org = Org.create(generateRandomOrg());
+  const users: User[] = [User.signUp(generateRandomUser())];
+  const schemas: Schema[] = [];
+
+  if (Math.random() > 0.2) {
+    org.verify();
+
+    users.push(
+      ...Array.from(
+        {
+          length: faker.number.int({
+            min: 2,
+            max: TIER_MAP[org.props.tier].users,
+          }),
+        },
+        () => {
+          const user = User.create(generateRandomUser());
+          const randStatus = Math.random();
+          if (randStatus > 0.2) {
+            user.confirm();
+          }
+          if (randStatus > 0.7) {
+            user.deactivate();
+          }
+          if (randStatus > 0.9) {
+            user.ban();
+          }
+          return user;
+        }
+      )
+    );
+
+    schemas.push(
+      ...Array.from(
+        {
+          length: faker.number.int({
+            min: 1,
+            max: TIER_MAP[org.props.tier].schemas,
+          }),
+        },
+        () => generateRandomSchemaVersion()
+      )
+    );
+  }
+
+  return {
+    org,
+    users,
+    schemas,
   };
 }
 
 async function main() {
-  await db.transaction(async (tx) => {
-    const STACHELABS: OrgCreate = {
-      name: process.env.ORG_NAME! as string,
-      verifiedAt: faker.date.recent(),
-    };
+  const tenants = [generateStachelabs()];
+  const randTenants = Array.from({ length: 10 }, () => generateTenant());
+  tenants.push(...randTenants);
 
-    const fakeOrgs = Array.from({ length: 10 }, () => generateRandomOrg());
+  await db.transaction(async (trx) => {
+    await Promise.all(
+      tenants.map(async (tenant) => {
+        const [{ id: orgId }] = await trx
+          .insert(orgTable)
+          .values(tenant.org.props)
+          .returning();
 
-    const insertedOrgs = await tx
-      .insert(orgs)
-      .values([STACHELABS, ...fakeOrgs])
-      .returning();
+        await trx
+          .insert(userTable)
+          .values(tenant.users.map((u) => ({ ...u.props, orgId })));
 
-    const stachelabsQuery = await tx.query.orgs.findFirst({
-      where: eq(orgs.name, process.env.ORG_NAME! as string),
-    });
+        if (tenant.schemas.length > 0) {
+          const insertedSchemas = await trx
+            .insert(schemaTable)
+            .values(tenant.schemas.map((s) => ({ ...s.props, orgId })))
+            .returning();
 
-    const fakeUsers = Array.from({ length: 100 }, () =>
-      generateRandomUser(faker.helpers.arrayElement(insertedOrgs).id)
-    );
+          const schemaVersions = insertedSchemas.map((s) => {
+            const schema = tenant.schemas.find(
+              (sch) => sch.props.title === s.title
+            );
+            return {
+              ...schema!.getLatestVersion().props,
+              schemaId: s.id,
+              orgId,
+            };
+          });
 
-    const myUser: UserCreate = {
-      orgId: stachelabsQuery!.id,
-      role: "admin",
-      status: "active",
-      confirmedAt: faker.date.recent(),
-      fullName: process.env.USER_FULLNAME! as string,
-      email: process.env.USER_EMAIL! as string,
-      password: process.env.USER_PASSWORD! as string,
-    };
-
-    await tx.insert(users).values([myUser, ...fakeUsers]);
-
-    const fakeSchemas = Array.from({ length: 500 }, () =>
-      generateRandomSchema(faker.helpers.arrayElement(insertedOrgs).id)
-    );
-
-    const insertedSchemas = await tx
-      .insert(schemas)
-      .values(fakeSchemas)
-      .returning();
-
-    const fakeSchemaVersions = insertedSchemas
-      .map((schema) => {
-        const arr = Array.from(
-          { length: faker.number.int({ min: 1, max: 5 }) },
-          () =>
-            generateRandomSchemaVersion(schema.title, schema.orgId, schema.id)
-        );
-
-        if (Math.random() > 0.5) {
-          arr[arr.length - 1].status = "draft";
+          await trx.insert(schemaVersionTable).values(schemaVersions);
         }
-        return arr;
       })
-      .reduce((acc, arr) => acc.concat(arr), []);
-
-    await tx.insert(schemaVersions).values(fakeSchemaVersions);
+    );
   });
 
   exit(0);

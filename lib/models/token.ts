@@ -1,10 +1,13 @@
 import crypto from "crypto";
-import { UserToken as DbToken } from "@/db/schema/user-tokens";
+import { DbUserToken } from "@/db/schema/user-tokens";
 import { TokenError } from "../errors/token.error";
 
-export type TokenProps = Omit<DbToken, "id" | "publicId" | "orgId" | "userId">;
+export type TokenProps = Omit<DbUserToken, "id" | "orgId" | "userId">;
 export type CreateTokenProps = Pick<TokenProps, "sentTo" | "context">;
-export type TokenId = number | undefined;
+export type TokenId = string | undefined;
+
+export const tokenContexts = ["confirmation", "reset-password"] as const;
+export type TokenContext = (typeof tokenContexts)[number];
 
 export class Token {
   private _props: TokenProps;
@@ -31,7 +34,7 @@ export class Token {
     );
   }
 
-  static fromProps(data: DbToken): Token {
+  static fromProps(data: DbUserToken): Token {
     return new Token(data, data.id, data.updatedAt);
   }
 
@@ -39,7 +42,7 @@ export class Token {
     return this._props;
   }
 
-  burn(context: string): void {
+  burn(context: TokenContext): void {
     if (new Date() > this._props.expiresAt) {
       throw new TokenError("expired");
     }

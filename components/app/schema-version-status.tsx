@@ -1,8 +1,9 @@
+import { SchemaVersionStatus as SchemaVersionStatuses } from "@/lib/models/schema-version";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  status: "draft" | "published" | "archived";
+  status: SchemaVersionStatuses;
 }
 
 export default function SchemaVersionStatus({ status, children }: Props) {

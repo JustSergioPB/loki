@@ -1,50 +1,31 @@
 import { relations } from "drizzle-orm";
-import {
-  integer,
-  jsonb,
-  pgEnum,
-  pgTable,
-  timestamp,
-} from "drizzle-orm/pg-core";
-import { orgs } from "./orgs";
-import { users } from "./users";
+import { jsonb, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { orgTable } from "./orgs";
+import { userTable } from "./users";
+import { auditableEntities, auditActions } from "@/lib/models/audit-log";
 
-export const auditAction = pgEnum("auditAction", [
-  "create",
-  "update",
-  "delete",
-]);
-export const auditableEntity = pgEnum("auditableEntity", [
-  "org",
-  "user",
-  "certificate",
-  "schema",
-  "schemaVersion",
-  "credential",
-  "bridge",
-  "emailBridge",
-  "userSettings",
-]);
+export const auditAction = pgEnum("auditAction", auditActions);
+export const auditableEntity = pgEnum("auditableEntity", auditableEntities);
 
-export const auditLogs = pgTable("auditLogs", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  entityId: integer().notNull(),
+export const auditLogTable = pgTable("auditLogs", {
+  id: uuid().primaryKey().notNull().defaultRandom(),
+  entityId: uuid().notNull(),
   entityType: auditableEntity().notNull(),
   action: auditAction().notNull(),
-  userId: integer().references(() => users.id, { onDelete: "set null" }),
-  orgId: integer().references(() => orgs.id, { onDelete: "set null" }),
+  userId: uuid().references(() => userTable.id, { onDelete: "set null" }),
+  orgId: uuid().references(() => orgTable.id, { onDelete: "set null" }),
   value: jsonb(),
   metadata: jsonb(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
-  user: one(users, {
-    fields: [auditLogs.userId],
-    references: [users.id],
+export const auditLogsRelations = relations(auditLogTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [auditLogTable.userId],
+    references: [userTable.id],
   }),
-  org: one(orgs, {
-    fields: [auditLogs.orgId],
-    references: [orgs.id],
+  org: one(orgTable, {
+    fields: [auditLogTable.orgId],
+    references: [orgTable.id],
   }),
 }));

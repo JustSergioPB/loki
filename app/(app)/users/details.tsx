@@ -8,7 +8,6 @@ import {
   Calendar,
   Clock,
   Database,
-  Globe,
 } from "lucide-react";
 import Field from "@/components/app/field";
 import UserStatus from "@/components/app/user-status";
@@ -16,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFullInitials } from "@/lib/helpers/user";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { UserWithOrg } from "@/db/schema/users";
+import { DbUser } from "@/db/schema/users";
 import {
   DialogDescription,
   DialogHeader,
@@ -25,7 +24,7 @@ import {
 import { useTranslations } from "next-intl";
 
 type Props = {
-  user: UserWithOrg;
+  user: DbUser;
   editHref: string;
   deleteHref: string;
 };
@@ -79,16 +78,13 @@ export default function UserDetails({ user, editHref, deleteHref }: Props) {
           </UserStatus>
         </Field>
         <Field icon={<Shield className="size-4" />} label={t("role")}>
-          <UserRole role={user.role}>{t(`roles.${user.role}`)}</UserRole>
+          <UserRole userRole={user.role}>{t(`roles.${user.role}`)}</UserRole>
         </Field>
         <Field icon={<Clock className="size-4" />} label={t("confirmedAt")}>
           {user.confirmedAt?.toLocaleString()}
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
           {user.id}
-        </Field>
-        <Field icon={<Globe className="size-4" />} label={tGeneric("publicId")}>
-          {user.publicId}
         </Field>
         <Field
           icon={<Calendar className="size-4" />}

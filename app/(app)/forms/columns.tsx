@@ -3,12 +3,12 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import SchemaDialog from "./dialog";
-import { SchemaWithVersions } from "@/db/schema/schemas";
+import { DbSchema } from "@/db/schema/schemas";
 import { Schema } from "@/lib/models/schema";
 import { Badge } from "@/components/ui/badge";
 import SchemaVersionStatus from "@/components/app/schema-version-status";
 
-export const schemaColumns: ColumnDef<SchemaWithVersions>[] = [
+export const schemaColumns: ColumnDef<DbSchema>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
@@ -48,7 +48,7 @@ export const schemaColumns: ColumnDef<SchemaWithVersions>[] = [
   {
     id: "actions",
     cell: function CellComponent({ row }) {
-      return <SchemaDialog schemaWithVersions={row.original} />;
+      return <SchemaDialog schema={row.original} />;
     },
   },
 ];

@@ -1,8 +1,9 @@
+import { UserRole as UserRoles } from "@/lib/models/user";
 import { PenTool, Shield, ShieldPlus } from "lucide-react";
 import React from "react";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  role: "admin" | "org-admin" | "issuer";
+  userRole: UserRoles;
 }
 
 export default function UserRole({ role, children }: Props) {

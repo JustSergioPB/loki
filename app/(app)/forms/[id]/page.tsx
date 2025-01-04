@@ -1,10 +1,10 @@
 import { db } from "@/db";
-import { schemas } from "@/db/schema/schemas";
+import { schemaTable } from "@/db/schema/schemas";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getUser } from "@/lib/helpers/dal";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
-import { schemaVersions } from "@/db/schema/schema-versions";
+import { schemaVersionTable } from "@/db/schema/schema-versions";
 import { getAction } from "@/lib/helpers/search-params";
 import SchemaForm from "../form";
 import SchemaDetails from "./details";
@@ -16,7 +16,7 @@ export default async function Schema({
   params: Promise<{ id: string }>;
   searchParams: SearchParams;
 }) {
-  const schemaId = Number((await params).id);
+  const schemaId = (await params).id;
 
   const user = await getUser();
 
@@ -26,9 +26,9 @@ export default async function Schema({
 
   const queryResult = await db
     .select()
-    .from(schemas)
-    .where(and(eq(schemas.orgId, user.orgId), eq(schemas.id, schemaId)))
-    .innerJoin(schemaVersions, eq(schemaVersions.schemaId, schemaId));
+    .from(schemaTable)
+    .where(and(eq(schemaTable.orgId, user.orgId), eq(schemaTable.id, schemaId)))
+    .innerJoin(schemaVersionTable, eq(schemaVersionTable.schemaId, schemaId));
 
   if (!queryResult) {
     notFound();
@@ -45,7 +45,7 @@ export default async function Schema({
     />
   ) : (
     <SchemaDetails
-      schemaWithVersions={{
+      schema={{
         ...queryResult[0].schemas,
         versions: queryResult.map((row) => row.schemaVersions),
       }}

@@ -1,23 +1,21 @@
 import { relations } from "drizzle-orm";
 import {
-  integer,
   pgTable,
   timestamp,
   uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { orgs } from "./orgs";
-import { SchemaVersion, schemaVersions } from "./schema-versions";
+import { orgTable } from "./orgs";
+import { DbSchemaVersion, schemaVersionTable } from "./schema-versions";
 
-export const schemas = pgTable(
+export const schemaTable = pgTable(
   "schemas",
   {
-    id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    publicId: uuid().notNull().defaultRandom(),
+    id: uuid().primaryKey().notNull().defaultRandom(),
     title: varchar({ length: 255 }).notNull(),
-    orgId: integer()
-      .references(() => orgs.id, { onDelete: "cascade" })
+    orgId: uuid()
+      .references(() => orgTable.id, { onDelete: "cascade" })
       .notNull(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }),
@@ -27,14 +25,15 @@ export const schemas = pgTable(
   })
 );
 
-export const schemasRelations = relations(schemas, ({ one, many }) => ({
-  org: one(orgs, {
-    fields: [schemas.orgId],
-    references: [orgs.id],
+export const schemaTableRelations = relations(schemaTable, ({ one, many }) => ({
+  org: one(orgTable, {
+    fields: [schemaTable.orgId],
+    references: [orgTable.id],
   }),
-  versions: many(schemaVersions),
+  versions: many(schemaVersionTable),
 }));
 
-export type Schema = typeof schemas.$inferSelect;
-export type SchemaCreate = typeof schemas.$inferInsert;
-export type SchemaWithVersions = Schema & { versions: SchemaVersion[] };
+export type DbSchema = typeof schemaTable.$inferSelect & {
+  versions: DbSchemaVersion[];
+};
+export type DbSchemaCreate = typeof schemaTable.$inferInsert;

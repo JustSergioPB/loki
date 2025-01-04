@@ -17,7 +17,7 @@ import { SchemaSchema, schemaSchema } from "@/lib/schemas/schema.schema";
 import { createSchema, updateSchema } from "@/lib/actions/schema.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
-import { SchemaWithVersions } from "@/db/schema/schemas";
+import { DbSchema } from "@/db/schema/schemas";
 import { Schema } from "@/lib/models/schema";
 import { Textarea } from "@/components/ui/textarea";
 import InfoPanel from "@/components/app/info-panel";
@@ -26,7 +26,7 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 
 type Props = {
-  schema?: SchemaWithVersions;
+  schema?: DbSchema;
 };
 
 export default function SchemaForm({ schema }: Props) {

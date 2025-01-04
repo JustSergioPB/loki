@@ -3,13 +3,14 @@
 import { getTranslations } from "next-intl/server";
 import { ActionResult } from "../generics/action-result";
 import { UserSchema } from "../schemas/user.schema";
-import { users } from "@/db/schema/users";
+import { userTable } from "@/db/schema/users";
 import { db } from "@/db";
 import { User } from "../models/user";
 import { authorize } from "../helpers/dal";
-import { auditLogs } from "@/db/schema/audit-logs";
+import { auditLogTable } from "@/db/schema/audit-logs";
 import { and, eq } from "drizzle-orm";
 import { UserError } from "../errors/user.error";
+import { PasswordProvider } from "@/providers/password.provider";
 
 //TODO: Add correct error messages on catch
 
@@ -19,17 +20,18 @@ export async function createUser(
   const t = await getTranslations("User");
   try {
     const authUser = await authorize(["org-admin", "admin"]);
-    const user = await User.create(data);
+    const randomPassword = await PasswordProvider.random();
+    const user = await User.create({ ...data, password: randomPassword });
 
     await db.transaction(async (tx) => {
       const [insertedUser] = await tx
-        .insert(users)
+        .insert(userTable)
         .values({
           ...user.props,
           orgId: authUser.orgId,
         })
         .returning();
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: insertedUser.id,
         entityType: "user",
         value: insertedUser,
@@ -49,14 +51,14 @@ export async function createUser(
 }
 
 export async function updateUser(
-  id: number,
+  id: string,
   data: UserSchema
 ): Promise<ActionResult<void>> {
   const t = await getTranslations("User");
   try {
     const authUser = await authorize(["org-admin", "admin"]);
-    const user = await db.query.users.findFirst({
-      where: and(eq(users.id, id), eq(users.orgId, authUser.id)),
+    const user = await db.query.userTable.findFirst({
+      where: and(eq(userTable.id, id), eq(userTable.orgId, authUser.id)),
     });
 
     if (!user) {
@@ -68,12 +70,12 @@ export async function updateUser(
 
     await db.transaction(async (tx) => {
       const [updated] = await tx
-        .update(users)
+        .update(userTable)
         .set({ ...updatedUser.props })
-        .where(eq(users.id, id))
+        .where(eq(userTable.id, id))
         .returning();
 
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: id,
         entityType: "user",
         value: updated,
@@ -90,22 +92,24 @@ export async function updateUser(
   }
 }
 
-export async function removeUser(id: number): Promise<ActionResult<void>> {
+export async function removeUser(id: string): Promise<ActionResult<void>> {
   const t = await getTranslations("User");
   try {
     const authUser = await authorize(["org-admin", "admin"]);
 
     await db.transaction(async (tx) => {
       const [deleted] = await tx
-        .delete(users)
+        .delete(userTable)
         .where(
           and(
-            eq(users.id, id),
-            authUser.role === "admin" ? undefined : eq(users.orgId, authUser.id)
+            eq(userTable.id, id),
+            authUser.role === "admin"
+              ? undefined
+              : eq(userTable.orgId, authUser.id)
           )
         )
         .returning();
-      await tx.insert(auditLogs).values({
+      await tx.insert(auditLogTable).values({
         entityId: id,
         entityType: "user",
         value: deleted,

@@ -7,7 +7,7 @@ import { SearchParams } from "@/lib/generics/search-params";
 import { getParams } from "@/lib/helpers/search-params";
 import { redirect } from "next/navigation";
 import { count, desc } from "drizzle-orm";
-import { orgs } from "@/db/schema/orgs";
+import { orgTable } from "@/db/schema/orgs";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
 
@@ -27,14 +27,14 @@ export default async function Orgs({
 
   const queryResult = await db
     .select()
-    .from(orgs)
+    .from(orgTable)
     .limit(pageSize)
     .offset(page * pageSize)
-    .orderBy(desc(orgs.createdAt));
+    .orderBy(desc(orgTable.createdAt));
 
   const [{ count: countResult }] = await db
     .select({ count: count() })
-    .from(orgs);
+    .from(orgTable);
 
   return (
     <Page>

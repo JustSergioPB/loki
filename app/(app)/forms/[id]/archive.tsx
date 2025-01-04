@@ -3,7 +3,7 @@
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { SchemaWithVersions } from "@/db/schema/schemas";
+import { DbSchema } from "@/db/schema/schemas";
 import { archiveSchemaVersion } from "@/lib/actions/schema-version.actions";
 import { Schema } from "@/lib/models/schema";
 import { Archive } from "lucide-react";
@@ -12,17 +12,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function ArchiveSchemaVersion({
-  schemaWithVersions,
-}: {
-  schemaWithVersions: SchemaWithVersions;
-}) {
+export default function ArchiveSchemaVersion({ schema }: { schema: DbSchema }) {
   const t = useTranslations("SchemaVersion");
   const router = useRouter();
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
-  const schema = Schema.fromProps(schemaWithVersions);
-  const latest = schema.getLatestVersion();
+  const latest = Schema.fromProps(schema).getLatestVersion();
   const [isLoading, setIsLoading] = useState(false);
 
   async function onArchive() {
@@ -61,13 +56,13 @@ export default function ArchiveSchemaVersion({
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={schemaWithVersions.title}
+          keyword={schema.title}
           title={t("archiveTitle")}
           description={t("archiveDescription")}
           label={t("archiveLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={schemaWithVersions.id}
+          id={schema.id}
           variant="warning"
         />
       </DialogContent>
