@@ -20,11 +20,11 @@ export class Schema {
     this.versions = versions;
   }
 
-  static create(data: SchemaSchema): Schema {
-    const version = SchemaVersion.create(data);
+  static create(props: SchemaSchema): Schema {
+    const version = SchemaVersion.create(props);
     return new Schema(
       {
-        title: data.title,
+        title: props.title,
         createdAt: new Date(),
         updatedAt: null,
       },
@@ -33,28 +33,28 @@ export class Schema {
     );
   }
 
-  static fromProps(data: DbSchema): Schema {
-    const versions = data.versions.map((v) => SchemaVersion.fromProps(v));
-    return new Schema(data, data.id, versions);
+  static fromProps(props: DbSchema): Schema {
+    const versions = props.versions.map((v) => SchemaVersion.fromProps(v));
+    return new Schema(props, props.id, versions);
   }
 
   get props(): SchemaProps {
     return this._props;
   }
 
-  update(data: SchemaSchema): void {
+  update(props: SchemaSchema): void {
     const latestVersion = this.getLatestVersion();
 
     if (latestVersion.props.status === "draft") {
-      latestVersion.update(data);
+      latestVersion.update(props);
     } else {
-      const newVersion = SchemaVersion.create(data);
+      const newVersion = SchemaVersion.create(props);
       this.versions.push(newVersion);
     }
 
     this._props = {
       ...this._props,
-      title: data.title,
+      title: props.title,
       updatedAt: new Date(),
     };
   }

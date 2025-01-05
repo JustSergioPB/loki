@@ -1,5 +1,5 @@
 import FormHeader from "@/components/app/form-header";
-import ConfirmButton from "./confirm-button";
+import ConfirmForm from "./confirm-form";
 import { getTranslations } from "next-intl/server";
 
 export default async function ConfirmAccount({
@@ -13,7 +13,7 @@ export default async function ConfirmAccount({
   return (
     <>
       <FormHeader title={t("title")} subtitle={t("subtitle")} />
-      <ConfirmButton token={token} />
+      <ConfirmForm token={token} />
     </>
   );
 }

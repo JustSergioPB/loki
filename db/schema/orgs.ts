@@ -4,13 +4,16 @@ import { userTable } from "./users";
 import { userTokenTable } from "./user-tokens";
 import { auditLogTable } from "./audit-logs";
 import { orgTierTypes } from "@/lib/models/org-tier";
+import { orgStatus } from "@/lib/models/org";
 
 export const orgTierType = pgEnum("orgTier", orgTierTypes);
+export const orgStatuses = pgEnum("orgStatus", orgStatus);
 
 export const orgTable = pgTable("orgs", {
   id: uuid().primaryKey().notNull().defaultRandom(),
   name: varchar({ length: 255 }).notNull().unique(),
   tier: orgTierType().notNull().default("starter"),
+  status: orgStatuses().notNull().default("onboarding"),
   verifiedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true }),

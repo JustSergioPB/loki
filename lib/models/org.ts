@@ -4,6 +4,9 @@ export type OrgProps = Omit<DbOrg, "id">;
 export type OrgId = string | undefined;
 export type CreateOrgProps = Pick<DbOrg, "name" | "tier">;
 
+export const orgStatus = ["onboarding", "verifying", "verified"] as const;
+export type OrgStatus = (typeof orgStatus)[number];
+
 export class Org {
   private _props: OrgProps;
   public readonly id: OrgId;
@@ -13,10 +16,11 @@ export class Org {
     this.id = id;
   }
 
-  static create(data: CreateOrgProps): Org {
+  static create(props: CreateOrgProps): Org {
     return new Org(
       {
-        ...data,
+        ...props,
+        status: "onboarding",
         verifiedAt: null,
         createdAt: new Date(),
         updatedAt: null,
@@ -25,8 +29,8 @@ export class Org {
     );
   }
 
-  static fromProps(data: DbOrg): Org {
-    return new Org(data, data.id);
+  static fromProps(props: DbOrg): Org {
+    return new Org(props, props.id);
   }
 
   get props(): OrgProps {
@@ -36,6 +40,7 @@ export class Org {
   verify(): void {
     this._props = {
       ...this._props,
+      status: "verified",
       verifiedAt: new Date(),
       updatedAt: new Date(),
     };

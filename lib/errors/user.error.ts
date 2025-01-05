@@ -1,4 +1,8 @@
-export const userErrorMessages = ["notFound", "alreadyExists"] as const;
+export const userErrorMessages = [
+  "notFound",
+  "alreadyExists",
+  "missingPosition",
+] as const;
 export type UserErrorMessage = (typeof userErrorMessages)[number];
 
 export class UserError extends Error {

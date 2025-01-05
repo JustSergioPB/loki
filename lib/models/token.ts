@@ -6,7 +6,7 @@ export type TokenProps = Omit<DbUserToken, "id" | "orgId" | "userId">;
 export type CreateTokenProps = Pick<TokenProps, "sentTo" | "context">;
 export type TokenId = string | undefined;
 
-export const tokenContexts = ["confirmation", "reset-password"] as const;
+export const tokenContexts = ["confirmation", "reset-password", "invitation"] as const;
 export type TokenContext = (typeof tokenContexts)[number];
 
 export class Token {
@@ -20,10 +20,10 @@ export class Token {
     this.updatedAt = updatedAt;
   }
 
-  static create(data: CreateTokenProps): Token {
+  static create(props: CreateTokenProps): Token {
     return new Token(
       {
-        ...data,
+        ...props,
         token: crypto.randomBytes(32).toString("hex"),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         createdAt: new Date(),
@@ -34,8 +34,8 @@ export class Token {
     );
   }
 
-  static fromProps(data: DbUserToken): Token {
-    return new Token(data, data.id, data.updatedAt);
+  static fromProps(props: DbUserToken): Token {
+    return new Token(props, props.id, props.updatedAt);
   }
 
   get props(): TokenProps {

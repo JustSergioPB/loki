@@ -27,6 +27,7 @@ export const userTable = pgTable(
     fullName: varchar({ length: 255 }).notNull(),
     email: varchar({ length: 255 }).notNull().unique(),
     password: varchar({ length: 255 }).notNull(),
+    position: varchar(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }),
     confirmedAt: timestamp({ withTimezone: true }),

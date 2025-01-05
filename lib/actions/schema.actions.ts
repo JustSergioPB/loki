@@ -43,23 +43,24 @@ export async function createSchema(
         })
         .returning();
 
-      await tx.insert(auditLogTable).values({
-        entityId: insertedSchema.id,
-        entityType: "schema",
-        action: "create",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: insertedSchema,
-      });
-
-      await tx.insert(auditLogTable).values({
-        entityId: insertedSchemaVersion.id,
-        entityType: "schemaVersion",
-        action: "create",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: insertedSchemaVersion,
-      });
+      await tx.insert(auditLogTable).values([
+        {
+          entityId: insertedSchema.id,
+          entityType: "schema",
+          action: "create",
+          userId: authUser.id,
+          orgId: authUser.orgId,
+          value: insertedSchema,
+        },
+        {
+          entityId: insertedSchemaVersion.id,
+          entityType: "schemaVersion",
+          action: "create",
+          userId: authUser.id,
+          orgId: authUser.orgId,
+          value: insertedSchemaVersion,
+        },
+      ]);
     });
     return { success: { data: undefined, message: t("createSucceded") } };
   } catch (error) {
@@ -147,15 +148,6 @@ async function createSchemaVersion(
       .where(eq(schemaTable.id, schema.id!))
       .returning();
 
-    await tx.insert(auditLogTable).values({
-      entityId: schema.id!,
-      entityType: "schema",
-      action: "update",
-      userId: authUser.id,
-      orgId: authUser.orgId,
-      value: updatedSchema,
-    });
-
     const [insertedSchema] = await tx
       .insert(schemaVersionTable)
       .values({
@@ -165,14 +157,24 @@ async function createSchemaVersion(
       })
       .returning();
 
-    await tx.insert(auditLogTable).values({
-      entityId: insertedSchema.id,
-      entityType: "schemaVersion",
-      action: "create",
-      userId: authUser.id,
-      orgId: authUser.orgId,
-      value: insertedSchema,
-    });
+    await tx.insert(auditLogTable).values([
+      {
+        entityId: schema.id!,
+        entityType: "schema",
+        action: "update",
+        userId: authUser.id,
+        orgId: authUser.orgId,
+        value: updatedSchema,
+      },
+      {
+        entityId: insertedSchema.id,
+        entityType: "schemaVersion",
+        action: "create",
+        userId: authUser.id,
+        orgId: authUser.orgId,
+        value: insertedSchema,
+      },
+    ]);
   });
 }
 
@@ -190,15 +192,6 @@ async function updateSchemaVersion(
       .where(eq(schemaTable.id, schema.id!))
       .returning();
 
-    await tx.insert(auditLogTable).values({
-      entityId: schema.id!,
-      entityType: "schema",
-      action: "update",
-      userId: authUser.id,
-      orgId: authUser.orgId,
-      value: updatedSchema,
-    });
-
     const [updatedVersion] = await tx
       .update(schemaVersionTable)
       .set({
@@ -207,13 +200,23 @@ async function updateSchemaVersion(
       .where(eq(schemaVersionTable.id, version.id!))
       .returning();
 
-    await tx.insert(auditLogTable).values({
-      entityId: updatedVersion.id,
-      entityType: "schemaVersion",
-      action: "update",
-      userId: authUser.id,
-      orgId: authUser.orgId,
-      value: updatedVersion,
-    });
+    await tx.insert(auditLogTable).values([
+      {
+        entityId: schema.id!,
+        entityType: "schema",
+        action: "update",
+        userId: authUser.id,
+        orgId: authUser.orgId,
+        value: updatedSchema,
+      },
+      {
+        entityId: updatedVersion.id,
+        entityType: "schemaVersion",
+        action: "update",
+        userId: authUser.id,
+        orgId: authUser.orgId,
+        value: updatedVersion,
+      },
+    ]);
   });
 }

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import OrgDialog from "./dialog";
 import { DbOrg } from "@/db/schema/orgs";
 import OrgTier from "@/components/app/org-tier";
+import OrgStatus from "@/components/app/org-status";
 
 export const userColumns: ColumnDef<DbOrg>[] = [
   {
@@ -25,6 +26,19 @@ export const userColumns: ColumnDef<DbOrg>[] = [
       const tier = row.original.tier;
 
       return <OrgTier tier={tier}>{t(`tiers.${tier}`)}</OrgTier>;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: function CellHeader() {
+      const t = useTranslations("Org");
+      return t("status");
+    },
+    cell: function CellComponent({ row }) {
+      const t = useTranslations("Org");
+      const status = row.original.status;
+
+      return <OrgStatus status={status}>{t(`statuses.${status}`)}</OrgStatus>;
     },
   },
   {

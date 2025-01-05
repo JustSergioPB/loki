@@ -24,6 +24,7 @@ import PageHeader from "@/components/app/page-header";
 import ArchiveSchemaVersion from "./archive";
 import DeleteSchemaVersion from "./delete";
 import PublishSchemaVersion from "./publish";
+import Date from "@/components/app/date";
 
 type Props = {
   schema: DbSchema;
@@ -34,7 +35,6 @@ export default function SchemaDetails({ schema }: Props) {
   const tSchema = useTranslations("Schema");
   const tGeneric = useTranslations("Generic");
   const latest = Schema.fromProps(schema).getLatestVersion();
-  const UNDEF_DATETIME = "--/--/----, --:--:-- --";
 
   return (
     <section className="p-6 h-full lg:w-[620px] space-y-6">
@@ -75,14 +75,10 @@ export default function SchemaDetails({ schema }: Props) {
           <p className="text-sm line-clamp-4">{latest.description}</p>
         </Field>
         <Field icon={<Timer className="size-4" />} label={t("validFrom")}>
-          {latest.validFrom
-            ? new Date(latest.validFrom).toLocaleString()
-            : UNDEF_DATETIME}
+          <Date date={latest.validFrom} />
         </Field>
         <Field icon={<TimerOff className="size-4" />} label={t("validUntil")}>
-          {latest.validUntil
-            ? new Date(latest.validUntil).toLocaleString()
-            : UNDEF_DATETIME}
+          <Date date={latest.validUntil} />
         </Field>
         <Field
           icon={<FileJson className="size-4" />}
@@ -110,13 +106,13 @@ export default function SchemaDetails({ schema }: Props) {
           icon={<Calendar className="size-4" />}
           label={tGeneric("updatedAt")}
         >
-          {schema.updatedAt?.toLocaleString()}
+          <Date date={schema.updatedAt} />
         </Field>
         <Field
           icon={<Clock className="size-4" />}
           label={tGeneric("createdAt")}
         >
-          {schema.createdAt.toLocaleString()}
+          <Date date={schema.createdAt} />
         </Field>
       </section>
     </section>

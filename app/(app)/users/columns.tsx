@@ -43,6 +43,13 @@ export const userColumns: ColumnDef<DbUser>[] = [
     },
   },
   {
+    accessorKey: "position",
+    header: function CellHeader() {
+      const t = useTranslations("User");
+      return t("position");
+    },
+  },
+  {
     accessorKey: "status",
     header: function CellHeader() {
       const t = useTranslations("User");

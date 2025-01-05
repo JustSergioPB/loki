@@ -47,6 +47,7 @@ export default function UserForm({ user, onSubmit }: Props) {
     defaultValues: {
       fullName: user?.fullName ?? "",
       email: user?.email ?? "",
+      position: user?.position ?? "",
       role: user?.role ?? "issuer",
     },
   });
@@ -121,6 +122,24 @@ export default function UserForm({ user, onSubmit }: Props) {
           />
           <FormField
             control={form.control}
+            name="position"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("position")}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t("positionPlaceholder")}
+                    type="text"
+                    required
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="role"
             render={({ field }) => (
               <FormItem>
@@ -135,7 +154,9 @@ export default function UserForm({ user, onSubmit }: Props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="org-admin">{t("roles.org-admin")}</SelectItem>
+                    <SelectItem value="org-admin">
+                      {t("roles.org-admin")}
+                    </SelectItem>
                     <SelectItem value="issuer">{t("roles.issuer")}</SelectItem>
                   </SelectContent>
                 </Select>

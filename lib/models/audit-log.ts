@@ -4,12 +4,9 @@ export type AuditAction = (typeof auditActions)[number];
 export const auditableEntities = [
   "org",
   "user",
-  "certificate",
+  "did",
   "schema",
   "schemaVersion",
-  "credential",
-  "bridge",
-  "emailBridge",
-  "userSettings",
+  "privateKey",
 ] as const;
 export type AuditableEntity = (typeof auditableEntities)[number];

@@ -3,7 +3,7 @@ import { DbUser } from "@/db/schema/users";
 export type UserProps = Omit<DbUser, "id" | "orgId" | "org">;
 export type CreateUserProps = Pick<
   DbUser,
-  "fullName" | "email" | "password" | "role"
+  "fullName" | "email" | "password" | "role" | "position"
 >;
 export type UpdateUserProps = Partial<CreateUserProps>;
 export type UserId = string | undefined;
@@ -23,24 +23,25 @@ export class User {
     this.id = id;
   }
 
-  static signUp(data: Omit<CreateUserProps, "role">): User {
+  static signUp(props: Omit<CreateUserProps, "position" | "role">): User {
     return new User(
       {
-        ...data,
+        ...props,
         role: "org-admin",
         confirmedAt: null,
         status: "inactive",
         createdAt: new Date(),
         updatedAt: null,
+        position: null,
       },
       undefined
     );
   }
 
-  static create(data: CreateUserProps): User {
+  static create(props: CreateUserProps): User {
     return new User(
       {
-        ...data,
+        ...props,
         confirmedAt: null,
         status: "inactive",
         createdAt: new Date(),
@@ -50,8 +51,8 @@ export class User {
     );
   }
 
-  static fromProps(data: DbUser): User {
-    return new User(data, data.id);
+  static fromProps(props: DbUser): User {
+    return new User(props, props.id);
   }
 
   get props(): UserProps {
@@ -66,13 +67,14 @@ export class User {
     };
   }
 
-  update(data: UpdateUserProps): void {
-    this._props = { ...this._props, ...data, updatedAt: new Date() };
+  update(props: UpdateUserProps): void {
+    this._props = { ...this._props, ...props, updatedAt: new Date() };
   }
 
-  confirm(): void {
+  confirm(position: string): void {
     this._props = {
       ...this._props,
+      position,
       confirmedAt: new Date(),
       status: "active",
       updatedAt: new Date(),

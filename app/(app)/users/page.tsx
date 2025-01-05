@@ -38,6 +38,7 @@ export default async function Users({
       updatedAt: userTable.updatedAt,
       createdAt: userTable.createdAt,
       orgId: userTable.orgId,
+      position: userTable.position,
       org: {
         name: orgTable.name,
       },

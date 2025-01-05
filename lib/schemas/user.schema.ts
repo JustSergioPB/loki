@@ -7,6 +7,10 @@ export const userSchema = z.object({
     .min(2, { message: "invalidFullNameLength" })
     .max(255, { message: "invalidFullNameLength" }),
   email: z.string().email({ message: "invalidEmail" }),
+  position: z
+    .string()
+    .min(2, { message: "invalidPositionLength" })
+    .max(255, { message: "invalidPositionLength" }),
   role: z.enum(userRoles),
 });
 
