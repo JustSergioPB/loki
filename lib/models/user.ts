@@ -1,4 +1,6 @@
 import { DbUser } from "@/db/schema/users";
+import { UserDID } from "./user-did";
+import { DID } from "./did";
 
 export type UserProps = Omit<DbUser, "id" | "orgId" | "org">;
 export type CreateUserProps = Pick<
@@ -6,7 +8,6 @@ export type CreateUserProps = Pick<
   "fullName" | "email" | "password" | "role" | "position"
 >;
 export type UpdateUserProps = Partial<CreateUserProps>;
-export type UserId = string | undefined;
 
 export const userRoles = ["admin", "org-admin", "issuer"] as const;
 export type UserRole = (typeof userRoles)[number];
@@ -16,47 +17,48 @@ export type UserStatus = (typeof userStatuses)[number];
 
 export class User {
   private _props: UserProps;
-  public readonly id: UserId;
+  private _did: UserDID | undefined;
+  public readonly id: string | undefined;
 
-  private constructor(props: UserProps, id: UserId) {
+  private constructor(props: UserProps, id?: string, did?: DID) {
     this._props = props;
     this.id = id;
+    this._did = did;
   }
 
   static signUp(props: Omit<CreateUserProps, "position" | "role">): User {
-    return new User(
-      {
-        ...props,
-        role: "org-admin",
-        confirmedAt: null,
-        status: "inactive",
-        createdAt: new Date(),
-        updatedAt: null,
-        position: null,
-      },
-      undefined
-    );
+    return new User({
+      ...props,
+      role: "org-admin",
+      confirmedAt: null,
+      status: "inactive",
+      createdAt: new Date(),
+      updatedAt: null,
+      position: null,
+    });
   }
 
   static create(props: CreateUserProps): User {
-    return new User(
-      {
-        ...props,
-        confirmedAt: null,
-        status: "inactive",
-        createdAt: new Date(),
-        updatedAt: null,
-      },
-      undefined
-    );
+    return new User({
+      ...props,
+      confirmedAt: null,
+      status: "inactive",
+      createdAt: new Date(),
+      updatedAt: null,
+    });
   }
 
   static fromProps(props: DbUser): User {
-    return new User(props, props.id);
+    const did = props.did ? UserDID.fromProps(props.did) : undefined;
+    return new User(props, props.id, did);
   }
 
   get props(): UserProps {
     return this._props;
+  }
+
+  get did(): UserDID | undefined {
+    return this._did;
   }
 
   resetPassword(password: string): void {
@@ -71,7 +73,8 @@ export class User {
     this._props = { ...this._props, ...props, updatedAt: new Date() };
   }
 
-  confirm(position: string): void {
+  confirm(position: string, did: UserDID): void {
+    this._did = did;
     this._props = {
       ...this._props,
       position,

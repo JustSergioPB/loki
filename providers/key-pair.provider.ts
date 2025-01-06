@@ -1,28 +1,16 @@
 import { db } from "@/db";
 import { privateKeyTable } from "@/db/schema/private-keys";
 import { OrgError } from "@/lib/errors/org.error";
+import { Key } from "@/lib/models/key";
 import { Org } from "@/lib/models/org";
-import { User } from "@/lib/models/user";
 import * as crypto from "crypto";
-import * as JOSE from "jose";
-
-export type Key = {
-  id: string;
-  type: "Ed25519VerificationKey2020";
-  publicKeyJwk: {
-    kty: "OKP";
-    crv: "Ed25519";
-    x: string;
-    alg: "EdDSA";
-  };
-};
 
 export abstract class KeyPairProvider {
-  abstract generate(org: Org, user?: User): Promise<Key>;
+  abstract generate(org: Org): Promise<Omit<Key, "purpose">>;
 }
 
 export class FakeHSMProvider extends KeyPairProvider {
-  async generate(org: Org, user?: User): Promise<Key> {
+  async generate(org: Org): Promise<Omit<Key, "purpose">> {
     if (!org.id) {
       throw new OrgError("nonRegistered");
     }
@@ -44,22 +32,28 @@ export class FakeHSMProvider extends KeyPairProvider {
       .values({
         pem: keyPair.privateKey,
         orgId: org.id,
-        userId: user?.id,
       })
       .returning();
 
-    const pubKey = await JOSE.importSPKI(keyPair.publicKey, "Ed25519");
-    const publicKeyJwk = await JOSE.exportJWK(pubKey);
+    // Remove PEM header, footer, and any whitespace
+    const cleanPem = keyPair.publicKey
+      .replace("-----BEGIN PUBLIC KEY-----", "")
+      .replace("-----END PUBLIC KEY-----", "")
+      .replace(/\s/g, "");
+
+    // Decode base64 PEM content to get the raw bytes
+    const rawBytes = Buffer.from(cleanPem, "base64");
+
+    // Skip the ASN.1 header for Ed25519 (if present)
+    // Ed25519 ASN.1 header is typically 12 bytes
+    const publicKeyBytes = Buffer.alloc(32); // Ed25519 public key is always 32 bytes
+    rawBytes.copy(publicKeyBytes, 0, rawBytes.length - 32); // Copy last 32 bytes
+    const base64Encoded = publicKeyBytes.toString("base64");
 
     return {
       id,
       type: "Ed25519VerificationKey2020",
-      publicKeyJwk: {
-        kty: "OKP",
-        crv: "Ed25519",
-        x: publicKeyJwk.x!,
-        alg: "EdDSA",
-      },
+      publicKeyMultibase: "m" + base64Encoded,
     };
   }
 }

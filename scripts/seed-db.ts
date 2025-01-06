@@ -1,4 +1,5 @@
 import { db } from "@/db";
+import { DbCreateDID, didTable } from "@/db/schema/dids";
 import { orgTable } from "@/db/schema/orgs";
 import { schemaVersionTable } from "@/db/schema/schema-versions";
 import { schemaTable } from "@/db/schema/schemas";
@@ -7,6 +8,7 @@ import { CreateOrgProps, Org } from "@/lib/models/org";
 import { orgTierTypes, TIER_MAP } from "@/lib/models/org-tier";
 import { Schema } from "@/lib/models/schema";
 import { CreateUserProps, User, userRoles } from "@/lib/models/user";
+import { UuidDIDProvider } from "@/providers/did.provider";
 import { faker } from "@faker-js/faker";
 import { exit } from "process";
 
@@ -22,6 +24,7 @@ function generateRandomUser(): CreateUserProps {
     fullName: faker.person.fullName(),
     email: faker.internet.email(),
     password: faker.internet.password(),
+    position: faker.person.jobTitle(),
   };
 }
 
@@ -66,19 +69,21 @@ function generateRandomSchemaVersion(): Schema {
   return schema;
 }
 
-function generateStachelabs(): Tenant {
-  const org = Org.create({ name: process.env.ORG_NAME!, tier: "unbound" });
-
-  org.verify();
-
+async function generateStachelabs(): Promise<Tenant> {
+  const org = Org.create({ name: process.env.ROOT_ORG_NAME!, tier: "unbound" });
   const user = User.create({
     email: process.env.USER_EMAIL!,
     fullName: process.env.USER_FULLNAME!,
     role: "admin",
     password: process.env.USER_PASSWORD!,
+    position: faker.person.jobTitle(),
   });
+  const didProvider = new UuidDIDProvider();
+  const orgDID = await didProvider.generateOrgDID(org, org);
+  const userDID = await didProvider.generateUserDID(org, user);
 
-  user.confirm();
+  org.verify(orgDID);
+  user.confirm(user.props.position!, userDID);
 
   return {
     org,
@@ -92,37 +97,42 @@ function generateStachelabs(): Tenant {
   };
 }
 
-function generateTenant(): Tenant {
+async function generateTenant(rootOrg: Org): Promise<Tenant> {
   const org = Org.create(generateRandomOrg());
   const users: User[] = [User.signUp(generateRandomUser())];
   const schemas: Schema[] = [];
+  const didProvider = new UuidDIDProvider();
 
-  if (Math.random() > 0.2) {
-    org.verify();
+  if (Math.random() > 0.4) {
+    const orgDID = await didProvider.generateOrgDID(rootOrg, org);
+    org.verify(orgDID);
 
     users.push(
-      ...Array.from(
-        {
-          length: faker.number.int({
-            min: 2,
-            max: TIER_MAP[org.props.tier].users,
-          }),
-        },
-        () => {
-          const user = User.create(generateRandomUser());
-          const randStatus = Math.random();
-          if (randStatus > 0.2) {
-            user.confirm();
+      ...(await Promise.all(
+        Array.from(
+          {
+            length: faker.number.int({
+              min: 2,
+              max: TIER_MAP[org.props.tier].users,
+            }),
+          },
+          async () => {
+            const user = User.create(generateRandomUser());
+            const randStatus = Math.random();
+            if (randStatus > 0.2) {
+              const userDID = await didProvider.generateUserDID(org, user);
+              user.confirm(user.props.position!, userDID);
+            }
+            if (randStatus > 0.7) {
+              user.deactivate();
+            }
+            if (randStatus > 0.9) {
+              user.ban();
+            }
+            return user;
           }
-          if (randStatus > 0.7) {
-            user.deactivate();
-          }
-          if (randStatus > 0.9) {
-            user.ban();
-          }
-          return user;
-        }
-      )
+        )
+      ))
     );
 
     schemas.push(
@@ -146,8 +156,11 @@ function generateTenant(): Tenant {
 }
 
 async function main() {
-  const tenants = [generateStachelabs()];
-  const randTenants = Array.from({ length: 10 }, () => generateTenant());
+  const rootTenant = await generateStachelabs();
+  const tenants = [rootTenant];
+  const randTenants = await Promise.all(
+    Array.from({ length: 10 }, async () => await generateTenant(rootTenant.org))
+  );
   tenants.push(...randTenants);
 
   await db.transaction(async (trx) => {
@@ -158,9 +171,26 @@ async function main() {
           .values(tenant.org.props)
           .returning();
 
-        await trx
+        const insertedUsers = await trx
           .insert(userTable)
-          .values(tenant.users.map((u) => ({ ...u.props, orgId })));
+          .values(tenant.users.map((u) => ({ ...u.props, orgId })))
+          .returning();
+
+        const DIDs: DbCreateDID[] = [
+          { ...tenant.org.did!.props, orgId: tenant.org.id! },
+          ...tenant.users.map((u) => {
+            const userId = insertedUsers.find(
+              (iu) => iu.email === u.props.email
+            )?.id;
+            return {
+              ...u.did!.props,
+              orgId,
+              userId,
+            };
+          }),
+        ];
+
+        await trx.insert(didTable).values(DIDs);
 
         if (tenant.schemas.length > 0) {
           const insertedSchemas = await trx

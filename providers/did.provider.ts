@@ -1,68 +1,50 @@
 import { Org } from "@/lib/models/org";
 import { User } from "@/lib/models/user";
-import { KeyPairProvider } from "./key-pair.provider";
-import { anchor, DID, PublicKey } from "@decentralized-identity/ion-tools";
-
-export type DIDResult = { did: string; medata: object };
+import { FakeHSMProvider, KeyPairProvider } from "./key-pair.provider";
+import { OrgDID } from "@/lib/models/org-did";
+import { UserDID } from "@/lib/models/user-did";
+import * as uuid from "uuid";
 
 export abstract class DIDProvider {
-  abstract generateOrgDID(org: Org): Promise<DIDResult>;
-  abstract generateUserDID(org: Org, user: User): Promise<DIDResult>;
+  abstract generateOrgDID(rootOrg: Org, org: Org): Promise<OrgDID>;
+  abstract generateUserDID(org: Org, user: User): Promise<UserDID>;
 }
 
-export class IONDIDProvider extends DIDProvider {
+export class UuidDIDProvider extends DIDProvider {
   private keyPairProvider: KeyPairProvider;
 
-  constructor(keyPairProvider: KeyPairProvider) {
+  constructor() {
     super();
-    this.keyPairProvider = keyPairProvider;
+    this.keyPairProvider = new FakeHSMProvider();
   }
 
-  async generateOrgDID(org: Org): Promise<DIDResult> {
-    const key = await this.keyPairProvider.generate(org);
-    const pubKey = { ...key, purposes: ["assertion"] } as PublicKey;
+  async generateOrgDID(rootOrg: Org, org: Org): Promise<OrgDID> {
+    const pubKey = await this.keyPairProvider.generate(org);
+    const url = process.env.BASE_URL!;
 
-    const did = new DID({
-      content: {
-        publicKeys: [pubKey],
-        services: [],
+    return OrgDID.create(
+      {
+        did: `did:uuid:${uuid.v7()}`,
+        keys: [{ ...pubKey, purpose: "signing" }],
       },
-    });
-
-    // Generate and publish create request to an ION node
-    const createRequest = await did.generateRequest(0);
-    await anchor(createRequest);
-    // Store the key material and source data of all operations that have been created for the DID
-    const ionOps = await did.getAllOperations();
-    const uri = await did.getURI();
-
-    return {
-      did: uri,
-      medata: ionOps,
-    };
+      rootOrg,
+      org,
+      url
+    );
   }
 
-  async generateUserDID(org: Org, user: User): Promise<DIDResult> {
-    const key = await this.keyPairProvider.generate(org, user);
-    const pubKey = { ...key, purposes: ["assertion"] };
+  async generateUserDID(org: Org, user: User): Promise<UserDID> {
+    const pubKey = await this.keyPairProvider.generate(org);
+    const url = process.env.BASE_URL!;
 
-    const did = new DID({
-      content: {
-        publicKeys: [pubKey],
-        services: [],
+    return UserDID.create(
+      {
+        did: `did:uuid:${uuid.v7()}`,
+        keys: [{ ...pubKey, purpose: "signing" }],
       },
-    });
-
-    // Generate and publish create request to an ION node
-    const createRequest = await did.generateRequest(0);
-    await anchor(createRequest);
-    // Store the key material and source data of all operations that have been created for the DID
-    const ionOps = await did.getAllOperations();
-    const uri = await did.getURI('short');
-
-    return {
-      did: uri,
-      medata: ionOps,
-    };
+      org,
+      user,
+      url
+    );
   }
 }

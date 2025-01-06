@@ -11,7 +11,6 @@ export const privateKeyTable = pgTable("privateKey", {
   orgId: uuid()
     .references(() => orgTable.id, { onDelete: "cascade" })
     .notNull(),
-  userId: uuid().references(() => orgTable.id, { onDelete: "cascade" }),
 });
 
 export const privateKeyTableRelations = relations(

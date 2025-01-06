@@ -1,4 +1,4 @@
-export const didErrorMessages = ["invalidFormat"] as const;
+export const didErrorMessages = ["replacementPurposeNotMatching"] as const;
 export type DIDErrorMessage = (typeof didErrorMessages)[number];
 
 export class DIDError extends Error {
