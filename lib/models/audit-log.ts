@@ -4,6 +4,7 @@ export type AuditAction = (typeof auditActions)[number];
 export const auditableEntities = [
   "org",
   "user",
+  "root-did",
   "org-did",
   "user-did",
   "schema",

@@ -1,6 +1,7 @@
 {
   "Dashboard": {
-    "title": "Welcome"
+    "title": "Welcome",
+    "rootDID": "Generate root DID"
   },
   "Home": {
     "title": "Welcome!"

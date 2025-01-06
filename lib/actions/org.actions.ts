@@ -71,6 +71,10 @@ export async function verifyOrg(id: string): Promise<ActionResult<void>> {
         and(eq(didTable.orgId, orgTable.id), isNull(didTable.userId))
       );
 
+    if(!rootOrgQuery[0]){
+      throw new Error("missingRootOrg")
+    }
+
     const rootOrg = Org.fromProps({
       ...rootOrgQuery[0].orgs,
       did: rootOrgQuery[0].dids ?? undefined,
