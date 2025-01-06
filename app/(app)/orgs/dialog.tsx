@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MoreHorizontal, Trash } from "lucide-react";
+import { ArrowRight, BadgeCheck, MoreHorizontal, Trash } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -14,7 +14,7 @@ import OrgDetails from "./details";
 import { DbOrg } from "@/db/schema/orgs";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
-import { removeOrg } from "@/lib/actions/org.actions";
+import { removeOrg, verifyOrg } from "@/lib/actions/org.actions";
 import { toast } from "sonner";
 
 export default function OrgDialog({ org }: { org: DbOrg }) {
@@ -30,11 +30,29 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
   const deleteParams = new URLSearchParams(searchParams);
   deleteParams.set("action", "delete");
 
-  function onActionTrigger(action: "see" | "edit" | "delete") {
+  const verifyParams = new URLSearchParams(searchParams);
+  verifyParams.set("action", "verify");
+
+  function onActionTrigger(action: "see" | "edit" | "delete" | "verify") {
     const params = new URLSearchParams(searchParams);
     params.set("id", org.id.toString());
     params.set("action", action);
     router.push(`${pathname}?${params.toString()}`);
+  }
+
+  async function onVerify() {
+    setIsLoading(true);
+
+    const { success, error } = await verifyOrg(org.id);
+
+    if (success) {
+      toast.success(success.message);
+      onClose();
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
   }
 
   async function onDelete() {
@@ -74,6 +92,12 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
+          {org.status === "verifying" && (
+            <DropdownMenuItem onClick={() => onActionTrigger("verify")}>
+              <BadgeCheck />
+              {tGeneric("verify")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="text-red-500"
             onClick={() => onActionTrigger("delete")}
@@ -88,6 +112,7 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
           <OrgDetails
             org={org}
             deleteHref={`${pathname}?${deleteParams.toString()}`}
+            verifyHref={`${pathname}?${verifyParams.toString()}`}
           />
         )}
         {action === "delete" && (
@@ -100,6 +125,18 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
             loading={isLoading}
             id={org.id}
             variant="danger"
+          />
+        )}
+        {action === "verify" && (
+          <ConfirmDialog
+            keyword={org.name}
+            title={t("verifyTitle")}
+            description={t("verifyDescription")}
+            label={t("verifyLabel")}
+            onSubmit={onVerify}
+            loading={isLoading}
+            id={org.id}
+            variant="warning"
           />
         )}
       </DialogContent>

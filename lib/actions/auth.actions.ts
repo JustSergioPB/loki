@@ -7,7 +7,7 @@ import { createSession, deleteSession } from "../helpers/session";
 import { db } from "@/db";
 import { userTable } from "@/db/schema/users";
 import { orgTable } from "@/db/schema/orgs";
-import { eq, sql } from "drizzle-orm";
+import { eq, isNull, sql, and } from "drizzle-orm";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { UserError } from "../errors/user.error";
 import { Org } from "../models/org";
@@ -19,6 +19,9 @@ import { ResetPasswordSchema } from "../schemas/reset-password.schema";
 import { userTokenTable } from "@/db/schema/user-tokens";
 import { PasswordProvider } from "@/providers/password.provider";
 import { AuthError } from "../errors/auth.error";
+import { ConfirmAccountSchema } from "../schemas/confirm-account.schema";
+import { didTable } from "@/db/schema/dids";
+import { UuidDIDProvider } from "@/providers/did.provider";
 
 //TODO: Add correct error messages on catch
 
@@ -51,8 +54,10 @@ export async function login(data: LoginSchema): Promise<ActionResult<string>> {
       redirect = "/inactive";
     } else if (!queryResult[0].users.confirmedAt) {
       redirect = "/hall";
-    } else if (!queryResult[0].orgs.verifiedAt) {
+    } else if (queryResult[0].orgs.status === "onboarding") {
       redirect = "/onboarding";
+    } else if (queryResult[0].orgs.status === "verifying") {
+      redirect = "/verifying";
     }
 
     await createSession({
@@ -120,6 +125,63 @@ export async function signUp(data: SignUpSchema): Promise<ActionResult<void>> {
   }
 }
 
+export async function confirmInvitation(
+  token: string
+): Promise<ActionResult<void>> {
+  const t = await getTranslations("ConfirmInvitation");
+
+  try {
+    const queryResult = await db
+      .select()
+      .from(userTable)
+      .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId))
+      .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
+      .leftJoin(
+        didTable,
+        and(eq(didTable.orgId, orgTable.id), isNull(didTable.userId))
+      )
+      .where(eq(userTokenTable.token, token));
+
+    const user = User.fromProps(queryResult[0].users);
+    const invitationToken = Token.fromProps(queryResult[0].userTokens);
+    const org = Org.fromProps({
+      ...queryResult[0].orgs,
+      did: queryResult[0].dids ?? undefined,
+    });
+    const userDID = await new UuidDIDProvider().generateUserDID(org, user);
+
+    if (!user.props.position) {
+      throw new UserError("missingPosition");
+    }
+
+    invitationToken.burn("invitation");
+    user.confirm(user.props.position, userDID);
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(userTable)
+        .set({ ...user.props })
+        .where(eq(userTable.id, user.id!));
+      await tx
+        .insert(didTable)
+        .values({ ...userDID.props, orgId: org.id!, userId: user.id });
+      await tx
+        .update(userTokenTable)
+        .set({ ...invitationToken.props })
+        .where(eq(userTokenTable.token, invitationToken.props.token));
+    });
+
+    await createSession({
+      userId: queryResult[0].users.id,
+    });
+
+    return { success: { data: undefined, message: t("succeded") } };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("failed") } };
+  }
+}
+
 export async function resendConfirmationMail(
   email: string
 ): Promise<ActionResult<void>> {
@@ -157,6 +219,7 @@ export async function resendConfirmationMail(
 }
 
 export async function confirmAccount(
+  data: ConfirmAccountSchema,
   token: string
 ): Promise<ActionResult<void>> {
   const t = await getTranslations("ConfirmAccount");
@@ -175,11 +238,9 @@ export async function confirmAccount(
 
     const user = User.fromProps(queryResult[0].users);
     const confirmationToken = Token.fromProps(queryResult[0].userTokens);
-    const org = Org.fromProps(queryResult[0].orgs);
 
     confirmationToken.burn("confirmation");
-    user.confirm();
-    org.verify();
+    user.confirm(data.position);
 
     await db.transaction(async (tx) => {
       await tx
@@ -190,10 +251,6 @@ export async function confirmAccount(
         .update(userTokenTable)
         .set({ ...confirmationToken.props })
         .where(eq(userTokenTable.id, confirmationToken.id!));
-      await tx
-        .update(orgTable)
-        .set({ ...org.props })
-        .where(eq(orgTable.id, org.id!));
     });
 
     await createSession({

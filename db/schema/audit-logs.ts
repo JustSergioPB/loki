@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm";
-import { jsonb, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgEnum,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { userTable } from "./users";
 import { auditableEntities, auditActions } from "@/lib/models/audit-log";
@@ -9,7 +16,7 @@ export const auditableEntity = pgEnum("auditableEntity", auditableEntities);
 
 export const auditLogTable = pgTable("auditLogs", {
   id: uuid().primaryKey().notNull().defaultRandom(),
-  entityId: uuid().notNull(),
+  entityId: varchar().notNull(),
   entityType: auditableEntity().notNull(),
   action: auditAction().notNull(),
   userId: uuid().references(() => userTable.id, { onDelete: "set null" }),

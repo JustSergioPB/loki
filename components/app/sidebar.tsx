@@ -27,16 +27,9 @@ import {
 import { useTranslations } from "next-intl";
 import NavUser from "./nav-user";
 import Banner from "./banner";
+import { AuthUser } from "@/db/schema/users";
 
-export default function AppSidebar({
-  user,
-}: {
-  user: {
-    fullName: string;
-    email: string;
-    role: string;
-  };
-}) {
+export default function AppSidebar({ user }: { user: AuthUser }) {
   const t = useTranslations("Navigation");
 
   const groups = [
@@ -127,7 +120,7 @@ export default function AppSidebar({
         ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={{ ...user, avatar: "" }} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   );

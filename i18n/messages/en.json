@@ -1,6 +1,7 @@
 {
   "Dashboard": {
-    "title": "Welcome"
+    "title": "Welcome",
+    "rootDID": "Generate root DID"
   },
   "Home": {
     "title": "Welcome!"
@@ -59,7 +60,9 @@
     "deleteSucceded": "User deleted successfully",
     "deleteFailed": "We couldn't delete the user. Please try again later",
     "seeTitle": "User details",
-    "seeDescription": "This dialog contains the information of the user and it's certificates"
+    "seeDescription": "This dialog contains the information of the user and it's certificates",
+    "position": "Position within the organization",
+    "positionPlaceholder": "Developer"
   },
   "Certificate": {
     "title": "Certificates",
@@ -87,15 +90,28 @@
       "starter": "Starter",
       "pro": "Professional",
       "enterprise": "Enterprise"
-    }
+    },
+    "status": "Status",
+    "statuses": {
+      "onboarding": "Onboarding",
+      "verifying": "Verifying",
+      "verified": "Verified"
+    },
+    "verifyTitle": "Verify organization",
+    "verifyDescription": "This organization will be able to perform operations using the platform",
+    "verifyLabel": "Type the organization's name to verify"
+  },
+  "Verifying": {
+    "title": "Verifying your organization",
+    "subtitle": "We're reviewing your details to ensure everything is in order. Once we'll done you'll receive an email letting you know you can start using our services."
   },
   "Hall": {
     "title": "Welcome aboard!",
     "subtitle": "We've sent you a confirmation email. Please check your inbox to verify your account. If yout still haven't recieved one you can request it again"
   },
   "Onboarding": {
-    "title": "Verifying your organization",
-    "subtitle": "We're reviewing your details to ensure everything is in order. Once we'll done you'll receive an email letting you know you can start using our services."
+    "title": "Organization data",
+    "subtitle": "We need the following information about your organization in order to avoid fraud. Please fill the form bellow."
   },
   "Inactive": {
     "title": " Account needs activation",
@@ -167,7 +183,7 @@
   },
   "ConfirmAccount": {
     "title": "Confirm your account",
-    "subtitle": "Click the button below to confirm your account",
+    "subtitle": "Fill the form below and start issuing credentials",
     "failed": "Account confirmation failed",
     "succeded": "Account confirmed successfully",
     "sendLink": "Request new confirmation link",
@@ -219,10 +235,10 @@
     "edit": "Edit",
     "createdAt": "Created at",
     "updatedAt": "Updated at",
-    "publicId": "Public ID",
     "id": "ID",
     "warning": "Warning",
-    "warningMessage": "This action is irreversible, please be sure"
+    "warningMessage": "This action is irreversible, please be sure",
+    "verify": "Verify"
   },
   "Navigation": {
     "home": "Home",

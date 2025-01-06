@@ -1,86 +1,16 @@
 import { DbSchemaVersion } from "@/db/schema/schema-versions";
 import { SchemaSchema } from "../schemas/schema.schema";
 import { SchemaVersionError } from "../errors/schema-version.error";
+import {
+  CredentialSchema,
+  CredentialSchemaProperties,
+} from "./credential-schema";
 
 export type SchemaVersionProps = Omit<
   DbSchemaVersion,
   "id" | "orgId" | "schemaId"
 >;
 export type SchemaVersionId = string | undefined;
-export type JsonSchema = object;
-export type CredentialSchemaProof = {
-  properties: {
-    type: {
-      const: "DataIntegrityProof";
-    };
-    cryptosuite: {
-      const: "ecdsa-jcs-2022";
-    };
-    created: {
-      type: "string";
-      format: "datetime";
-    };
-    verificationMethod: {
-      type: "string";
-      format: "uri";
-    };
-    proofPurpose: {
-      const: "assertionMethod";
-    };
-    proofValue: {
-      type: "string";
-    };
-  };
-  required: [
-    "type",
-    "cryptosuite",
-    "created",
-    "verificationMethod",
-    "proofPurpose",
-    "proofValue"
-  ];
-  type: "object";
-};
-
-export type CredentialSchemaProperties = {
-  "@context": { const: ["https://www.w3.org/ns/credentials/v2"] };
-  title: { const: string };
-  description?: { const: string };
-  type: { const: ["VerifiableCredential"] };
-  issuer: { type: "string"; format: "uri" };
-  validFrom?: {
-    const: string;
-  };
-  validUntil?: {
-    const: string;
-  };
-  credentialSubject: {
-    properties: {
-      id: { type: "string" };
-      content: object;
-    };
-    type: "object";
-    required: ["id", "content"];
-  };
-  credentialSchema: {
-    type: "object";
-    properties: {
-      id: { type: "string"; format: "uri" };
-      type: { const: "JsonSchema" };
-    };
-    required: ["id", "type"];
-  };
-  proof: CredentialSchemaProof;
-};
-
-export type CredentialSchema = {
-  $schema: "https://json-schema.org/draft/2020-12/schema";
-  title: string;
-  description?: string;
-  properties: CredentialSchemaProperties;
-  required: string[];
-  type: "object";
-};
 
 export const schemaVersionStatuses = [
   "draft",
@@ -98,10 +28,10 @@ export class SchemaVersion {
     this.id = id;
   }
 
-  static create(data: SchemaSchema): SchemaVersion {
+  static create(props: SchemaSchema): SchemaVersion {
     return new SchemaVersion(
       {
-        content: this.buildSchema(data),
+        content: this.buildSchema(props),
         createdAt: new Date(),
         updatedAt: null,
         status: "draft",
@@ -110,11 +40,11 @@ export class SchemaVersion {
     );
   }
 
-  static fromProps(data: DbSchemaVersion): SchemaVersion {
-    const { content, ...rest } = data;
+  static fromProps(props: DbSchemaVersion): SchemaVersion {
+    const { content, ...rest } = props;
     return new SchemaVersion(
       { ...rest, content: content as CredentialSchema },
-      data.id
+      props.id
     );
   }
 
@@ -126,20 +56,22 @@ export class SchemaVersion {
     return this._props.content.description;
   }
 
-  get validFrom(): string | undefined {
-    return this._props.content.properties.validFrom?.const;
+  get validFrom(): Date | undefined {
+    const validFrom = this._props.content.properties.validFrom?.const;
+    return validFrom ? new Date(validFrom) : undefined;
   }
 
-  get validUntil(): string | undefined {
-    return this._props.content.properties.validUntil?.const;
+  get validUntil(): Date | undefined {
+    const validUntil = this._props.content.properties.validUntil?.const;
+    return validUntil ? new Date(validUntil) : undefined;
   }
 
   get credentialSubject(): object {
     return this._props.content.properties.credentialSubject.properties.content;
   }
 
-  update(data: SchemaSchema): void {
-    this._props.content = SchemaVersion.buildSchema(data);
+  update(props: SchemaSchema): void {
+    this._props.content = SchemaVersion.buildSchema(props);
     this._props.updatedAt = new Date();
   }
 
@@ -159,7 +91,7 @@ export class SchemaVersion {
     this._props.updatedAt = new Date();
   }
 
-  private static buildSchema(data: SchemaSchema): CredentialSchema {
+  private static buildSchema(props: SchemaSchema): CredentialSchema {
     const required = [
       "@context",
       "title",
@@ -171,13 +103,14 @@ export class SchemaVersion {
 
     const properties: CredentialSchemaProperties = {
       "@context": { const: ["https://www.w3.org/ns/credentials/v2"] },
-      title: { const: data.title },
+      title: { const: props.title },
       type: { const: ["VerifiableCredential"] },
-      issuer: { type: "string", format: "uri" },
+      issuer: { type: "string", format: "did" },
+      id: { type: "string", format: "uuid" },
       credentialSubject: {
         properties: {
-          id: { type: "string" },
-          content: data.content,
+          id: { type: "string", format: "did" },
+          content: props.content,
         },
         type: "object",
         required: ["id", "content"],
@@ -225,25 +158,25 @@ export class SchemaVersion {
       },
     };
 
-    if (data.validFrom) {
+    if (props.validFrom) {
       required.push("validFrom");
-      properties.validFrom = { const: data.validFrom.toISOString() };
+      properties.validFrom = { const: props.validFrom.toISOString() };
     }
 
-    if (data.validUntil) {
+    if (props.validUntil) {
       required.push("validUntil");
-      properties.validUntil = { const: data.validUntil.toISOString() };
+      properties.validUntil = { const: props.validUntil.toISOString() };
     }
 
-    if (data.description) {
+    if (props.description) {
       required.push("description");
-      properties.description = { const: data.description };
+      properties.description = { const: props.description };
     }
 
     return {
       $schema: "https://json-schema.org/draft/2020-12/schema",
-      title: data.title,
-      description: data.description,
+      title: props.title,
+      description: props.description,
       properties,
       required,
       type: "object",

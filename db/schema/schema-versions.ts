@@ -2,10 +2,8 @@ import { relations } from "drizzle-orm";
 import { jsonb, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { schemaTable } from "./schemas";
-import {
-  CredentialSchema,
-  schemaVersionStatuses,
-} from "@/lib/models/schema-version";
+import { schemaVersionStatuses } from "@/lib/models/schema-version";
+import { CredentialSchema } from "@/lib/models/credential-schema";
 
 export const schemaVersionStatus = pgEnum(
   "schemaVersionStatus",

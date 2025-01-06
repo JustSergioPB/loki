@@ -1,41 +1,51 @@
 import { DbOrg } from "@/db/schema/orgs";
+import { OrgDID } from "./org-did";
 
 export type OrgProps = Omit<DbOrg, "id">;
-export type OrgId = string | undefined;
 export type CreateOrgProps = Pick<DbOrg, "name" | "tier">;
+
+export const orgStatus = ["onboarding", "verifying", "verified"] as const;
+export type OrgStatus = (typeof orgStatus)[number];
 
 export class Org {
   private _props: OrgProps;
-  public readonly id: OrgId;
+  private _did: OrgDID | undefined;
+  public readonly id: string | undefined;
 
-  private constructor(props: OrgProps, id: OrgId) {
+  private constructor(props: OrgProps, id?: string, did?: OrgDID) {
     this._props = props;
     this.id = id;
+    this._did = did;
   }
 
-  static create(data: CreateOrgProps): Org {
-    return new Org(
-      {
-        ...data,
-        verifiedAt: null,
-        createdAt: new Date(),
-        updatedAt: null,
-      },
-      undefined
-    );
+  static create(props: CreateOrgProps): Org {
+    return new Org({
+      ...props,
+      status: "verifying",
+      verifiedAt: null,
+      createdAt: new Date(),
+      updatedAt: null,
+    });
   }
 
-  static fromProps(data: DbOrg): Org {
-    return new Org(data, data.id);
+  static fromProps(props: DbOrg): Org {
+    const did = props.did ? OrgDID.fromProps(props.did) : undefined;
+    return new Org(props, props.id, did);
   }
 
   get props(): OrgProps {
     return this._props;
   }
 
-  verify(): void {
+  get did(): OrgDID | undefined {
+    return this._did;
+  }
+
+  verify(did: OrgDID): void {
+    this._did = did;
     this._props = {
       ...this._props,
+      status: "verified",
       verifiedAt: new Date(),
       updatedAt: new Date(),
     };
