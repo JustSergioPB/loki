@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { orgTable } from "@/db/schema/orgs";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { ActionResult } from "../generics/action-result";
 import { authorize } from "../helpers/dal";
@@ -66,7 +66,10 @@ export async function verifyOrg(id: string): Promise<ActionResult<void>> {
       .select()
       .from(orgTable)
       .where(eq(orgTable.name, process.env.ROOT_ORG_NAME!))
-      .leftJoin(didTable, and(eq(didTable.orgId, id)));
+      .leftJoin(
+        didTable,
+        and(eq(didTable.orgId, orgTable.id), isNull(didTable.userId))
+      );
 
     const rootOrg = Org.fromProps({
       ...rootOrgQuery[0].orgs,

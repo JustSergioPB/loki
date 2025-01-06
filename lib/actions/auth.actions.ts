@@ -7,7 +7,7 @@ import { createSession, deleteSession } from "../helpers/session";
 import { db } from "@/db";
 import { userTable } from "@/db/schema/users";
 import { orgTable } from "@/db/schema/orgs";
-import { eq, sql } from "drizzle-orm";
+import { eq, isNull, sql, and } from "drizzle-orm";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { UserError } from "../errors/user.error";
 import { Org } from "../models/org";
@@ -20,6 +20,8 @@ import { userTokenTable } from "@/db/schema/user-tokens";
 import { PasswordProvider } from "@/providers/password.provider";
 import { AuthError } from "../errors/auth.error";
 import { ConfirmAccountSchema } from "../schemas/confirm-account.schema";
+import { didTable } from "@/db/schema/dids";
+import { UuidDIDProvider } from "@/providers/did.provider";
 
 //TODO: Add correct error messages on catch
 
@@ -134,24 +136,35 @@ export async function confirmInvitation(
       .from(userTable)
       .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId))
       .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
+      .leftJoin(
+        didTable,
+        and(eq(didTable.orgId, orgTable.id), isNull(didTable.userId))
+      )
       .where(eq(userTokenTable.token, token));
 
     const user = User.fromProps(queryResult[0].users);
     const invitationToken = Token.fromProps(queryResult[0].userTokens);
-    //const org = Org.fromProps(queryResult[0].orgs);
+    const org = Org.fromProps({
+      ...queryResult[0].orgs,
+      did: queryResult[0].dids ?? undefined,
+    });
+    const userDID = await new UuidDIDProvider().generateUserDID(org, user);
 
     if (!user.props.position) {
       throw new UserError("missingPosition");
     }
 
     invitationToken.burn("invitation");
-    user.confirm(user.props.position);
+    user.confirm(user.props.position, userDID);
 
     await db.transaction(async (tx) => {
       await tx
         .update(userTable)
         .set({ ...user.props })
         .where(eq(userTable.id, user.id!));
+      await tx
+        .insert(didTable)
+        .values({ ...userDID.props, orgId: org.id!, userId: user.id });
       await tx
         .update(userTokenTable)
         .set({ ...invitationToken.props })
@@ -216,6 +229,7 @@ export async function confirmAccount(
       .select()
       .from(userTable)
       .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId))
+      .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
       .where(eq(userTokenTable.token, token));
 
     if (queryResult.length == 0) {

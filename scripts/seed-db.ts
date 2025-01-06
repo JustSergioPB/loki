@@ -79,10 +79,9 @@ async function generateStachelabs(): Promise<Tenant> {
     position: faker.person.jobTitle(),
   });
   const didProvider = new UuidDIDProvider();
-  const orgDID = await didProvider.generateOrgDID(org, org);
-  const userDID = await didProvider.generateUserDID(org, user);
-
+  const orgDID = await didProvider.generateRootDID(org);
   org.verify(orgDID);
+  const userDID = await didProvider.generateUserDID(org, user);
   user.confirm(user.props.position!, userDID);
 
   return {
@@ -176,21 +175,25 @@ async function main() {
           .values(tenant.users.map((u) => ({ ...u.props, orgId })))
           .returning();
 
-        const DIDs: DbCreateDID[] = [
-          { ...tenant.org.did!.props, orgId: tenant.org.id! },
-          ...tenant.users.map((u) => {
-            const userId = insertedUsers.find(
-              (iu) => iu.email === u.props.email
-            )?.id;
-            return {
-              ...u.did!.props,
-              orgId,
-              userId,
-            };
-          }),
-        ];
+        if (tenant.org.props.status === "verified") {
+          const DIDs: DbCreateDID[] = [
+            { ...tenant.org.did!.props, orgId },
+            ...tenant.users
+              .filter((u) => u.did)
+              .map((u) => {
+                const userId = insertedUsers.find(
+                  (iu) => iu.email === u.props.email
+                )?.id;
+                return {
+                  ...u.did!.props,
+                  orgId,
+                  userId,
+                };
+              }),
+          ];
 
-        await trx.insert(didTable).values(DIDs);
+          await trx.insert(didTable).values(DIDs);
+        }
 
         if (tenant.schemas.length > 0) {
           const insertedSchemas = await trx

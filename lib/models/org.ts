@@ -21,7 +21,7 @@ export class Org {
   static create(props: CreateOrgProps): Org {
     return new Org({
       ...props,
-      status: "onboarding",
+      status: "verifying",
       verifiedAt: null,
       createdAt: new Date(),
       updatedAt: null,

@@ -4,6 +4,7 @@ import { FakeHSMProvider, KeyPairProvider } from "./key-pair.provider";
 import { OrgDID } from "@/lib/models/org-did";
 import { UserDID } from "@/lib/models/user-did";
 import * as uuid from "uuid";
+import { RootDID } from "@/lib/models/root-did";
 
 export abstract class DIDProvider {
   abstract generateOrgDID(rootOrg: Org, org: Org): Promise<OrgDID>;
@@ -18,14 +19,30 @@ export class UuidDIDProvider extends DIDProvider {
     this.keyPairProvider = new FakeHSMProvider();
   }
 
+  async generateRootDID(rootOrg: Org): Promise<OrgDID> {
+    const did = `did:uuid:${uuid.v7()}`;
+    const pubKey = await this.keyPairProvider.generate(`${did}#key-1`);
+    const url = process.env.BASE_URL!;
+
+    return RootDID.create(
+      {
+        did,
+        keys: [{ ...pubKey, purpose: "signing", id: `${did}#key-1` }],
+      },
+      rootOrg,
+      url
+    );
+  }
+
   async generateOrgDID(rootOrg: Org, org: Org): Promise<OrgDID> {
-    const pubKey = await this.keyPairProvider.generate(org);
+    const did = `did:uuid:${uuid.v7()}`;
+    const pubKey = await this.keyPairProvider.generate(`${did}#key-1`);
     const url = process.env.BASE_URL!;
 
     return OrgDID.create(
       {
-        did: `did:uuid:${uuid.v7()}`,
-        keys: [{ ...pubKey, purpose: "signing" }],
+        did,
+        keys: [{ ...pubKey, purpose: "signing", id: `${did}#key-1` }],
       },
       rootOrg,
       org,
@@ -34,13 +51,14 @@ export class UuidDIDProvider extends DIDProvider {
   }
 
   async generateUserDID(org: Org, user: User): Promise<UserDID> {
-    const pubKey = await this.keyPairProvider.generate(org);
+    const did = `did:uuid:${uuid.v7()}`;
+    const pubKey = await this.keyPairProvider.generate(`${did}#key-1`);
     const url = process.env.BASE_URL!;
 
     return UserDID.create(
       {
         did: `did:uuid:${uuid.v7()}`,
-        keys: [{ ...pubKey, purpose: "signing" }],
+        keys: [{ ...pubKey, purpose: "signing", id: `${did}#key-1` }],
       },
       org,
       user,

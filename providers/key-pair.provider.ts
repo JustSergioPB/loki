@@ -1,19 +1,14 @@
 import { db } from "@/db";
 import { privateKeyTable } from "@/db/schema/private-keys";
-import { OrgError } from "@/lib/errors/org.error";
 import { Key } from "@/lib/models/key";
-import { Org } from "@/lib/models/org";
 import * as crypto from "crypto";
 
 export abstract class KeyPairProvider {
-  abstract generate(org: Org): Promise<Omit<Key, "purpose">>;
+  abstract generate(label: string): Promise<Omit<Key, "purpose" | "id">>;
 }
 
 export class FakeHSMProvider extends KeyPairProvider {
-  async generate(org: Org): Promise<Omit<Key, "purpose">> {
-    if (!org.id) {
-      throw new OrgError("nonRegistered");
-    }
+  async generate(label: string): Promise<Omit<Key, "purpose" | "id">> {
     const keyPair = crypto.generateKeyPairSync("ed25519", {
       publicKeyEncoding: {
         type: "spki",
@@ -27,11 +22,11 @@ export class FakeHSMProvider extends KeyPairProvider {
       },
     });
 
-    const [{ id }] = await db
+    await db
       .insert(privateKeyTable)
       .values({
         pem: keyPair.privateKey,
-        orgId: org.id,
+        label,
       })
       .returning();
 
@@ -51,7 +46,6 @@ export class FakeHSMProvider extends KeyPairProvider {
     const base64Encoded = publicKeyBytes.toString("base64");
 
     return {
-      id,
       type: "Ed25519VerificationKey2020",
       publicKeyMultibase: "m" + base64Encoded,
     };

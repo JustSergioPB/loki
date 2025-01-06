@@ -7,13 +7,18 @@ import { DbOrg } from "@/db/schema/orgs";
 import OrgTier from "@/components/app/org-tier";
 import OrgStatus from "@/components/app/org-status";
 
-export const userColumns: ColumnDef<DbOrg>[] = [
+export const orgColumns: ColumnDef<DbOrg>[] = [
   {
     accessorKey: "name",
     header: function CellHeader() {
       const t = useTranslations("Org");
       return t("name");
     },
+  },
+  {
+    accessorKey: "did",
+    header: "DID",
+    cell: ({ row }) => row.original.did?.did,
   },
   {
     accessorKey: "tier",

@@ -73,7 +73,7 @@ export class User {
     this._props = { ...this._props, ...props, updatedAt: new Date() };
   }
 
-  confirm(position: string, did: UserDID): void {
+  confirm(position: string, did?: UserDID): void {
     this._did = did;
     this._props = {
       ...this._props,
