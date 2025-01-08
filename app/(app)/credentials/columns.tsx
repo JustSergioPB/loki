@@ -15,7 +15,9 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("titleProp");
     },
     cell: function CellCompodnent({ row }) {
-      return FormVersion.fromProps(row.original.formVersion).title;
+      return row.original.formVersion
+        ? FormVersion.fromProps(row.original.formVersion).title
+        : undefined;
     },
   },
   {
@@ -25,7 +27,9 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("type");
     },
     cell: function CellComponent({ row }) {
-      const type = FormVersion.fromProps(row.original.formVersion).type;
+      const type = row.original.formVersion
+        ? FormVersion.fromProps(row.original.formVersion).type
+        : [];
       return (
         <div className="flex items-center gap-1">
           {type.slice(1, 3).map((type, idx) => (
