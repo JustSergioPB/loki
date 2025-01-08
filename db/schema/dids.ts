@@ -6,8 +6,8 @@ import {
   boolean,
   jsonb,
 } from "drizzle-orm/pg-core";
-import { userTable } from "./users";
-import { orgTable } from "./orgs";
+import { DbUser, userTable } from "./users";
+import { DbOrg, orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DIDDocument } from "@/lib/models/did-document";
 
@@ -34,5 +34,9 @@ export const didTableRelations = relations(didTable, ({ one }) => ({
   }),
 }));
 
-export type DbDID = typeof didTable.$inferSelect;
+export type DbDID = typeof didTable.$inferSelect & {
+  user?: DbUser;
+  org?: DbOrg;
+};
+
 export type DbCreateDID = typeof didTable.$inferInsert;

@@ -11,7 +11,6 @@ import { auditLogTable } from "./audit-logs";
 import { orgTable } from "./orgs";
 import { userTokenTable } from "./user-tokens";
 import { userRoles, userStatuses } from "@/lib/models/user";
-import { DbDID } from "./dids";
 
 export const userRole = pgEnum("userRole", userRoles);
 export const userStatus = pgEnum("userStatus", userStatuses);
@@ -52,7 +51,6 @@ export const userTableRelations = relations(userTable, ({ one, many }) => ({
 
 export type DbUser = typeof userTable.$inferSelect & {
   org?: { name: string };
-  did?: DbDID;
 };
 
 export type DbUserCreate = typeof userTable.$inferInsert;

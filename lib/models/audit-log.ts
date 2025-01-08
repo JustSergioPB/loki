@@ -4,11 +4,14 @@ export type AuditAction = (typeof auditActions)[number];
 export const auditableEntities = [
   "org",
   "user",
+  "delegation-proof",
   "root-did",
   "org-did",
   "user-did",
-  "schema",
-  "schemaVersion",
+  "did",
+  "form",
+  "formVersion",
   "privateKey",
+  "credential",
 ] as const;
 export type AuditableEntity = (typeof auditableEntities)[number];

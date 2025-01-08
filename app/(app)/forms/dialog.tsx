@@ -1,4 +1,4 @@
-import { DbSchema } from "@/db/schema/schemas";
+import { DbForm } from "@/db/schema/forms";
 import { Button } from "@/components/ui/button";
 import {
   Archive,
@@ -18,26 +18,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
-import { Schema } from "@/lib/models/schema";
+import { Form } from "@/lib/models/form";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
-import { removeSchema } from "@/lib/actions/schema.actions";
+import { removeForm, changeFormState } from "@/lib/actions/form.actions";
 import { toast } from "sonner";
-import {
-  archiveSchemaVersion,
-  publishSchemaVersion,
-} from "@/lib/actions/schema-version.actions";
 
-export default function SchemaDialog({ schema }: { schema: DbSchema }) {
-  const t = useTranslations("Schema");
+export default function FormDialog({ form }: { form: DbForm }) {
+  const t = useTranslations("Form");
   const tGeneric = useTranslations("Generic");
-  const tVersion = useTranslations("SchemaVersion");
+  const tVersion = useTranslations("FormVersion");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const action = searchParams.get("action");
   const id = searchParams.get("id");
-  const latest = Schema.fromProps(schema).getLatestVersion();
+  const latest = Form.fromProps(form).latestVersion;
   const [isLoading, setIsLoading] = useState(false);
 
   const deleteParams = new URLSearchParams(searchParams);
@@ -51,19 +47,19 @@ export default function SchemaDialog({ schema }: { schema: DbSchema }) {
 
   function onActionTrigger(action: "delete" | "publish" | "archive") {
     const params = new URLSearchParams(searchParams);
-    params.set("id", schema.id.toString());
+    params.set("id", form.id.toString());
     params.set("action", action);
     router.push(`${pathname}?${params.toString()}`);
   }
 
   async function onActionNavigate(action: "see" | "edit") {
-    router.push(`${pathname}/${schema.id}?action=${action}`);
+    router.push(`${pathname}/${form.id}?action=${action}`);
   }
 
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeSchema(schema.id);
+    const { success, error } = await removeForm(form.id);
 
     if (success) {
       toast.success(success.message);
@@ -78,7 +74,7 @@ export default function SchemaDialog({ schema }: { schema: DbSchema }) {
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await publishSchemaVersion(latest.id!);
+    const { success, error } = await changeFormState(form.id!, "published");
 
     if (success) {
       toast.success(success.message);
@@ -93,7 +89,7 @@ export default function SchemaDialog({ schema }: { schema: DbSchema }) {
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await archiveSchemaVersion(latest.id!);
+    const { success, error } = await changeFormState(form.id!, "archived");
 
     if (success) {
       toast.success(success.message);
@@ -113,7 +109,7 @@ export default function SchemaDialog({ schema }: { schema: DbSchema }) {
   }
 
   return (
-    <Dialog open={!!action && id === schema.id} onOpenChange={onClose}>
+    <Dialog open={!!action && id === form.id} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -155,37 +151,37 @@ export default function SchemaDialog({ schema }: { schema: DbSchema }) {
       <DialogContent className="max-h-[95vh] overflow-y-auto">
         {action === "publish" && (
           <ConfirmDialog
-            keyword={schema.title}
+            keyword={form.title}
             title={tVersion("publishTitle")}
             description={tVersion("publishDescription")}
             label={tVersion("publishLabel")}
             onSubmit={onPublish}
             loading={isLoading}
-            id={schema.id}
+            id={form.id}
             variant="warning"
           />
         )}
         {action === "archive" && (
           <ConfirmDialog
-            keyword={schema.title}
+            keyword={form.title}
             title={tVersion("archiveTitle")}
             description={tVersion("archiveDescription")}
             label={tVersion("archiveLabel")}
             onSubmit={onArchive}
             loading={isLoading}
-            id={schema.id}
+            id={form.id}
             variant="warning"
           />
         )}
         {action === "delete" && (
           <ConfirmDialog
-            keyword={schema.title}
+            keyword={form.title}
             title={t("deleteTitle")}
             description={t("deleteDescription")}
             label={t("deleteLabel")}
             onSubmit={onDelete}
             loading={isLoading}
-            id={schema.id}
+            id={form.id}
             variant="danger"
           />
         )}

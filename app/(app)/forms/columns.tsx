@@ -2,24 +2,43 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import SchemaDialog from "./dialog";
-import { DbSchema } from "@/db/schema/schemas";
-import { Schema } from "@/lib/models/schema";
+import FormDialog from "./dialog";
+import { DbForm } from "@/db/schema/forms";
+import { Form } from "@/lib/models/form";
 import { Badge } from "@/components/ui/badge";
-import SchemaVersionStatus from "@/components/app/schema-version-status";
+import FormVersionStatus from "@/components/app/form-version-status";
 
-export const schemaColumns: ColumnDef<DbSchema>[] = [
+export const formColumns: ColumnDef<DbForm>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
-      const t = useTranslations("Schema");
+      const t = useTranslations("Form");
       return t("titleProp");
+    },
+  },
+  {
+    accessorKey: "type",
+    header: function CellHeader() {
+      const t = useTranslations("FormVersion");
+      return t("type");
+    },
+    cell: function CellComponent({ row }) {
+      const type = Form.fromProps(row.original).latestVersion.type;
+      return (
+        <div className="flex items-center gap-1">
+          {type.slice(1, 3).map((type, idx) => (
+            <Badge variant="secondary" key={`${type}-${idx}`}>
+              {type}
+            </Badge>
+          ))}
+        </div>
+      );
     },
   },
   {
     accessorKey: "version",
     header: function CellHeader() {
-      const t = useTranslations("SchemaVersion");
+      const t = useTranslations("FormVersion");
       return t("version");
     },
     cell: function CellComponent({ row }) {
@@ -29,26 +48,24 @@ export const schemaColumns: ColumnDef<DbSchema>[] = [
   {
     accessorKey: "status",
     header: function CellHeader() {
-      const t = useTranslations("SchemaVersion");
+      const t = useTranslations("FormVersion");
       return t("status");
     },
     cell: function CellComponent({ row }) {
-      const t = useTranslations("SchemaVersion");
-      const schema = Schema.fromProps(row.original);
-      const latest = schema.getLatestVersion();
-      const status = latest.props.status;
+      const t = useTranslations("FormVersion");
+      const status = Form.fromProps(row.original).latestVersion.props.status;
 
       return (
-        <SchemaVersionStatus status={status}>
+        <FormVersionStatus status={status}>
           {t(`statuses.${status}`)}
-        </SchemaVersionStatus>
+        </FormVersionStatus>
       );
     },
   },
   {
     id: "actions",
     cell: function CellComponent({ row }) {
-      return <SchemaDialog schema={row.original} />;
+      return <FormDialog form={row.original} />;
     },
   },
 ];

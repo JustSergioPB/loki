@@ -1,12 +1,12 @@
-import { SchemaVersionStatus as SchemaVersionStatuses } from "@/lib/models/schema-version";
+import { FormVersionStatus as FormVersionStatuses } from "@/lib/models/form-version";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  status: SchemaVersionStatuses;
+  status: FormVersionStatuses;
 }
 
-export default function SchemaVersionStatus({ status, children }: Props) {
+export default function FormVersionStatus({ status, children }: Props) {
   let bg = "bg-neutral-100";
   let textColor = "text-neutral-500";
 

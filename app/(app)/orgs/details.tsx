@@ -54,7 +54,7 @@ export default function OrgDetails({ org, deleteHref, verifyHref }: Props) {
           </div>
         </div>
       </div>
-      <div>
+      <div className="space-x-2">
         {org.status === "verifying" && (
           <Link
             href={verifyHref}

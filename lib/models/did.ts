@@ -20,6 +20,10 @@ export abstract class DID {
     return this._props;
   }
 
+  get signingLabel(): string {
+    return this._props.document.assertionMethod[0];
+  }
+
   protected static buildDocument(
     props: CreateDIDProps,
     url: string,
@@ -30,21 +34,17 @@ export abstract class DID {
     const authorization: string[] = [];
 
     const verificationMethods = props.keys.map((key) => {
-      const verificationMethodId = `${url}/keys/${key.id}`;
-
       if (key.purpose === "signing") {
-        assertionMethod.push(verificationMethodId);
+        assertionMethod.push(key.id);
       }
 
       if (key.purpose === "authorization") {
-        authorization.push(verificationMethodId);
+        authorization.push(key.id);
       }
 
       return {
-        id: verificationMethodId,
         controller: [props.did, ...controllers],
-        publicKeyMultibase: key.publicKeyMultibase,
-        type: key.type,
+        ...key,
       };
     });
 

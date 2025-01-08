@@ -1,38 +1,43 @@
 import { DbDID } from "@/db/schema/dids";
 import { CreateDIDProps, DID, DIDProps } from "./did";
 import { Org } from "./org";
-import { OrgDIDError } from "../errors/org-did.error";
 
 export class OrgDID extends DID {
   private constructor(props: DIDProps) {
     super(props);
   }
 
-  static create(
-    props: CreateDIDProps,
-    rootOrg: Org,
-    org: Org,
-    url: string
-  ): OrgDID {
-    const orgURL = `${url}/orgs/${org.id}`;
-
-    if (!rootOrg.did) {
-      throw new OrgDIDError("missingRootDID");
-    }
-
+  static create(props: CreateDIDProps, rootDID: OrgDID, url: string): OrgDID {
     return new OrgDID({
       did: props.did,
       document: super.buildDocument(
         props,
-        orgURL,
+        `${url}/did/${props.did}`,
         [
           {
-            type: "Issuers",
-            serviceEndpoint: `${orgURL}/issuers`,
+            type: "Profile",
+            serviceEndpoint: `${url}/did/${props.did}/profile`,
           },
         ],
-        [rootOrg.did.props.did]
+        [rootDID.props.did]
       ),
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: null,
+    });
+  }
+
+  static createRoot(props: CreateDIDProps, rootOrg: Org, url: string): OrgDID {
+    const orgURL = `${url}/orgs/${rootOrg.id}`;
+
+    return new OrgDID({
+      did: props.did,
+      document: super.buildDocument(props, orgURL, [
+        {
+          type: "VerifiedOrganizations",
+          serviceEndpoint: `${orgURL}/organizations?status=verified`,
+        },
+      ]),
       isActive: true,
       createdAt: new Date(),
       updatedAt: null,

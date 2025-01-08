@@ -5,7 +5,6 @@ import { userTokenTable } from "./user-tokens";
 import { auditLogTable } from "./audit-logs";
 import { orgTierTypes } from "@/lib/models/org-tier";
 import { orgStatus } from "@/lib/models/org";
-import { DbDID } from "./dids";
 
 export const orgTierType = pgEnum("orgTier", orgTierTypes);
 export const orgStatuses = pgEnum("orgStatus", orgStatus);
@@ -26,8 +25,5 @@ export const orgTableRelations = relations(orgTable, ({ many }) => ({
   auditLogs: many(auditLogTable),
 }));
 
-export type DbOrg = typeof orgTable.$inferSelect & {
-  did?: DbDID;
-};
-
+export type DbOrg = typeof orgTable.$inferSelect;
 export type DbOrgCreate = typeof orgTable.$inferInsert;

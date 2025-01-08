@@ -3,27 +3,25 @@
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { DbSchema } from "@/db/schema/schemas";
-import { archiveSchemaVersion } from "@/lib/actions/schema-version.actions";
-import { Schema } from "@/lib/models/schema";
+import { DbForm } from "@/db/schema/forms";
+import { changeFormState } from "@/lib/actions/form.actions";
 import { Archive } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function ArchiveSchemaVersion({ schema }: { schema: DbSchema }) {
-  const t = useTranslations("SchemaVersion");
+export default function ArchiveFormVersion({ form }: { form: DbForm }) {
+  const t = useTranslations("FormVersion");
   const router = useRouter();
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
-  const latest = Schema.fromProps(schema).getLatestVersion();
   const [isLoading, setIsLoading] = useState(false);
 
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await archiveSchemaVersion(latest.id!);
+    const { success, error } = await changeFormState(form.id!, "archived");
 
     if (success) {
       toast.success(success.message);
@@ -36,11 +34,11 @@ export default function ArchiveSchemaVersion({ schema }: { schema: DbSchema }) {
   }
 
   async function onClose() {
-    router.push(`/forms/${schema.id}?action=see`);
+    router.push(`/forms/${form.id}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${schema.id}?action=archive`);
+    router.push(`/forms/${form.id}?action=archive`);
   }
 
   return (
@@ -56,13 +54,13 @@ export default function ArchiveSchemaVersion({ schema }: { schema: DbSchema }) {
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={schema.title}
+          keyword={form.title}
           title={t("archiveTitle")}
           description={t("archiveDescription")}
           label={t("archiveLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={schema.id}
+          id={form.id}
           variant="warning"
         />
       </DialogContent>

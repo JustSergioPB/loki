@@ -3,16 +3,16 @@
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { DbSchema } from "@/db/schema/schemas";
-import { removeSchema } from "@/lib/actions/schema.actions";
+import { DbForm } from "@/db/schema/forms";
+import { removeForm } from "@/lib/actions/form.actions";
 import { Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function DeleteSchemaVersion({ schema }: { schema: DbSchema }) {
-  const t = useTranslations("Schema");
+export default function DeleteFormVersion({ form }: { form: DbForm }) {
+  const t = useTranslations("Form");
   const tGeneric = useTranslations("Generic");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,7 +22,7 @@ export default function DeleteSchemaVersion({ schema }: { schema: DbSchema }) {
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await removeSchema(schema.id);
+    const { success, error } = await removeForm(form.id);
 
     if (success) {
       toast.success(success.message);
@@ -35,11 +35,11 @@ export default function DeleteSchemaVersion({ schema }: { schema: DbSchema }) {
   }
 
   async function onClose() {
-    router.push(`/forms/${schema.id}?action=see`);
+    router.push(`/forms/${form.id}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${schema.id}?action=delete`);
+    router.push(`/forms/${form.id}?action=delete`);
   }
 
   return (
@@ -55,13 +55,13 @@ export default function DeleteSchemaVersion({ schema }: { schema: DbSchema }) {
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={schema.title}
+          keyword={form.title}
           title={t("deleteTitle")}
           description={t("deleteDescription")}
           label={t("deleteLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={schema.id}
+          id={form.id}
           variant="danger"
         />
       </DialogContent>

@@ -3,31 +3,27 @@
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { DbSchema } from "@/db/schema/schemas";
-import { publishSchemaVersion } from "@/lib/actions/schema-version.actions";
-import { Schema } from "@/lib/models/schema";
+import { DbForm } from "@/db/schema/forms";
+import { changeFormState } from "@/lib/actions/form.actions";
+import { Form } from "@/lib/models/form";
 import { Rss } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function PublishSchemaVersion({
-  schema,
-}: {
-  schema: DbSchema;
-}) {
-  const t = useTranslations("SchemaVersion");
+export default function PublishFormVersion({ form }: { form: DbForm }) {
+  const t = useTranslations("FormVersion");
   const router = useRouter();
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
-  const latest = Schema.fromProps(schema).getLatestVersion();
+  const latest = Form.fromProps(form).latestVersion;
   const [isLoading, setIsLoading] = useState(false);
 
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await publishSchemaVersion(latest.id!);
+    const { success, error } = await changeFormState(latest.id!, "published");
 
     if (success) {
       toast.success(success.message);
@@ -40,11 +36,11 @@ export default function PublishSchemaVersion({
   }
 
   async function onClose() {
-    router.push(`/forms/${schema.id}?action=see`);
+    router.push(`/forms/${form.id}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${schema.id}?action=publish`);
+    router.push(`/forms/${form.id}?action=publish`);
   }
 
   return (
@@ -60,13 +56,13 @@ export default function PublishSchemaVersion({
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={schema.title}
+          keyword={form.title}
           title={t("publishTitle")}
           description={t("publishDescription")}
           label={t("publishLabel")}
           onSubmit={onPublish}
           loading={isLoading}
-          id={schema.id}
+          id={form.id}
           variant="warning"
         />
       </DialogContent>

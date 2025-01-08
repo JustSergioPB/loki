@@ -13,36 +13,38 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
-import { SchemaSchema, schemaSchema } from "@/lib/schemas/schema.schema";
-import { createSchema, updateSchema } from "@/lib/actions/schema.actions";
+import { FormSchema, formSchema } from "@/lib/schemas/form.schema";
+import { createForm, updateForm } from "@/lib/actions/form.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
-import { DbSchema } from "@/db/schema/schemas";
-import { Schema } from "@/lib/models/schema";
+import { DbForm } from "@/db/schema/forms";
+import { Form as FormEntity } from "@/lib/models/form";
 import { Textarea } from "@/components/ui/textarea";
 import InfoPanel from "@/components/app/info-panel";
 import { DatetimePicker } from "@/components/ui/datetime-picker";
 import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
+import { TagsInput } from "@/components/ui/tags-input";
 
 type Props = {
-  schema?: DbSchema;
+  form?: DbForm;
 };
 
-export default function SchemaForm({ schema }: Props) {
-  const t = useTranslations("Schema");
-  const tVersion = useTranslations("SchemaVersion");
+export default function FormForm({ form: dbForm }: Props) {
+  const t = useTranslations("Form");
+  const tVersion = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
-  
+
   const [isLoading, setIsLoading] = useState(false);
-  const latestVersion = schema
-    ? Schema.fromProps(schema).getLatestVersion()
+  const latestVersion = dbForm
+    ? FormEntity.fromProps(dbForm).latestVersion
     : undefined;
 
-  const form = useForm<SchemaSchema>({
-    resolver: zodResolver(schemaSchema),
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      title: schema?.title ?? "",
+      title: dbForm?.title ?? "",
+      type: latestVersion?.type.slice(1) ?? [],
       description: latestVersion?.description ?? "",
       content: JSON.stringify(latestVersion?.credentialSubject, null, 1) ?? "",
       validFrom:
@@ -56,16 +58,16 @@ export default function SchemaForm({ schema }: Props) {
     },
   });
 
-  async function handleSubmit(values: SchemaSchema) {
+  async function handleSubmit(values: FormSchema) {
     setIsLoading(true);
 
-    const { success, error } = schema
-      ? await updateSchema(schema.id, values)
-      : await createSchema(values);
+    const { success, error } = dbForm
+      ? await updateForm(dbForm.id, values)
+      : await createForm(values);
 
     if (success) {
       toast.success(success.message);
-      redirect(schema ? `/forms/${schema.id}?action=see` : "/forms");
+      redirect(dbForm ? `/forms/${dbForm.id}?action=see` : "/forms");
     } else {
       toast.error(error.message);
     }
@@ -76,8 +78,8 @@ export default function SchemaForm({ schema }: Props) {
   return (
     <section className="p-6 space-y-6 lg:w-[640px]">
       <PageHeader
-        title={t(schema ? "editTitle" : "createTitle")}
-        subtitle={t(schema ? "editDescription" : "createDescription")}
+        title={t(dbForm ? "editTitle" : "createTitle")}
+        subtitle={t(dbForm ? "editDescription" : "createDescription")}
         className="p-0"
       />
       {latestVersion && latestVersion.props.status !== "draft" && (
@@ -85,14 +87,14 @@ export default function SchemaForm({ schema }: Props) {
           variant="warning"
           type="vertical"
           label={tGeneric("warning")}
-          message={tVersion("schemaNotInDraft")}
+          message={tVersion("formNotInDraft")}
         />
       )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-6"
-          id={schema ? `schema-form-${schema.id}` : "new"}
+          id={dbForm ? `form-form-${dbForm.id}` : "new"}
         >
           <FormField
             control={form.control}
@@ -106,6 +108,22 @@ export default function SchemaForm({ schema }: Props) {
                     type="text"
                     required
                     {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{tVersion("type")}</FormLabel>
+                <FormControl>
+                  <TagsInput
+                    value={field.value}
+                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />

@@ -5,8 +5,8 @@ import * as orgs from "./schema/orgs";
 import * as userTokens from "./schema/user-tokens";
 import * as users from "./schema/users";
 import * as auditLogs from "./schema/audit-logs";
-import * as schemaVersions from "./schema/schema-versions";
-import * as schemas from "./schema/schemas";
+import * as formVersions from "./schema/form-versions";
+import * as forms from "./schema/forms";
 import * as dids from "./schema/dids";
 import * as privateKeys from "./schema/private-keys";
 
@@ -20,8 +20,8 @@ export const db = drizzle({
     ...userTokens,
     ...users,
     ...auditLogs,
-    ...schemas,
-    ...schemaVersions,
+    ...forms,
+    ...formVersions,
     ...dids,
     ...privateKeys,
   },

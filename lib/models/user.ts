@@ -1,6 +1,4 @@
 import { DbUser } from "@/db/schema/users";
-import { UserDID } from "./user-did";
-import { DID } from "./did";
 
 export type UserProps = Omit<DbUser, "id" | "orgId" | "org">;
 export type CreateUserProps = Pick<
@@ -17,13 +15,11 @@ export type UserStatus = (typeof userStatuses)[number];
 
 export class User {
   private _props: UserProps;
-  private _did: UserDID | undefined;
   public readonly id: string | undefined;
 
-  private constructor(props: UserProps, id?: string, did?: DID) {
+  private constructor(props: UserProps, id?: string) {
     this._props = props;
     this.id = id;
-    this._did = did;
   }
 
   static signUp(props: Omit<CreateUserProps, "position" | "role">): User {
@@ -49,16 +45,11 @@ export class User {
   }
 
   static fromProps(props: DbUser): User {
-    const did = props.did ? UserDID.fromProps(props.did) : undefined;
-    return new User(props, props.id, did);
+    return new User(props, props.id);
   }
 
   get props(): UserProps {
     return this._props;
-  }
-
-  get did(): UserDID | undefined {
-    return this._did;
   }
 
   resetPassword(password: string): void {
@@ -73,8 +64,7 @@ export class User {
     this._props = { ...this._props, ...props, updatedAt: new Date() };
   }
 
-  confirm(position: string, did?: UserDID): void {
-    this._did = did;
+  confirm(position: string): void {
     this._props = {
       ...this._props,
       position,

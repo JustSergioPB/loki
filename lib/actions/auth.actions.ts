@@ -7,7 +7,7 @@ import { createSession, deleteSession } from "../helpers/session";
 import { db } from "@/db";
 import { userTable } from "@/db/schema/users";
 import { orgTable } from "@/db/schema/orgs";
-import { eq, isNull, sql, and } from "drizzle-orm";
+import { eq, isNull, sql, and, like } from "drizzle-orm";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { UserError } from "../errors/user.error";
 import { Org } from "../models/org";
@@ -22,6 +22,14 @@ import { AuthError } from "../errors/auth.error";
 import { ConfirmAccountSchema } from "../schemas/confirm-account.schema";
 import { didTable } from "@/db/schema/dids";
 import { UuidDIDProvider } from "@/providers/did.provider";
+import { OrgDID } from "../models/org-did";
+import { UserDIDError } from "../errors/user-did.error";
+import { FakeHSMProvider } from "@/providers/key-pair.provider";
+import { formTable } from "@/db/schema/forms";
+import { formVersionTable } from "@/db/schema/form-versions";
+import { Form } from "../models/form";
+import * as uuid from "uuid";
+import { credentialTable } from "@/db/schema/credentials";
 
 //TODO: Add correct error messages on catch
 
@@ -136,26 +144,73 @@ export async function confirmInvitation(
       .from(userTable)
       .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId))
       .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
-      .leftJoin(
+      .innerJoin(
         didTable,
         and(eq(didTable.orgId, orgTable.id), isNull(didTable.userId))
       )
       .where(eq(userTokenTable.token, token));
 
+    if (!queryResult[0].dids) {
+      throw new UserDIDError("missingOrgDID");
+    }
+
     const user = User.fromProps(queryResult[0].users);
     const invitationToken = Token.fromProps(queryResult[0].userTokens);
-    const org = Org.fromProps({
-      ...queryResult[0].orgs,
-      did: queryResult[0].dids ?? undefined,
-    });
-    const userDID = await new UuidDIDProvider().generateUserDID(org, user);
+    const org = Org.fromProps(queryResult[0].orgs);
+    const orgDID = OrgDID.fromProps(queryResult[0].dids);
+    const keyPairProvider = new FakeHSMProvider();
+    const didProvider = new UuidDIDProvider(
+      keyPairProvider,
+      process.env.BASE_URL!
+    );
+    const userDID = await didProvider.generateUserDID(orgDID);
 
     if (!user.props.position) {
       throw new UserError("missingPosition");
     }
 
     invitationToken.burn("invitation");
-    user.confirm(user.props.position, userDID);
+    user.confirm(user.props.position);
+
+    const delegationFormQuery = await db
+      .select()
+      .from(orgTable)
+      .where(eq(orgTable.name, process.env.ROOT_ORG_NAME!))
+      .innerJoin(
+        formTable,
+        and(
+          eq(orgTable.id, formTable.orgId),
+          like(formTable.title, process.env.DELEGATION_PROOF!)
+        )
+      )
+      .innerJoin(formVersionTable, eq(formTable.id, formVersionTable.formId));
+
+    if (!delegationFormQuery[0]) {
+      throw new Error("missingDelegationForm");
+    }
+
+    const BASE_URL = process.env.BASE_URL!;
+    const delegationProofForm = Form.fromProps({
+      ...delegationFormQuery[0].forms,
+      versions: [delegationFormQuery[0].formVersions],
+    });
+
+    const delegationProof = delegationProofForm.fill(
+      {
+        claims: { isAllowedToSign: true },
+        validFrom: undefined,
+        validUntil: undefined,
+        id: `${BASE_URL!}/${uuid.v7()}`,
+      },
+      BASE_URL,
+      orgDID,
+      userDID
+    );
+
+    const cypher = await keyPairProvider.signAndEncrypt(
+      orgDID.signingLabel,
+      delegationProof
+    );
 
     await db.transaction(async (tx) => {
       await tx
@@ -165,6 +220,12 @@ export async function confirmInvitation(
       await tx
         .insert(didTable)
         .values({ ...userDID.props, orgId: org.id!, userId: user.id });
+      await tx.insert(credentialTable).values({
+        ...cypher.props,
+        formVersionId: delegationProofForm.latestVersion.id!,
+        holder: userDID.props.did,
+        orgId: org.id!,
+      });
       await tx
         .update(userTokenTable)
         .set({ ...invitationToken.props })

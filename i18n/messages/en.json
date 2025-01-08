@@ -64,11 +64,6 @@
     "position": "Position within the organization",
     "positionPlaceholder": "Developer"
   },
-  "Certificate": {
-    "title": "Certificates",
-    "subtitle": "Handle everything related to certificate generation, rotation, revokation and deleting in here",
-    "certificate": "Certificate"
-  },
   "Org": {
     "alreadyExists": "Organization already exists",
     "org": "Organization",
@@ -133,15 +128,24 @@
     "title": "Welcome!"
   },
   "Credential": {
-    "title": "Welcome!"
+    "title": "Credentials",
+    "subtitle": "Handle everything related to credentials in here. You can delete and see credentials's data here.",
+    "issuer": "Issuer",
+    "deleteTitle": "Delete credential",
+    "deleteDescription": "This credential will be deleted from the database but the holder will still keep the copy, you'll loose control over it, consider revoking it instead",
+    "deleteLabel": "Type the credential's id to confirm",
+    "seeTitle": "Credential details",
+    "seeDescription": "This page contains the information of the credential",
+    "proof": "Proof",
+    "holder": "Holder"
   },
   "Bridge": {
     "title": "Welcome!"
   },
-  "Schema": {
+  "Form": {
     "title": "Forms",
     "subtitle": "Handle everything related to your organization's forms in here. You can create, edit, see, delete, publish and archive your forms.",
-    "schema": "Form",
+    "form": "Form",
     "titleProp": "Title",
     "titlePlaceholder": "Organization user",
     "createTitle": "Create form",
@@ -154,19 +158,20 @@
     "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
     "deleteLabel": "Type the form's title to confirm"
   },
-  "SchemaVersion": {
+  "FormVersion": {
     "version": "Version",
     "status": "Status",
     "description": "Description",
     "descriptionPlaceholder": "This credential claims that the user belongs to the organization...",
     "content": "Content",
     "contentPlaceholder": "'{ }'",
-    "schemaNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
+    "formNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
     "statuses": {
       "draft": "Draft",
       "published": "Published",
       "archived": "Archived"
     },
+    "type": "Types",
     "latestVersion": "Latest version",
     "publish": "Publish",
     "archive": "Archive",
@@ -208,6 +213,26 @@
     "notFound": "Token not found",
     "expired": "Token has expired",
     "burnt": "Token has already been used"
+  },
+  "Did": {
+    "title": "Descentralized IDs",
+    "subtitle": "Handle everything related to DIDs in here. You can see and delete them.",
+    "did": "Descentralized ID",
+    "document": "Document",
+    "services": "Services",
+    "seeTitle": "DID details",
+    "seeDescription": "This dialog contains the information of the did",
+    "status": "Status",
+    "keys": "Keys",
+    "key": "Key",
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "keyStatuses": {
+      "active": "Active",
+      "revoked": "Revoked"
+    }
   },
   "Table": {
     "noResults": "No results found"
@@ -251,6 +276,7 @@
     "forms": "Forms",
     "bridges": "Bridges",
     "wall": "Wall",
-    "administration": "Administration"
+    "administration": "Administration",
+    "dids": "DIDs"
   }
 }

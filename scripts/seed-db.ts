@@ -1,21 +1,33 @@
 import { db } from "@/db";
 import { DbCreateDID, didTable } from "@/db/schema/dids";
 import { orgTable } from "@/db/schema/orgs";
-import { schemaVersionTable } from "@/db/schema/schema-versions";
-import { schemaTable } from "@/db/schema/schemas";
+import { formVersionTable } from "@/db/schema/form-versions";
+import { formTable } from "@/db/schema/forms";
 import { userTable } from "@/db/schema/users";
+import { DID } from "@/lib/models/did";
 import { CreateOrgProps, Org } from "@/lib/models/org";
+import { OrgDID } from "@/lib/models/org-did";
 import { orgTierTypes, TIER_MAP } from "@/lib/models/org-tier";
-import { Schema } from "@/lib/models/schema";
+import { Form } from "@/lib/models/form";
 import { CreateUserProps, User, userRoles } from "@/lib/models/user";
 import { UuidDIDProvider } from "@/providers/did.provider";
 import { faker } from "@faker-js/faker";
 import { exit } from "process";
+import { FakeHSMProvider } from "@/providers/key-pair.provider";
+import { Credential } from "@/lib/models/credential";
+import * as uuid from "uuid";
+import { credentialTable, DbCreateCredential } from "@/db/schema/credentials";
+
+const BASE_URL = process.env.BASE_URL!;
+const keyPairProvider = new FakeHSMProvider();
+const didProvider = new UuidDIDProvider(keyPairProvider, BASE_URL);
 
 type Tenant = {
   org: Org;
   users: User[];
-  schemas: Schema[];
+  forms: Form[];
+  dids: DID[];
+  credentials: Credential[];
 };
 
 function generateRandomUser(): CreateUserProps {
@@ -35,10 +47,15 @@ function generateRandomOrg(): CreateOrgProps {
   };
 }
 
-function generateRandomSchemaVersion(): Schema {
+function generateRandomFormVersion(): Form {
   const randValidity = Math.random();
-  const schema = Schema.create({
+  const form = Form.create({
     title: faker.lorem.words({ min: 2, max: 4 }),
+    type: [
+      ...Array.from({ length: faker.number.int({ min: 1, max: 3 }) }, () =>
+        faker.word.noun()
+      ),
+    ],
     description:
       Math.random() > 0.5
         ? faker.lorem.sentences({ min: 1, max: 3 })
@@ -58,7 +75,7 @@ function generateRandomSchemaVersion(): Schema {
     },
   });
   const rand = Math.random();
-  const latest = schema.getLatestVersion();
+  const latest = form.latestVersion;
 
   if (rand > 0.4) {
     latest.publish();
@@ -66,7 +83,7 @@ function generateRandomSchemaVersion(): Schema {
     latest.archive();
   }
 
-  return schema;
+  return form;
 }
 
 async function generateStachelabs(): Promise<Tenant> {
@@ -78,33 +95,65 @@ async function generateStachelabs(): Promise<Tenant> {
     password: process.env.USER_PASSWORD!,
     position: faker.person.jobTitle(),
   });
-  const didProvider = new UuidDIDProvider();
+
+  org.verify();
+  user.confirm(user.props.position!);
+
   const orgDID = await didProvider.generateRootDID(org);
-  org.verify(orgDID);
-  const userDID = await didProvider.generateUserDID(org, user);
-  user.confirm(user.props.position!, userDID);
+  const userDID = await didProvider.generateUserDID(orgDID);
+  const delegationProofForm = Form.create({
+    title: process.env.DELEGATION_PROOF!,
+    description: "Proof that allows a user to issue credentials",
+    type: ["DelegationProof"],
+    content: {
+      isAllowedToSign: {
+        type: "boolean",
+      },
+    },
+  });
+
+  delegationProofForm.latestVersion.publish();
+
+  const delegationProof = delegationProofForm.fill(
+    {
+      claims: { isAllowedToSign: true },
+      validFrom: undefined,
+      validUntil: undefined,
+      id: `${BASE_URL!}/${uuid.v7()}`,
+    },
+    BASE_URL,
+    orgDID,
+    userDID
+  );
+
+  const cypher = await keyPairProvider.signAndEncrypt(
+    orgDID.signingLabel,
+    delegationProof
+  );
 
   return {
     org,
     users: [user],
-    schemas: Array.from(
-      {
-        length: faker.number.int({ min: 1, max: 20 }),
-      },
-      () => generateRandomSchemaVersion()
-    ),
+    dids: [orgDID, userDID],
+    forms: [delegationProofForm],
+    credentials: [cypher],
   };
 }
 
-async function generateTenant(rootOrg: Org): Promise<Tenant> {
+async function generateTenant(
+  rootDID: OrgDID,
+  delegationProofForm: Form
+): Promise<Tenant> {
   const org = Org.create(generateRandomOrg());
   const users: User[] = [User.signUp(generateRandomUser())];
-  const schemas: Schema[] = [];
-  const didProvider = new UuidDIDProvider();
+  const forms: Form[] = [];
+  const dids: DID[] = [];
+  const credentials: Credential[] = [];
 
   if (Math.random() > 0.4) {
-    const orgDID = await didProvider.generateOrgDID(rootOrg, org);
-    org.verify(orgDID);
+    const orgDID = await didProvider.generateOrgDID(rootDID);
+    dids.push(orgDID);
+    org.verify();
 
     users.push(
       ...(await Promise.all(
@@ -119,8 +168,27 @@ async function generateTenant(rootOrg: Org): Promise<Tenant> {
             const user = User.create(generateRandomUser());
             const randStatus = Math.random();
             if (randStatus > 0.2) {
-              const userDID = await didProvider.generateUserDID(org, user);
-              user.confirm(user.props.position!, userDID);
+              const userDID = await didProvider.generateUserDID(orgDID);
+              const delegationProof = delegationProofForm.fill(
+                {
+                  claims: { isAllowedToSign: true },
+                  validFrom: undefined,
+                  validUntil: undefined,
+                  id: `${BASE_URL!}/${uuid.v7()}`,
+                },
+                BASE_URL,
+                orgDID,
+                userDID
+              );
+
+              const cypher = await keyPairProvider.signAndEncrypt(
+                orgDID.signingLabel,
+                delegationProof
+              );
+
+              dids.push(userDID);
+              credentials.push(cypher);
+              user.confirm(user.props.position!);
             }
             if (randStatus > 0.7) {
               user.deactivate();
@@ -134,15 +202,15 @@ async function generateTenant(rootOrg: Org): Promise<Tenant> {
       ))
     );
 
-    schemas.push(
+    forms.push(
       ...Array.from(
         {
           length: faker.number.int({
             min: 1,
-            max: TIER_MAP[org.props.tier].schemas,
+            max: TIER_MAP[org.props.tier].forms,
           }),
         },
-        () => generateRandomSchemaVersion()
+        () => generateRandomFormVersion()
       )
     );
   }
@@ -150,7 +218,9 @@ async function generateTenant(rootOrg: Org): Promise<Tenant> {
   return {
     org,
     users,
-    schemas,
+    dids,
+    forms,
+    credentials,
   };
 }
 
@@ -158,13 +228,17 @@ async function main() {
   const rootTenant = await generateStachelabs();
   const tenants = [rootTenant];
   const randTenants = await Promise.all(
-    Array.from({ length: 10 }, async () => await generateTenant(rootTenant.org))
+    Array.from(
+      { length: 10 },
+      async () => await generateTenant(rootTenant.dids[0], rootTenant.forms[0])
+    )
   );
   tenants.push(...randTenants);
+  let delegationFormVersionId: string | undefined;
 
   await db.transaction(async (trx) => {
     await Promise.all(
-      tenants.map(async (tenant) => {
+      tenants.map(async (tenant, idx) => {
         const [{ id: orgId }] = await trx
           .insert(orgTable)
           .values(tenant.org.props)
@@ -175,44 +249,66 @@ async function main() {
           .values(tenant.users.map((u) => ({ ...u.props, orgId })))
           .returning();
 
-        if (tenant.org.props.status === "verified") {
-          const DIDs: DbCreateDID[] = [
-            { ...tenant.org.did!.props, orgId },
-            ...tenant.users
-              .filter((u) => u.did)
-              .map((u) => {
-                const userId = insertedUsers.find(
-                  (iu) => iu.email === u.props.email
-                )?.id;
-                return {
-                  ...u.did!.props,
-                  orgId,
-                  userId,
-                };
-              }),
-          ];
-
-          await trx.insert(didTable).values(DIDs);
-        }
-
-        if (tenant.schemas.length > 0) {
-          const insertedSchemas = await trx
-            .insert(schemaTable)
-            .values(tenant.schemas.map((s) => ({ ...s.props, orgId })))
+        if (tenant.forms.length > 0) {
+          const insertedForms = await trx
+            .insert(formTable)
+            .values(tenant.forms.map((s) => ({ ...s.props, orgId })))
             .returning();
 
-          const schemaVersions = insertedSchemas.map((s) => {
-            const schema = tenant.schemas.find(
+          const formVersions = insertedForms.map((s) => {
+            const form = tenant.forms.find(
               (sch) => sch.props.title === s.title
             );
             return {
-              ...schema!.getLatestVersion().props,
-              schemaId: s.id,
+              ...form!.latestVersion.props,
+              formId: s.id,
               orgId,
             };
           });
 
-          await trx.insert(schemaVersionTable).values(schemaVersions);
+          const insertedFormVersions = await trx
+            .insert(formVersionTable)
+            .values(formVersions)
+            .returning();
+
+          if (idx === 0) {
+            const formId = insertedForms.find(
+              (iform) => iform.title === process.env.DELEGATION_PROOF!
+            )!.id;
+            delegationFormVersionId = insertedFormVersions.find(
+              (isf) => isf.formId === formId
+            )!.id;
+          }
+        }
+
+        if (tenant.org.props.status === "verified") {
+          const DIDs: DbCreateDID[] = [
+            { ...tenant.dids[0].props, orgId },
+            ...tenant.dids.slice(1).map((did, index) => {
+              const users = insertedUsers.filter((iu) => iu.confirmedAt);
+              return {
+                ...did.props,
+                orgId,
+                userId: users[index].id,
+              };
+            }),
+          ];
+
+          await trx.insert(didTable).values(DIDs);
+
+          const ciphers: DbCreateCredential[] = tenant.credentials.map(
+            (cipher, index) => {
+              const users = insertedUsers.filter((iu) => iu.confirmedAt);
+              return {
+                ...cipher.props,
+                formVersionId: delegationFormVersionId!,
+                orgId,
+                userId: users[index].id,
+              };
+            }
+          );
+
+          await trx.insert(credentialTable).values(ciphers);
         }
       })
     );

@@ -1,5 +1,5 @@
-import SchemaForm from "../form";
+import FormForm from "../form";
 
-export default async function NewSchema() {
-  return <SchemaForm />;
+export default async function NewForm() {
+  return <FormForm />;
 }

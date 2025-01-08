@@ -56,7 +56,7 @@ export default function UserDetails({ user, editHref, deleteHref }: Props) {
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="space-x-2">
         <Link href={editHref} className={cn(buttonVariants({ size: "sm" }))}>
           <Pencil className="size-3" />
           {tGeneric("edit")}

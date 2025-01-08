@@ -16,11 +16,6 @@ export const orgColumns: ColumnDef<DbOrg>[] = [
     },
   },
   {
-    accessorKey: "did",
-    header: "DID",
-    cell: ({ row }) => row.original.did?.did,
-  },
-  {
     accessorKey: "tier",
     header: function CellHeader() {
       const t = useTranslations("Org");

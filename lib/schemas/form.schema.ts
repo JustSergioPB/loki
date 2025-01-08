@@ -1,8 +1,9 @@
 import * as z from "zod";
 
-export const schemaSchema = z
+export const formSchema = z
   .object({
     title: z.string().min(1, { message: "required" }),
+    type: z.array(z.string()),
     description: z
       .string()
       .min(2, { message: "invalidDescriptionLength" })
@@ -37,4 +38,4 @@ export const schemaSchema = z
     }
   );
 
-export type SchemaSchema = z.infer<typeof schemaSchema>;
+export type FormSchema = z.infer<typeof formSchema>;

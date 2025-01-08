@@ -45,14 +45,14 @@ export default function ConfirmDialog({
 }: Props) {
   const tGeneric = useTranslations("Generic");
 
-  const confirmSchema = z.object({
+  const confirmForm = z.object({
     keyword: z.string().refine((data) => data === keyword, {
       message: "keywordDontMatch",
     }),
   });
 
   const form = useForm({
-    resolver: zodResolver(confirmSchema),
+    resolver: zodResolver(confirmForm),
     defaultValues: {
       keyword: "",
     },

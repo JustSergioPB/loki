@@ -7,10 +7,10 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
-import { DbSchemaVersion, schemaVersionTable } from "./schema-versions";
+import { DbFormVersion, formVersionTable } from "./form-versions";
 
-export const schemaTable = pgTable(
-  "schemas",
+export const formTable = pgTable(
+  "forms",
   {
     id: uuid().primaryKey().notNull().defaultRandom(),
     title: varchar({ length: 255 }).notNull(),
@@ -25,15 +25,15 @@ export const schemaTable = pgTable(
   })
 );
 
-export const schemaTableRelations = relations(schemaTable, ({ one, many }) => ({
+export const formTableRelations = relations(formTable, ({ one, many }) => ({
   org: one(orgTable, {
-    fields: [schemaTable.orgId],
+    fields: [formTable.orgId],
     references: [orgTable.id],
   }),
-  versions: many(schemaVersionTable),
+  versions: many(formVersionTable),
 }));
 
-export type DbSchema = typeof schemaTable.$inferSelect & {
-  versions: DbSchemaVersion[];
+export type DbForm = typeof formTable.$inferSelect & {
+  versions: DbFormVersion[];
 };
-export type DbSchemaCreate = typeof schemaTable.$inferInsert;
+export type DbFormCreate = typeof formTable.$inferInsert;

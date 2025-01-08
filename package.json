@@ -28,6 +28,7 @@
     "dotenv": "16.4.7",
     "drizzle-orm": "0.38.2",
     "jose": "5.9.6",
+    "json-canonicalize": "^1.0.6",
     "lucide-react": "0.468.0",
     "next": "15.1.0",
     "next-intl": "3.26.1",

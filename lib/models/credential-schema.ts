@@ -4,7 +4,7 @@ export type CredentialSchemaProof = {
       const: "DataIntegrityProof";
     };
     cryptosuite: {
-      const: "ecdsa-jcs-2022";
+      const: "Ed25519Signature2020";
     };
     created: {
       type: "string";
@@ -36,9 +36,9 @@ export type CredentialSchemaProperties = {
   "@context": { const: ["https://www.w3.org/ns/credentials/v2"] };
   title: { const: string };
   description?: { const: string };
-  type: { const: ["VerifiableCredential"] };
-  issuer: { type: "string"; format: "did" };
-  id: { type: "string"; format: "uuid" };
+  type: { const: string[] };
+  issuer: { type: "string"; format: "uri" };
+  id: { type: "string"; format: "uri" };
   validFrom?: {
     const: string;
   };
@@ -47,11 +47,11 @@ export type CredentialSchemaProperties = {
   };
   credentialSubject: {
     properties: {
-      id: { type: "string"; format: "did" };
-      content: object;
+      id: { type: "string"; format: "uri" };
+      [x: string]: unknown;
     };
     type: "object";
-    required: ["id", "content"];
+    required: string[];
   };
   credentialSchema: {
     type: "object";

@@ -1,22 +1,22 @@
 import { db } from "@/db";
-import { schemaTable } from "@/db/schema/schemas";
+import { formTable } from "@/db/schema/forms";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getUser } from "@/lib/helpers/dal";
 import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
-import { schemaVersionTable } from "@/db/schema/schema-versions";
+import { formVersionTable } from "@/db/schema/form-versions";
 import { getAction } from "@/lib/helpers/search-params";
-import SchemaForm from "../form";
-import SchemaDetails from "./details";
+import FormForm from "../form";
+import FormDetails from "./details";
 
-export default async function Schema({
+export default async function Form({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
   searchParams: SearchParams;
 }) {
-  const schemaId = (await params).id;
+  const formId = (await params).id;
 
   const user = await getUser();
 
@@ -26,9 +26,9 @@ export default async function Schema({
 
   const queryResult = await db
     .select()
-    .from(schemaTable)
-    .where(and(eq(schemaTable.orgId, user.orgId), eq(schemaTable.id, schemaId)))
-    .innerJoin(schemaVersionTable, eq(schemaVersionTable.schemaId, schemaId));
+    .from(formTable)
+    .where(and(eq(formTable.orgId, user.orgId), eq(formTable.id, formId)))
+    .innerJoin(formVersionTable, eq(formVersionTable.formId, formId));
 
   if (!queryResult) {
     notFound();
@@ -37,17 +37,17 @@ export default async function Schema({
   const action = await getAction(searchParams);
 
   return action === "edit" ? (
-    <SchemaForm
-      schema={{
-        ...queryResult[0].schemas,
-        versions: queryResult.map((row) => row.schemaVersions),
+    <FormForm
+      form={{
+        ...queryResult[0].forms,
+        versions: queryResult.map((row) => row.formVersions),
       }}
     />
   ) : (
-    <SchemaDetails
-      schema={{
-        ...queryResult[0].schemas,
-        versions: queryResult.map((row) => row.schemaVersions),
+    <FormDetails
+      form={{
+        ...queryResult[0].forms,
+        versions: queryResult.map((row) => row.formVersions),
       }}
     />
   );

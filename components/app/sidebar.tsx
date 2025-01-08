@@ -17,12 +17,13 @@ import {
    * BrickWall,
   Cable,
   FileArchive,
-  FilePenLine,
   */
+  FilePenLine,
   FileJson,
   LayoutGrid,
   User,
   Building,
+  Fingerprint,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import NavUser from "./nav-user";
@@ -37,7 +38,7 @@ export default function AppSidebar({ user }: { user: AuthUser }) {
       label: t("home"),
       children: [
         { title: t("dashboard"), url: "/dashboard", icon: LayoutGrid },
-        //{ title: t("credentials"), url: "/credentials", icon: FilePenLine },
+        { title: t("credentials"), url: "/credentials", icon: FilePenLine },
       ],
     },
   ];
@@ -51,13 +52,11 @@ export default function AppSidebar({ user }: { user: AuthUser }) {
           url: "/orgs",
           icon: Building,
         },
-        /**
-         * {
-          title: t("certificates"),
-          url: "/certificates",
-          icon: FileArchive,
+        {
+          title: t("dids"),
+          url: "/dids",
+          icon: Fingerprint,
         },
-         */
       ],
     });
   }

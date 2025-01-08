@@ -1,70 +1,70 @@
-import { schemaColumns } from "./columns";
+import { formColumns } from "./columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
 import { db } from "@/db";
-import { schemaTable } from "@/db/schema/schemas";
+import { formTable } from "@/db/schema/forms";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getParams } from "@/lib/helpers/search-params";
 import { redirect } from "next/navigation";
 import { eq, count, desc, inArray } from "drizzle-orm";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
-import { schemaVersionTable } from "@/db/schema/schema-versions";
-import NewSchema from "./new";
+import { formVersionTable } from "@/db/schema/form-versions";
+import NewForm from "./new";
 
-export default async function Schemas({
+export default async function Forms({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const { page, pageSize } = await getParams(searchParams);
 
-  const t = await getTranslations("Schema");
+  const t = await getTranslations("Form");
   const user = await getUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const paginatedSchemas = await db
+  const paginatedForms = await db
     .select()
-    .from(schemaTable)
-    .where(eq(schemaTable.orgId, user.orgId))
+    .from(formTable)
+    .where(eq(formTable.orgId, user.orgId))
     .limit(pageSize)
     .offset(page * pageSize)
-    .orderBy(desc(schemaTable.createdAt));
+    .orderBy(desc(formTable.createdAt));
 
-  const schemaIds = paginatedSchemas.map((schema) => schema.id);
+  const formIds = paginatedForms.map((form) => form.id);
 
-  const versionsForSchemas =
-    schemaIds.length > 0
+  const versionsForForms =
+    formIds.length > 0
       ? await db
           .select()
-          .from(schemaVersionTable)
-          .where(inArray(schemaVersionTable.schemaId, schemaIds))
+          .from(formVersionTable)
+          .where(inArray(formVersionTable.formId, formIds))
       : [];
 
   // Combine the results
-  const combinedResults = paginatedSchemas.map((schema) => ({
-    ...schema,
-    versions: versionsForSchemas.filter(
-      (version) => version.schemaId === schema.id
+  const combinedResults = paginatedForms.map((form) => ({
+    ...form,
+    versions: versionsForForms.filter(
+      (version) => version.formId === form.id
     ),
   }));
 
   const [{ count: countResult }] = await db
     .select({ count: count() })
-    .from(schemaTable)
-    .where(eq(schemaTable.orgId, user.orgId));
+    .from(formTable)
+    .where(eq(formTable.orgId, user.orgId));
 
   return (
     <Page>
       <PageHeader title={t("title")} subtitle={t("subtitle")}>
-        <NewSchema />
+        <NewForm />
       </PageHeader>
       <DataTable
-        columns={schemaColumns}
+        columns={formColumns}
         data={combinedResults}
         count={countResult}
         page={page}
