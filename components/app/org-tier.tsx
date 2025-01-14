@@ -1,9 +1,9 @@
-import { OrgTierType } from "@/lib/models/org-tier";
+import { OrgTier as OrgTiers } from "@/lib/types/org";
 import { Building2, Flame, House, Warehouse } from "lucide-react";
 import React from "react";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  tier: OrgTierType;
+  tier: OrgTiers;
 }
 
 export default function OrgTier({ tier, children }: Props) {

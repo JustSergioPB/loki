@@ -14,7 +14,7 @@ import DIDDetails from "./details";
 import { DbDID } from "@/db/schema/dids";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
-import { removeDID } from "@/lib/actions/did.actions";
+import { deleteDIDAction } from "@/lib/actions/did.actions";
 import { toast } from "sonner";
 
 export default function DIDDialog({ did }: { did: DbDID }) {
@@ -40,7 +40,7 @@ export default function DIDDialog({ did }: { did: DbDID }) {
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeDID(did.did);
+    const { success, error } = await deleteDIDAction(did.did);
 
     if (success) {
       toast.success(success.message);

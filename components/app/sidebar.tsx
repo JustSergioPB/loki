@@ -24,6 +24,7 @@ import {
   User,
   Building,
   Fingerprint,
+  Cable,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import NavUser from "./nav-user";
@@ -75,19 +76,11 @@ export default function AppSidebar({ user }: { user: AuthUser }) {
           url: "/forms",
           icon: FileJson,
         },
-        /*
-        
         {
           title: t("bridges"),
           url: "/bridges",
           icon: Cable,
         },
-        {
-          title: t("wall"),
-          url: "/wall",
-          icon: BrickWall,
-        },
-        */
       ],
     });
   }

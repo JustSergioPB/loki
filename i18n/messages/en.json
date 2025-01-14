@@ -1,7 +1,8 @@
 {
   "Dashboard": {
     "title": "Welcome",
-    "rootDID": "Generate root DID"
+    "rootDID": "Generate root DID",
+    "delegationProof": "Gen delegation proof form"
   },
   "Home": {
     "title": "Welcome!"
@@ -140,7 +141,18 @@
     "holder": "Holder"
   },
   "Bridge": {
-    "title": "Welcome!"
+    "title": "Bridges",
+    "subtitle": "Handle everything related to bridges in here. You can configure them and toggle on/off them. Bridges allow your holders to generate credentials from Web2 data.",
+    "bridges": {
+      "email": {
+        "editTitle": "Configure email bridge",
+        "editDescription": "Edit the form bellow to configure which email domains are allowed",
+        "emailBridgeWillBePublished": "Submiting the form will create and publish a form version for this bridge.",
+        "domains": "Domains",
+        "title": "Email",
+        "description": "This bridge allows a holder to claim that it belongs to your organization through a credential that contains their organization email."
+      }
+    }
   },
   "Form": {
     "title": "Forms",
@@ -166,6 +178,7 @@
     "content": "Content",
     "contentPlaceholder": "'{ }'",
     "formNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
+    "dontEditBridge": "Don't edit this form manually, if you want to edit this form do it in the bridge section.",
     "statuses": {
       "draft": "Draft",
       "published": "Published",
@@ -216,7 +229,7 @@
   },
   "Did": {
     "title": "Descentralized IDs",
-    "subtitle": "Handle everything related to DIDs in here. You can see and delete them.",
+    "subtitle": "Handle everything related to DIDs in here. You can see and delete them. DIDs represent your digital identity in a descentralized way where your digital identity is linked to a universal identifier.",
     "did": "Descentralized ID",
     "document": "Document",
     "services": "Services",

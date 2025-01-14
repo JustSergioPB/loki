@@ -1,4 +1,4 @@
-import { UserRole as UserRoles } from "@/lib/models/user";
+import { UserRole as UserRoles } from "@/lib/types/user";
 import { PenTool, Shield, ShieldPlus } from "lucide-react";
 import React from "react";
 

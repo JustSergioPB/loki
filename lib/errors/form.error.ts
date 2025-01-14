@@ -1,5 +1,5 @@
 export const formErrorMessages = [
-  "missingPublishedVersion",
+  "delegationFormNotFound",
   "notFound",
 ] as const;
 export type FormErrorMessage = (typeof formErrorMessages)[number];

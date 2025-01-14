@@ -17,7 +17,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
 import { signUpSchema, SignUpSchema } from "@/lib/schemas/sign-up.schema";
-import { signUp } from "@/lib/actions/auth.actions";
+import { signUpUserAction } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -43,7 +43,7 @@ export default function SignUpForm() {
   async function onSubmit(values: SignUpSchema) {
     setIsLoading(true);
 
-    const { success, error } = await signUp(values);
+    const { success, error } = await signUpUserAction(values);
 
     if (success) {
       toast.success(success.message);

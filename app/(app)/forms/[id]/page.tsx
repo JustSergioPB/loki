@@ -1,13 +1,10 @@
-import { db } from "@/db";
-import { formTable } from "@/db/schema/forms";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getUser } from "@/lib/helpers/dal";
 import { notFound, redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
-import { formVersionTable } from "@/db/schema/form-versions";
 import { getAction } from "@/lib/helpers/search-params";
 import FormForm from "../form";
 import FormDetails from "./details";
+import { getFormById } from "@/lib/models/form.model";
 
 export default async function Form({
   params,
@@ -24,31 +21,17 @@ export default async function Form({
     redirect("/login");
   }
 
-  const queryResult = await db
-    .select()
-    .from(formTable)
-    .where(and(eq(formTable.orgId, user.orgId), eq(formTable.id, formId)))
-    .innerJoin(formVersionTable, eq(formVersionTable.formId, formId));
+  const formVersion = await getFormById(user, formId);
 
-  if (!queryResult) {
+  if (!formVersion) {
     notFound();
   }
 
   const action = await getAction(searchParams);
 
   return action === "edit" ? (
-    <FormForm
-      form={{
-        ...queryResult[0].forms,
-        versions: queryResult.map((row) => row.formVersions),
-      }}
-    />
+    <FormForm formVersion={formVersion} />
   ) : (
-    <FormDetails
-      form={{
-        ...queryResult[0].forms,
-        versions: queryResult.map((row) => row.formVersions),
-      }}
-    />
+    <FormDetails formVersion={formVersion} />
   );
 }

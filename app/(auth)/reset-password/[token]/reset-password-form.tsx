@@ -20,7 +20,7 @@ import {
   ResetPasswordSchema,
 } from "@/lib/schemas/reset-password.schema";
 import { useRouter } from "next/navigation";
-import { resetPassword } from "@/lib/actions/auth.actions";
+import { resetUserPasswordAction } from "@/lib/actions/auth.actions";
 import { useTranslations } from "next-intl";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
@@ -39,7 +39,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
   async function onSubmit(values: ResetPasswordSchema) {
     setIsLoading(true);
 
-    const { success, error } = await resetPassword(values, token);
+    const { success, error } = await resetUserPasswordAction(values, token);
 
     if (success) {
       toast.success(success.message);

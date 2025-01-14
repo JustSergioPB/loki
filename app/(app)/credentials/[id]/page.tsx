@@ -12,19 +12,14 @@ import {
   IdCard,
 } from "lucide-react";
 import Field from "@/components/app/field";
-import Date from "@/components/app/date";
 import { Badge } from "@/components/ui/badge";
-import { credentialTable } from "@/db/schema/credentials";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { notFound, redirect } from "next/navigation";
-import { db } from "@/db";
 import PageHeader from "@/components/app/page-header";
-import { and, eq, isNull } from "drizzle-orm";
-import { didTable } from "@/db/schema/dids";
-import { OrgDID } from "@/lib/models/org-did";
-import { FakeHSMProvider } from "@/providers/key-pair.provider";
 import DeleteCredential from "./delete";
+import { getCredentialById } from "@/lib/models/credential.model";
+import DateDisplay from "@/components/app/date";
 
 export default async function Credential({
   params,
@@ -43,34 +38,14 @@ export default async function Credential({
     redirect("/login");
   }
 
-  const queryResult = await db
-    .select()
-    .from(credentialTable)
-    .where(
-      and(
-        eq(credentialTable.orgId, user.orgId),
-        eq(credentialTable.id, credentialId)
-      )
-    )
-    .innerJoin(
-      didTable,
-      and(eq(didTable.orgId, user.orgId), isNull(didTable.userId))
-    );
+  const credential = await getCredentialById(user, credentialId);
 
-  if (!queryResult[0]) {
+  if (!credential) {
     notFound();
   }
 
-  const orgDID = OrgDID.fromProps(queryResult[0].dids);
-  const keyPairProvider = new FakeHSMProvider();
-  const credential = await keyPairProvider.decrypt(
-    orgDID.signingLabel,
-    queryResult[0].credentials
-  );
-
-  const { id: holder, ...credentialSubject } = credential.credentialSubject;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { proofValue, ...proof } = credential.proof;
+  const { id: holder, ...claims } =
+    credential.plainCredential.credentialSubject;
 
   return (
     <section className="p-6 lg:w-[620px] space-y-6">
@@ -80,7 +55,7 @@ export default async function Credential({
         className="p-0"
       />
       <div>
-        <DeleteCredential credential={queryResult[0].credentials} />
+        <DeleteCredential credential={credential} />
       </div>
       <section className="space-y-4">
         <Field
@@ -88,7 +63,9 @@ export default async function Credential({
           label={tForm("titleProp")}
           type="vertical"
         >
-          <p className="text-sm line-clamp-2">{credential.title}</p>
+          <p className="text-sm line-clamp-2">
+            {credential.plainCredential.title}
+          </p>
         </Field>
         <Field
           icon={<ClipboardType className="size-4" />}
@@ -96,7 +73,7 @@ export default async function Credential({
           type="vertical"
         >
           <div className="flex items-center gap-1 flex-wrap">
-            {credential.type.slice(1).map((type, idx) => (
+            {credential.plainCredential.type.slice(1).map((type, idx) => (
               <Badge variant="secondary" key={`${type}-${idx}`}>
                 {type}
               </Badge>
@@ -108,19 +85,33 @@ export default async function Credential({
           label={tFormVersion("description")}
           type="vertical"
         >
-          <p className="text-sm line-clamp-4">{credential.description}</p>
+          <p className="text-sm line-clamp-4">
+            {credential.plainCredential.description}
+          </p>
         </Field>
         <Field
           icon={<Timer className="size-4" />}
           label={tFormVersion("validFrom")}
         >
-          <Date date={credential.validFrom} />
+          <DateDisplay
+            date={
+              credential.plainCredential.validFrom
+                ? new Date(credential.plainCredential.validFrom)
+                : undefined
+            }
+          />
         </Field>
         <Field
           icon={<TimerOff className="size-4" />}
           label={tFormVersion("validUntil")}
         >
-          <Date date={credential.validUntil} />
+          <DateDisplay
+            date={
+              credential.plainCredential.validUntil
+                ? new Date(credential.plainCredential.validUntil)
+                : undefined
+            }
+          />
         </Field>
         <Field icon={<IdCard className="size-4" />} label={t("holder")}>
           {holder}
@@ -131,9 +122,7 @@ export default async function Credential({
           type="vertical"
         >
           <pre className="w-full rounded-md border p-2">
-            <code className="text-xs">
-              {JSON.stringify(credentialSubject, null, 1)}
-            </code>
+            <code className="text-xs">{JSON.stringify(claims, null, 1)}</code>
           </pre>
         </Field>
         <Field
@@ -142,7 +131,9 @@ export default async function Credential({
           type="vertical"
         >
           <pre className="w-full rounded-md border p-2">
-            <code className="text-xs">{JSON.stringify(proof, null, 1)}</code>
+            <code className="text-xs">
+              {JSON.stringify(credential.plainCredential.proof, null, 1)}
+            </code>
           </pre>
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
@@ -152,13 +143,13 @@ export default async function Credential({
           icon={<Calendar className="size-4" />}
           label={tGeneric("createdAt")}
         >
-          <Date date={credential.props.createdAt} />
+          <DateDisplay date={credential.createdAt} />
         </Field>
         <Field
           icon={<Clock className="size-4" />}
           label={tGeneric("updatedAt")}
         >
-          <Date date={credential.props.updatedAt} />
+          <DateDisplay date={credential.updatedAt} />
         </Field>
       </section>
     </section>

@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { UserSchema, userSchema } from "@/lib/schemas/user.schema";
 import { DbUser } from "@/db/schema/users";
-import { createUser, updateUser } from "@/lib/actions/user.actions";
+import { createUserAction, updateUserAction } from "@/lib/actions/user.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
 
@@ -56,8 +56,8 @@ export default function UserForm({ user, onSubmit }: Props) {
     setIsLoading(true);
 
     const { success, error } = user
-      ? await updateUser(user.id, values)
-      : await createUser(values);
+      ? await updateUserAction(user.id, values)
+      : await createUserAction(values);
 
     if (success) {
       toast.success(success.message);

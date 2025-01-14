@@ -1,7 +1,7 @@
 "use client";
 
 import { LoadingButton } from "@/components/app/loading-button";
-import { createRootDID } from "@/lib/actions/did.actions";
+import { createRootDIDAction } from "@/lib/actions/did.actions";
 import { Rocket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -14,7 +14,7 @@ export default function RootDIDButton() {
   async function onClick() {
     setIsLoading(true);
 
-    const { success, error } = await createRootDID();
+    const { success, error } = await createRootDIDAction();
 
     if (success) {
       toast.success(success.message);

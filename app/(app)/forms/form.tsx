@@ -14,60 +14,59 @@ import {
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
 import { FormSchema, formSchema } from "@/lib/schemas/form.schema";
-import { createForm, updateForm } from "@/lib/actions/form.actions";
+import { createFormAction, updateFormAction } from "@/lib/actions/form.actions";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
-import { DbForm } from "@/db/schema/forms";
-import { Form as FormEntity } from "@/lib/models/form";
 import { Textarea } from "@/components/ui/textarea";
 import InfoPanel from "@/components/app/info-panel";
 import { DatetimePicker } from "@/components/ui/datetime-picker";
 import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import { TagsInput } from "@/components/ui/tags-input";
+import { DbFormVersion } from "@/db/schema/form-versions";
 
-type Props = {
-  form?: DbForm;
-};
-
-export default function FormForm({ form: dbForm }: Props) {
+export default function FormForm({
+  formVersion,
+}: {
+  formVersion?: DbFormVersion;
+}) {
   const t = useTranslations("Form");
   const tVersion = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
+  const validFrom = formVersion?.credentialSchema.properties.validFrom;
+  const validUntil = formVersion?.credentialSchema.properties.validUntil;
 
   const [isLoading, setIsLoading] = useState(false);
-  const latestVersion = dbForm
-    ? FormEntity.fromProps(dbForm).latestVersion
-    : undefined;
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: dbForm?.title ?? "",
-      type: latestVersion?.type.slice(1) ?? [],
-      description: latestVersion?.description ?? "",
-      content: JSON.stringify(latestVersion?.credentialSubject, null, 1) ?? "",
-      validFrom:
-        latestVersion && latestVersion.validFrom
-          ? new Date(latestVersion.validFrom)
-          : undefined,
-      validUntil:
-        latestVersion && latestVersion.validUntil
-          ? new Date(latestVersion.validUntil)
-          : undefined,
+      title: formVersion?.credentialSchema.title ?? "",
+      type: formVersion?.credentialSchema.properties.type.const.slice(1) ?? [],
+      description: formVersion?.credentialSchema.description ?? "",
+      content:
+        JSON.stringify(
+          formVersion?.credentialSchema.properties.credentialSubject,
+          null,
+          1
+        ) ?? "",
+      validFrom: validFrom ? new Date(validFrom.const) : undefined,
+      validUntil: validUntil ? new Date(validUntil.const) : undefined,
     },
   });
 
   async function handleSubmit(values: FormSchema) {
     setIsLoading(true);
 
-    const { success, error } = dbForm
-      ? await updateForm(dbForm.id, values)
-      : await createForm(values);
+    const { success, error } = formVersion
+      ? await updateFormAction(formVersion.formId, values)
+      : await createFormAction(values);
 
     if (success) {
       toast.success(success.message);
-      redirect(dbForm ? `/forms/${dbForm.id}?action=see` : "/forms");
+      redirect(
+        formVersion ? `/forms/${formVersion.formId}?action=see` : "/forms"
+      );
     } else {
       toast.error(error.message);
     }
@@ -78,11 +77,11 @@ export default function FormForm({ form: dbForm }: Props) {
   return (
     <section className="p-6 space-y-6 lg:w-[640px]">
       <PageHeader
-        title={t(dbForm ? "editTitle" : "createTitle")}
-        subtitle={t(dbForm ? "editDescription" : "createDescription")}
+        title={t(formVersion ? "editTitle" : "createTitle")}
+        subtitle={t(formVersion ? "editDescription" : "createDescription")}
         className="p-0"
       />
-      {latestVersion && latestVersion.props.status !== "draft" && (
+      {formVersion && formVersion?.status !== "draft" && (
         <InfoPanel
           variant="warning"
           type="vertical"
@@ -90,11 +89,22 @@ export default function FormForm({ form: dbForm }: Props) {
           message={tVersion("formNotInDraft")}
         />
       )}
+      {formVersion &&
+        formVersion?.credentialSchema.properties.type.const.includes(
+          "Bridge"
+        ) && (
+          <InfoPanel
+            variant="danger"
+            type="vertical"
+            label={tGeneric("warning")}
+            message={tVersion("dontEditBridge")}
+          />
+        )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-6"
-          id={dbForm ? `form-form-${dbForm.id}` : "new"}
+          id={formVersion ? `form-form-${formVersion.formId}` : "new"}
         >
           <FormField
             control={form.control}

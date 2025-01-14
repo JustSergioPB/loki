@@ -17,7 +17,7 @@ export type Service = {
 
 export type VerificationMethod = {
   id: string;
-  controller: string[];
+  controllers: string[];
   type: string;
   publicKeyMultibase: string;
   revoked?: Date;

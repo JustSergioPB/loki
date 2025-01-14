@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { removeCredential } from "@/lib/actions/credential.actions";
+import { deleteCredentialAction } from "@/lib/actions/credential.actions";
 import { DbCredential } from "@/db/schema/credentials";
 
 export default function CredentialDialog({
@@ -47,7 +47,7 @@ export default function CredentialDialog({
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeCredential(credential.id);
+    const { success, error } = await deleteCredentialAction(credential.id);
 
     if (success) {
       toast.success(success.message);

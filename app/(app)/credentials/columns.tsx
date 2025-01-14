@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import CredentialDialog from "./dialog";
 import { DbCredential } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
-import { FormVersion } from "@/lib/models/form-version";
 
 export const credentialColumns: ColumnDef<DbCredential>[] = [
   {
@@ -15,9 +14,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("titleProp");
     },
     cell: function CellCompodnent({ row }) {
-      return row.original.formVersion
-        ? FormVersion.fromProps(row.original.formVersion).title
-        : undefined;
+      return row.original.formVersion?.credentialSchema.title;
     },
   },
   {
@@ -27,9 +24,8 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("type");
     },
     cell: function CellComponent({ row }) {
-      const type = row.original.formVersion
-        ? FormVersion.fromProps(row.original.formVersion).type
-        : [];
+      const type =
+        row.original.formVersion?.credentialSchema.properties.type.const ?? [];
       return (
         <div className="flex items-center gap-1">
           {type.slice(1, 3).map((type, idx) => (

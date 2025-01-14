@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { userTable } from "./users";
-import { auditableEntities, auditActions } from "@/lib/models/audit-log";
+import { auditableEntities, auditActions } from "@/lib/types/audit-log";
 
 export const auditAction = pgEnum("auditAction", auditActions);
 export const auditableEntity = pgEnum("auditableEntity", auditableEntities);
@@ -24,6 +24,9 @@ export const auditLogTable = pgTable("auditLogs", {
   value: jsonb(),
   metadata: jsonb(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export const auditLogsRelations = relations(auditLogTable, ({ one }) => ({

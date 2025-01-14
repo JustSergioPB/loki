@@ -1,4 +1,4 @@
-import { FormVersionStatus as FormVersionStatuses } from "@/lib/models/form-version";
+import { FormVersionStatus as FormVersionStatuses } from "@/lib/types/form";
 import { cn } from "@/lib/utils";
 import React from "react";
 

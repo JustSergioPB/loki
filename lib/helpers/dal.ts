@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { AuthUser, userTable } from "@/db/schema/users";
 import { decrypt } from "./session";
 import { AuthError } from "../errors/auth.error";
+import { UserRole } from "../types/user";
 
 export const verifySession = cache(async () => {
   const cookie = (await cookies()).get("session")?.value;
@@ -44,7 +45,7 @@ export const getUser = cache(async () => {
   }
 });
 
-export async function authorize(allowedRoles: string[]): Promise<AuthUser> {
+export async function authorize(allowedRoles: UserRole[]): Promise<AuthUser> {
   const user = await getUser();
 
   if (!user) {

@@ -2,23 +2,20 @@ import { userColumns } from "./columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
-import { db } from "@/db";
-import { userTable } from "@/db/schema/users";
 import { SearchParams } from "@/lib/generics/search-params";
 import { getParams } from "@/lib/helpers/search-params";
 import { redirect } from "next/navigation";
-import { eq, count } from "drizzle-orm";
-import { orgTable } from "@/db/schema/orgs";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
 import NewUser from "./new";
+import { searchUsers } from "@/lib/models/user.model";
 
 export default async function Users({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { page, pageSize } = await getParams(searchParams);
+  const query = await getParams(searchParams);
 
   const t = await getTranslations("User");
   const user = await getUser();
@@ -27,40 +24,7 @@ export default async function Users({
     redirect("/login");
   }
 
-  const query = db
-    .select({
-      id: userTable.id,
-      fullName: userTable.fullName,
-      email: userTable.email,
-      role: userTable.role,
-      status: userTable.status,
-      confirmedAt: userTable.confirmedAt,
-      updatedAt: userTable.updatedAt,
-      createdAt: userTable.createdAt,
-      orgId: userTable.orgId,
-      position: userTable.position,
-      org: {
-        name: orgTable.name,
-      },
-    })
-    .from(userTable)
-    .limit(pageSize)
-    .offset(page * pageSize)
-    .innerJoin(orgTable, eq(userTable.orgId, orgTable.id))
-    .orderBy(userTable.orgId);
-
-  const countQuery = db.select({ count: count() }).from(userTable);
-
-  if (user.role !== "admin") {
-    query.where(eq(userTable.orgId, user.orgId));
-    countQuery.where(eq(userTable.orgId, user.orgId));
-  }
-
-  const queryResult = (await query).map((row) => ({
-    ...row,
-    password: "********",
-  }));
-  const [{ count: countResult }] = await countQuery;
+  const queryResult = await searchUsers(user, query);
 
   return (
     <Page>
@@ -69,10 +33,10 @@ export default async function Users({
       </PageHeader>
       <DataTable
         columns={userColumns}
-        data={queryResult}
-        count={countResult}
-        page={page}
-        pageSize={pageSize}
+        data={queryResult.items}
+        count={queryResult.count}
+        page={query.page}
+        pageSize={query.pageSize}
       />
     </Page>
   );

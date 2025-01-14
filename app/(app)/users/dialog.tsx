@@ -15,7 +15,7 @@ import UserDetails from "./details";
 import UserForm from "./form";
 import { useState } from "react";
 import ConfirmDialog from "@/components/app/confirm-dialog";
-import { removeUser } from "@/lib/actions/user.actions";
+import { deleteUserAction } from "@/lib/actions/user.actions";
 import { toast } from "sonner";
 
 export default function UserDialog({ user }: { user: DbUser }) {
@@ -44,7 +44,7 @@ export default function UserDialog({ user }: { user: DbUser }) {
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeUser(user.id);
+    const { success, error } = await deleteUserAction(user.id);
 
     if (success) {
       toast.success(success.message);

@@ -14,7 +14,7 @@ import OrgDetails from "./details";
 import { DbOrg } from "@/db/schema/orgs";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
-import { removeOrg, verifyOrg } from "@/lib/actions/org.actions";
+import { deleteOrgAction, verifyOrgAction } from "@/lib/actions/org.actions";
 import { toast } from "sonner";
 
 export default function OrgDialog({ org }: { org: DbOrg }) {
@@ -43,7 +43,7 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
   async function onVerify() {
     setIsLoading(true);
 
-    const { success, error } = await verifyOrg(org.id);
+    const { success, error } = await verifyOrgAction(org.id);
 
     if (success) {
       toast.success(success.message);
@@ -58,7 +58,7 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeOrg(org.id);
+    const { success, error } = await deleteOrgAction(org.id);
 
     if (success) {
       toast.success(success.message);

@@ -3,15 +3,19 @@
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { DbForm } from "@/db/schema/forms";
-import { removeForm } from "@/lib/actions/form.actions";
+import { DbFormVersion } from "@/db/schema/form-versions";
+import { deleteFormAction } from "@/lib/actions/form.actions";
 import { Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function DeleteFormVersion({ form }: { form: DbForm }) {
+export default function DeleteFormVersion({
+  formVersion,
+}: {
+  formVersion: DbFormVersion;
+}) {
   const t = useTranslations("Form");
   const tGeneric = useTranslations("Generic");
   const router = useRouter();
@@ -22,7 +26,7 @@ export default function DeleteFormVersion({ form }: { form: DbForm }) {
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await removeForm(form.id);
+    const { success, error } = await deleteFormAction(formVersion.formId);
 
     if (success) {
       toast.success(success.message);
@@ -35,11 +39,11 @@ export default function DeleteFormVersion({ form }: { form: DbForm }) {
   }
 
   async function onClose() {
-    router.push(`/forms/${form.id}?action=see`);
+    router.push(`/forms/${formVersion.formId}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${form.id}?action=delete`);
+    router.push(`/forms/${formVersion.formId}?action=delete`);
   }
 
   return (
@@ -55,13 +59,13 @@ export default function DeleteFormVersion({ form }: { form: DbForm }) {
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={form.title}
+          keyword={formVersion.credentialSchema.title}
           title={t("deleteTitle")}
           description={t("deleteDescription")}
           label={t("deleteLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={form.id}
+          id={formVersion.formId}
           variant="danger"
         />
       </DialogContent>

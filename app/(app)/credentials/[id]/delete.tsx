@@ -4,7 +4,8 @@ import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { DbCredential } from "@/db/schema/credentials";
-import { removeCredential } from "@/lib/actions/credential.actions";
+import { deleteCredentialAction } from "@/lib/actions/credential.actions";
+import { PlainCredential } from "@/lib/types/credential";
 import { Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 export default function DeleteCredential({
   credential,
 }: {
-  credential: DbCredential;
+  credential: DbCredential | PlainCredential;
 }) {
   const t = useTranslations("Credential");
   const tGeneric = useTranslations("Generic");
@@ -26,7 +27,7 @@ export default function DeleteCredential({
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await removeCredential(credential.id);
+    const { success, error } = await deleteCredentialAction(credential.id);
 
     if (success) {
       toast.success(success.message);

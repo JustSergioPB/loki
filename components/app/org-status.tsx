@@ -1,4 +1,4 @@
-import { OrgStatus as Status } from "@/lib/models/org";
+import { OrgStatus as Status } from "@/lib/types/org";
 import { cn } from "@/lib/utils";
 import React from "react";
 

@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
 import { emailSchema, EmailSchema } from "@/lib/schemas/email.schema";
-import { forgotPassword } from "@/lib/actions/auth.actions";
+import { sendUserForgotPasswordAction } from "@/lib/actions/auth.actions";
 import { useTranslations } from "next-intl";
 
 export default function ForgotPasswordForm() {
@@ -33,7 +33,7 @@ export default function ForgotPasswordForm() {
   async function onSubmit(values: EmailSchema) {
     setIsLoading(true);
 
-    const { success, error } = await forgotPassword(values.email);
+    const { success, error } = await sendUserForgotPasswordAction(values);
 
     if (success) {
       toast.success(success.message);

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "migrate:prod": "drizzle-kit generate",
     "migrate:dev": "drizzle-kit push",
-    "seed": "npx tsx scripts/seed-db.ts"
+    "seed:db": "npx tsx scripts/seed-db.ts",
+    "reset:db": "npx tsx scripts/reset-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.1",
@@ -20,6 +21,7 @@
     "@radix-ui/react-select": "2.1.4",
     "@radix-ui/react-separator": "1.1.1",
     "@radix-ui/react-slot": "1.1.1",
+    "@radix-ui/react-switch": "^1.1.2",
     "@radix-ui/react-tooltip": "1.1.6",
     "@tanstack/react-table": "8.20.6",
     "bcrypt": "5.1.1",
@@ -27,6 +29,7 @@
     "clsx": "2.1.1",
     "dotenv": "16.4.7",
     "drizzle-orm": "0.38.2",
+    "drizzle-seed": "^0.3.0",
     "jose": "5.9.6",
     "json-canonicalize": "^1.0.6",
     "lucide-react": "0.468.0",

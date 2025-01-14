@@ -18,7 +18,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
 import { loginSchema, LoginSchema } from "@/lib/schemas/login.schema";
-import { login } from "@/lib/actions/auth.actions";
+import { loginUserAction } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -39,7 +39,7 @@ export default function LoginForm() {
   async function onSubmit(values: LoginSchema) {
     setIsLoading(true);
 
-    const { success, error } = await login(values);
+    const { success, error } = await loginUserAction(values);
 
     if (success) {
       toast.success(success.message);

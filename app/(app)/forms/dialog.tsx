@@ -1,4 +1,3 @@
-import { DbForm } from "@/db/schema/forms";
 import { Button } from "@/components/ui/button";
 import {
   Archive,
@@ -18,13 +17,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
-import { Form } from "@/lib/models/form";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
-import { removeForm, changeFormState } from "@/lib/actions/form.actions";
+import {
+  deleteFormAction,
+  publishFormAction,
+  archiveFormAction,
+} from "@/lib/actions/form.actions";
 import { toast } from "sonner";
+import { DbFormVersion } from "@/db/schema/form-versions";
 
-export default function FormDialog({ form }: { form: DbForm }) {
+export default function FormDialog({
+  formVersion,
+}: {
+  formVersion: DbFormVersion;
+}) {
   const t = useTranslations("Form");
   const tGeneric = useTranslations("Generic");
   const tVersion = useTranslations("FormVersion");
@@ -33,7 +40,6 @@ export default function FormDialog({ form }: { form: DbForm }) {
   const pathname = usePathname();
   const action = searchParams.get("action");
   const id = searchParams.get("id");
-  const latest = Form.fromProps(form).latestVersion;
   const [isLoading, setIsLoading] = useState(false);
 
   const deleteParams = new URLSearchParams(searchParams);
@@ -47,19 +53,19 @@ export default function FormDialog({ form }: { form: DbForm }) {
 
   function onActionTrigger(action: "delete" | "publish" | "archive") {
     const params = new URLSearchParams(searchParams);
-    params.set("id", form.id.toString());
+    params.set("id", formVersion.formId.toString());
     params.set("action", action);
     router.push(`${pathname}?${params.toString()}`);
   }
 
   async function onActionNavigate(action: "see" | "edit") {
-    router.push(`${pathname}/${form.id}?action=${action}`);
+    router.push(`${pathname}/${formVersion.formId}?action=${action}`);
   }
 
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await removeForm(form.id);
+    const { success, error } = await deleteFormAction(formVersion.formId);
 
     if (success) {
       toast.success(success.message);
@@ -74,7 +80,7 @@ export default function FormDialog({ form }: { form: DbForm }) {
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await changeFormState(form.id!, "published");
+    const { success, error } = await publishFormAction(formVersion.formId);
 
     if (success) {
       toast.success(success.message);
@@ -89,7 +95,7 @@ export default function FormDialog({ form }: { form: DbForm }) {
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await changeFormState(form.id!, "archived");
+    const { success, error } = await archiveFormAction(formVersion.formId);
 
     if (success) {
       toast.success(success.message);
@@ -109,7 +115,7 @@ export default function FormDialog({ form }: { form: DbForm }) {
   }
 
   return (
-    <Dialog open={!!action && id === form.id} onOpenChange={onClose}>
+    <Dialog open={!!action && id === formVersion.formId} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -127,13 +133,13 @@ export default function FormDialog({ form }: { form: DbForm }) {
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
-          {latest.props.status === "draft" && (
+          {formVersion.status === "draft" && (
             <DropdownMenuItem onClick={() => onActionTrigger("publish")}>
               <Rss />
               {tVersion("publish")}
             </DropdownMenuItem>
           )}
-          {latest.props.status === "published" && (
+          {formVersion.status === "published" && (
             <DropdownMenuItem onClick={() => onActionTrigger("archive")}>
               <Archive />
               {tVersion("archive")}
@@ -151,37 +157,37 @@ export default function FormDialog({ form }: { form: DbForm }) {
       <DialogContent className="max-h-[95vh] overflow-y-auto">
         {action === "publish" && (
           <ConfirmDialog
-            keyword={form.title}
+            keyword={formVersion.credentialSchema.title}
             title={tVersion("publishTitle")}
             description={tVersion("publishDescription")}
             label={tVersion("publishLabel")}
             onSubmit={onPublish}
             loading={isLoading}
-            id={form.id}
+            id={formVersion.formId}
             variant="warning"
           />
         )}
         {action === "archive" && (
           <ConfirmDialog
-            keyword={form.title}
+            keyword={formVersion.credentialSchema.title}
             title={tVersion("archiveTitle")}
             description={tVersion("archiveDescription")}
             label={tVersion("archiveLabel")}
             onSubmit={onArchive}
             loading={isLoading}
-            id={form.id}
+            id={formVersion.formId}
             variant="warning"
           />
         )}
         {action === "delete" && (
           <ConfirmDialog
-            keyword={form.title}
+            keyword={formVersion.credentialSchema.title}
             title={t("deleteTitle")}
             description={t("deleteDescription")}
             label={t("deleteLabel")}
             onSubmit={onDelete}
             loading={isLoading}
-            id={form.id}
+            id={formVersion.formId}
             variant="danger"
           />
         )}

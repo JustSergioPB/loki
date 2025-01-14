@@ -5,12 +5,14 @@ import {
   uuid,
   varchar,
   timestamp,
-  uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 import { auditLogTable } from "./audit-logs";
-import { orgTable } from "./orgs";
+import { DbOrg, orgTable } from "./orgs";
 import { userTokenTable } from "./user-tokens";
-import { userRoles, userStatuses } from "@/lib/models/user";
+import { credentialTable } from "./credentials";
+import { userRoles, userStatuses } from "@/lib/types/user";
+import { didTable } from "./dids";
 
 export const userRole = pgEnum("userRole", userRoles);
 export const userStatus = pgEnum("userStatus", userStatuses);
@@ -29,28 +31,34 @@ export const userTable = pgTable(
     password: varchar({ length: 255 }).notNull(),
     position: varchar(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp({ withTimezone: true }),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .$onUpdate(() => new Date()),
     confirmedAt: timestamp({ withTimezone: true }),
   },
-  (table) => ({
-    fullNameEmailIdx: uniqueIndex("uniqueFullNamePerEmail").on(
-      table.email,
-      table.fullName
-    ),
-  })
+  (table) => [
+    {
+      fullNameEmailIdx: unique("uniqueFullNamePerEmail").on(
+        table.email,
+        table.fullName
+      ),
+    },
+  ]
 );
 
 export const userTableRelations = relations(userTable, ({ one, many }) => ({
+  auditLogs: many(auditLogTable),
+  credentials: many(credentialTable),
+  did: one(didTable),
   org: one(orgTable, {
     fields: [userTable.orgId],
     references: [orgTable.id],
   }),
-  tokens: many(userTokenTable),
-  auditLogs: many(auditLogTable),
+  userTokens: many(userTokenTable),
 }));
 
 export type DbUser = typeof userTable.$inferSelect & {
-  org?: { name: string };
+  org?: DbOrg;
 };
 
 export type DbUserCreate = typeof userTable.$inferInsert;

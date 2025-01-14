@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { userRoles } from "../models/user";
+import { userRoles } from "../types/user";
 
 export const userSchema = z.object({
   fullName: z

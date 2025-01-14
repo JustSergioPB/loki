@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/app/loading-button";
-import { resendConfirmationMail } from "@/lib/actions/auth.actions";
+import { resendUserConfirmationAction } from "@/lib/actions/auth.actions";
 import { emailSchema, EmailSchema } from "@/lib/schemas/email.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
@@ -31,7 +31,7 @@ export default function ResendConfirmationForm() {
 
   async function onSubmit(values: EmailSchema) {
     setIsLoading(true);
-    const { success, error } = await resendConfirmationMail(values.email);
+    const { success, error } = await resendUserConfirmationAction(values);
 
     if (success) {
       toast.success(success.message);

@@ -1,8 +1,12 @@
-export const didErrorMessages = ["replacementPurposeNotMatching"] as const;
-export type DIDErrorMessage = (typeof didErrorMessages)[number];
+export const DIDErrorMessages = [
+  "missingOrgDID",
+  "missingUserDID",
+  "missingRootDID",
+] as const;
+export type UserDIDErrorMessage = (typeof DIDErrorMessages)[number];
 
 export class DIDError extends Error {
-  constructor(message: DIDErrorMessage) {
+  constructor(message: UserDIDErrorMessage) {
     super(message);
     this.name = message;
   }

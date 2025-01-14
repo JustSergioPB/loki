@@ -1,4 +1,4 @@
-import { UserStatus as UserStatuses } from "@/lib/models/user";
+import { UserStatus as UserStatuses } from "@/lib/types/user";
 import { cn } from "@/lib/utils";
 import React from "react";
 

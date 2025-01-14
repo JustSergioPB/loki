@@ -3,15 +3,19 @@
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { DbForm } from "@/db/schema/forms";
-import { changeFormState } from "@/lib/actions/form.actions";
+import { DbFormVersion } from "@/db/schema/form-versions";
+import { archiveFormAction } from "@/lib/actions/form.actions";
 import { Archive } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function ArchiveFormVersion({ form }: { form: DbForm }) {
+export default function ArchiveFormVersion({
+  formVersion,
+}: {
+  formVersion: DbFormVersion;
+}) {
   const t = useTranslations("FormVersion");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +25,7 @@ export default function ArchiveFormVersion({ form }: { form: DbForm }) {
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await changeFormState(form.id!, "archived");
+    const { success, error } = await archiveFormAction(formVersion.formId);
 
     if (success) {
       toast.success(success.message);
@@ -34,11 +38,11 @@ export default function ArchiveFormVersion({ form }: { form: DbForm }) {
   }
 
   async function onClose() {
-    router.push(`/forms/${form.id}?action=see`);
+    router.push(`/forms/${formVersion.formId}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${form.id}?action=archive`);
+    router.push(`/forms/${formVersion.formId}?action=archive`);
   }
 
   return (
@@ -54,13 +58,13 @@ export default function ArchiveFormVersion({ form }: { form: DbForm }) {
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={form.title}
+          keyword={formVersion.credentialSchema.title}
           title={t("archiveTitle")}
           description={t("archiveDescription")}
           label={t("archiveLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={form.id}
+          id={formVersion.formId}
           variant="warning"
         />
       </DialogContent>

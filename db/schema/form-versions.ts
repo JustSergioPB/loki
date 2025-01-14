@@ -2,8 +2,10 @@ import { relations } from "drizzle-orm";
 import { jsonb, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { formTable } from "./forms";
-import { formVersionStatuses } from "@/lib/models/form-version";
-import { CredentialSchema } from "@/lib/models/credential-schema";
+import { formVersionStatuses } from "@/lib/types/form";
+import { CredentialSchema } from "@/lib/types/credential-schema";
+import { credentialTable } from "./credentials";
+import { emailBridgeRequestTable } from "./email-bridge-request";
 
 export const formVersionStatus = pgEnum(
   "formVersionStatus",
@@ -18,7 +20,9 @@ export const formVersionTable = pgTable("formVersions", {
     .references(() => formTable.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp({ withTimezone: true }),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .$onUpdate(() => new Date()),
   orgId: uuid()
     .references(() => orgTable.id, { onDelete: "cascade" })
     .notNull(),
@@ -26,7 +30,9 @@ export const formVersionTable = pgTable("formVersions", {
 
 export const formVersionTableRelations = relations(
   formVersionTable,
-  ({ one }) => ({
+  ({ one, many }) => ({
+    credentials: many(credentialTable),
+    emailBridgeRequests: many(emailBridgeRequestTable),
     org: one(orgTable, {
       fields: [formVersionTable.orgId],
       references: [orgTable.id],

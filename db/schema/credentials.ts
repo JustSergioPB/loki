@@ -3,6 +3,7 @@ import { DbUser, userTable } from "./users";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DbFormVersion, formVersionTable } from "./form-versions";
+import { emailBridgeRequestTable } from "./email-bridge-request";
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
@@ -18,7 +19,9 @@ export const credentialTable = pgTable("credentials", {
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp({ withTimezone: true }),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export const credentialTableRelations = relations(
@@ -36,6 +39,7 @@ export const credentialTableRelations = relations(
       fields: [credentialTable.formVersionId],
       references: [formVersionTable.id],
     }),
+    emailBridgeRequest: one(emailBridgeRequestTable),
   })
 );
 

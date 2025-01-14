@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { logout } from "@/lib/actions/auth.actions";
+import { logoutUserAction } from "@/lib/actions/auth.actions";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
 import { getFullInitials } from "@/lib/helpers/user";
@@ -28,7 +28,7 @@ export default function NavUser({ user }: { user: AuthUser }) {
   const { isMobile } = useSidebar();
 
   async function onLogout() {
-    const { error, success } = await logout();
+    const { error, success } = await logoutUserAction();
 
     if (success) {
       toast.success(success.message);

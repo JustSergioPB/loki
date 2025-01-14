@@ -3,26 +3,40 @@ import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { userTable } from "./users";
 import { userTokenTable } from "./user-tokens";
 import { auditLogTable } from "./audit-logs";
-import { orgTierTypes } from "@/lib/models/org-tier";
-import { orgStatus } from "@/lib/models/org";
+import { credentialTable } from "./credentials";
+import { didTable } from "./dids";
+import { formVersionTable } from "./form-versions";
+import { formTable } from "./forms";
+import { orgStatus, orgTiers } from "@/lib/types/org";
+import { bridgeTypes } from "@/lib/types/bridge";
+import { emailBridgeRequestTable } from "./email-bridge-request";
 
-export const orgTierType = pgEnum("orgTier", orgTierTypes);
+export const orgTier = pgEnum("orgTier", orgTiers);
 export const orgStatuses = pgEnum("orgStatus", orgStatus);
+export const orgBridge = pgEnum("orgBridge", bridgeTypes);
 
 export const orgTable = pgTable("orgs", {
   id: uuid().primaryKey().notNull().defaultRandom(),
   name: varchar({ length: 255 }).notNull().unique(),
-  tier: orgTierType().notNull().default("starter"),
+  tier: orgTier().notNull().default("starter"),
   status: orgStatuses().notNull().default("verifying"),
+  activeBridges: orgBridge().array().notNull(),
   verifiedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp({ withTimezone: true }),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export const orgTableRelations = relations(orgTable, ({ many }) => ({
-  users: many(userTable),
-  userTokens: many(userTokenTable),
   auditLogs: many(auditLogTable),
+  crendetials: many(credentialTable),
+  dids: many(didTable),
+  emailBridgeRequests: many(emailBridgeRequestTable),
+  formVersions: many(formVersionTable),
+  forms: many(formTable),
+  userTokens: many(userTokenTable),
+  users: many(userTable),
 }));
 
 export type DbOrg = typeof orgTable.$inferSelect;

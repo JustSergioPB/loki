@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { useState } from "react";
 import { LoadingButton } from "@/components/app/loading-button";
-import { confirmAccount } from "@/lib/actions/auth.actions";
+import { confirmUserAccountAction } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -37,7 +37,7 @@ export default function ConfirmForm({ token }: { token: string }) {
   async function onSubmit(values: ConfirmAccountSchema) {
     setIsLoading(true);
 
-    const { success, error } = await confirmAccount(values, token);
+    const { success, error } = await confirmUserAccountAction(values, token);
 
     if (success) {
       toast.success(success.message);
