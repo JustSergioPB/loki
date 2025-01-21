@@ -57,13 +57,14 @@ export const userTableRelations = relations(userTable, ({ one, many }) => ({
   userTokens: many(userTokenTable),
 }));
 
-export type DbUser = typeof userTable.$inferSelect & {
-  org?: DbOrg;
-};
-
+export type DbUser = typeof userTable.$inferSelect;
 export type DbUserCreate = typeof userTable.$inferInsert;
 
 export type AuthUser = Pick<
   DbUser,
   "id" | "fullName" | "email" | "role" | "orgId"
 >;
+
+export type UserWithOrg = DbUser & {
+  org: DbOrg;
+};

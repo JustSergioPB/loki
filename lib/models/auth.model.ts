@@ -1,24 +1,20 @@
 import { TokenError } from "../errors/token.error";
 import { AuthError } from "../errors/auth.error";
 import { LoginSchema } from "../schemas/login.schema";
-import { DbDID, didTable } from "@/db/schema/dids";
+import { didTable } from "@/db/schema/dids";
 import { createUserDID } from "./did.model";
 import { DbUserToken, userTokenTable } from "@/db/schema/user-tokens";
 import { DbOrg, orgTable } from "@/db/schema/orgs";
 import { OrgError } from "../errors/org.error";
-import { and, eq, isNull, like, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { SignUpSchema } from "../schemas/sign-up.schema";
 import { db } from "@/db";
-import { DbUser, userTable } from "@/db/schema/users";
+import { DbUser, userTable, UserWithOrg } from "@/db/schema/users";
 import { UserError } from "../errors/user.error";
 import bcrypt from "bcrypt";
-import { createCredential } from "./credential.model";
-import { formTable } from "@/db/schema/forms";
-import { FORMS } from "../consts/form.consts";
-import { FormError } from "../errors/form.error";
 import { UserTokenContext } from "../types/user-token";
 
-export async function loginUser(data: LoginSchema): Promise<DbUser> {
+export async function loginUser(data: LoginSchema): Promise<UserWithOrg> {
   const queryResult = await db
     .select()
     .from(userTable)
@@ -163,17 +159,7 @@ export async function confirmUserAccount(
   });
 
   if (queryResult[0].dids) {
-    const userDID = await createUserDID(
-      queryResult[0].dids,
-      queryResult[0].users.id
-    );
-
-    await emitDelegationProof(
-      queryResult[0].orgs.name,
-      queryResult[0].users,
-      queryResult[0].dids,
-      userDID
-    );
+    await createUserDID(queryResult[0].dids, queryResult[0].users.id);
   }
 
   return user;
@@ -208,34 +194,6 @@ export async function sendUserForgotPassword(email: string): Promise<void> {
     context: "reset-password",
     orgId: user.orgId,
     userId: user.id,
-  });
-}
-
-export async function emitDelegationProof(
-  organization: string,
-  user: {
-    fullName: string;
-    email: string;
-  },
-  issuerDID: DbDID,
-  holderDID: DbDID
-): Promise<void> {
-  const delegationFormQuery = await db
-    .select()
-    .from(formTable)
-    .where(like(formTable.title, FORMS[0].title));
-
-  if (!delegationFormQuery[0]) {
-    throw new FormError("delegationFormNotFound");
-  }
-
-  await createCredential(delegationFormQuery[0].id, issuerDID, holderDID, {
-    claims: {
-      organization,
-      user,
-    },
-    validFrom: undefined,
-    validUntil: undefined,
   });
 }
 

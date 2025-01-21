@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
 import DIDDetails from "./details";
-import { DbDID } from "@/db/schema/dids";
+import { DIDWithOwner } from "@/db/schema/dids";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
 import { deleteDIDAction } from "@/lib/actions/did.actions";
 import { toast } from "sonner";
 
-export default function DIDDialog({ did }: { did: DbDID }) {
+export default function DIDDialog({ did }: { did: DIDWithOwner }) {
   const t = useTranslations("Did");
   const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();

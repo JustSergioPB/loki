@@ -5,7 +5,7 @@ import { formTable } from "./forms";
 import { formVersionStatuses } from "@/lib/types/form";
 import { CredentialSchema } from "@/lib/types/credential-schema";
 import { credentialTable } from "./credentials";
-import { emailBridgeRequestTable } from "./email-bridge-request";
+import { credentialRequestTable } from "./credential-request";
 
 export const formVersionStatus = pgEnum(
   "formVersionStatus",
@@ -32,7 +32,7 @@ export const formVersionTableRelations = relations(
   formVersionTable,
   ({ one, many }) => ({
     credentials: many(credentialTable),
-    emailBridgeRequests: many(emailBridgeRequestTable),
+    emailBridgeRequests: many(credentialRequestTable),
     org: one(orgTable, {
       fields: [formVersionTable.orgId],
       references: [orgTable.id],

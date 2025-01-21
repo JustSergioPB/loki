@@ -11,3 +11,5 @@ export const privateKeyTable = pgTable("privateKeys", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
+
+export type DbPrivateKey = typeof privateKeyTable.$inferSelect;

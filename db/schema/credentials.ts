@@ -1,23 +1,21 @@
-import { pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { DbUser, userTable } from "./users";
+import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
-import { DbFormVersion, formVersionTable } from "./form-versions";
-import { emailBridgeRequestTable } from "./email-bridge-request";
+import { credentialRequestTable } from "./credential-request";
+import { DbUser } from "./users";
+import { DbFormVersion } from "./form-versions";
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  iv: text().notNull(),
-  authTag: text().notNull(),
-  holder: varchar().notNull(),
   encryptedContent: varchar().notNull(),
-  userId: uuid().references(() => userTable.id, { onDelete: "cascade" }),
+  credentialRequestId: uuid()
+    .notNull()
+    .references(() => credentialRequestTable.id, {
+      onDelete: "cascade",
+    }),
   orgId: uuid()
     .notNull()
     .references(() => orgTable.id, { onDelete: "cascade" }),
-  formVersionId: uuid()
-    .notNull()
-    .references(() => formVersionTable.id, { onDelete: "cascade" }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })
     .notNull()
@@ -31,21 +29,16 @@ export const credentialTableRelations = relations(
       fields: [credentialTable.orgId],
       references: [orgTable.id],
     }),
-    user: one(userTable, {
-      fields: [credentialTable.userId],
-      references: [userTable.id],
+    credentialRequest: one(credentialRequestTable, {
+      fields: [credentialTable.credentialRequestId],
+      references: [credentialRequestTable.id],
     }),
-    formVersion: one(formVersionTable, {
-      fields: [credentialTable.formVersionId],
-      references: [formVersionTable.id],
-    }),
-    emailBridgeRequest: one(emailBridgeRequestTable),
   })
 );
 
-export type DbCredential = typeof credentialTable.$inferSelect & {
-  formVersion?: DbFormVersion;
-  user?: DbUser;
-};
+export type DbCredential = typeof credentialTable.$inferSelect;
 
-export type DbCreateCredential = typeof credentialTable.$inferInsert;
+export type CredentialWithIssuer = DbCredential & {
+  issuer?: DbUser;
+  formVersion: DbFormVersion;
+};

@@ -3,18 +3,21 @@ import { eq } from "drizzle-orm";
 import { privateKeyTable } from "@/db/schema/private-keys";
 import { Key } from "@/lib/types/key";
 import * as crypto from "crypto";
-import * as canonicalize from "json-canonicalize";
-import { DbCredential } from "@/db/schema/credentials";
-import { VerifiableCredential } from "@/lib/types/verifiable-crendential";
+import { PREFFIX_MAP, SupportedPreffix } from "../types/encoding";
+import { ALGORITHM_MAP, SupportedAlgorithm } from "../types/algorithms";
+import { baseEncode } from "../helpers/encoder";
 
-const ALGORITHM = "aes-256-gcm";
+const CIPHER_ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
+const PREFFIX: SupportedPreffix = "z";
+const KEYGEN_ALGORITHM: SupportedAlgorithm = "ed25519";
+const HASHING_ALGORITHM = "sha256";
 
 export async function generateKeyPair(label: string): Promise<Key> {
-  const keyPair = crypto.generateKeyPairSync("ed25519", {
+  const keyPair = crypto.generateKeyPairSync(KEYGEN_ALGORITHM, {
     publicKeyEncoding: {
       type: "spki",
-      format: "pem",
+      format: "der",
     },
     privateKeyEncoding: {
       type: "pkcs8",
@@ -24,6 +27,8 @@ export async function generateKeyPair(label: string): Promise<Key> {
     },
   });
 
+  const base = PREFFIX_MAP[PREFFIX];
+
   await db
     .insert(privateKeyTable)
     .values({
@@ -32,31 +37,17 @@ export async function generateKeyPair(label: string): Promise<Key> {
     })
     .returning();
 
-  // Remove PEM header, footer, and any whitespace
-  const cleanPem = keyPair.publicKey
-    .replace("-----BEGIN PUBLIC KEY-----", "")
-    .replace("-----END PUBLIC KEY-----", "")
-    .replace(/\s/g, "");
-
-  // Decode base64 PEM content to get the raw bytes
-  const rawBytes = Buffer.from(cleanPem, "base64");
-
-  // Skip the ASN.1 header for Ed25519 (if present)
-  // Ed25519 ASN.1 header is typically 12 bytes
-  const publicKeyBytes = Buffer.alloc(32); // Ed25519 public key is always 32 bytes
-  rawBytes.copy(publicKeyBytes, 0, rawBytes.length - 32); // Copy last 32 bytes
-  const base64Encoded = publicKeyBytes.toString("base64");
-
   return {
-    type: "Ed25519VerificationKey2020",
-    publicKeyMultibase: "m" + base64Encoded,
+    type: ALGORITHM_MAP[KEYGEN_ALGORITHM],
+    publicKeyMultibase: `${PREFFIX}${baseEncode(
+      keyPair.publicKey,
+      base.base,
+      base.alphabet
+    )}`,
   };
 }
 
-export async function signVC(
-  label: string,
-  verifiableCredential: VerifiableCredential
-): Promise<Readonly<VerifiableCredential>> {
+export async function encrypt(label: string, message: string): Promise<string> {
   const [privateKey] = await db
     .select()
     .from(privateKeyTable)
@@ -66,57 +57,27 @@ export async function signVC(
     throw new Error("keyNotFound");
   }
 
-  const key = crypto.createPrivateKey({
-    type: "pkcs8",
-    format: "pem",
-    key: privateKey.pem,
-    passphrase: process.env.PASSPHRASE!,
-  });
-
-  const unsigned = canonicalize.canonicalize(verifiableCredential);
-  const signature = crypto.sign(null, Buffer.from(unsigned), key);
-
-  verifiableCredential.proof.proofValue = signature.toString("base64");
-
-  return verifiableCredential;
-}
-
-export async function encryptVC(
-  label: string,
-  verifiableCredential: VerifiableCredential
-): Promise<Pick<DbCredential, "authTag" | "iv" | "encryptedContent">> {
-  const [privateKey] = await db
-    .select()
-    .from(privateKeyTable)
-    .where(eq(privateKeyTable.label, label));
-
-  if (!privateKey) {
-    throw new Error("keyNotFound");
-  }
-  // Generate encryption key from private key
   const encryptionKey = crypto
-    .createHash("sha256")
+    .createHash(HASHING_ALGORITHM)
     .update(privateKey.pem)
     .digest();
 
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, encryptionKey, iv);
+  const cipher = crypto.createCipheriv(CIPHER_ALGORITHM, encryptionKey, iv);
 
-  const signed = JSON.stringify(verifiableCredential);
-  const encrypted = Buffer.concat([cipher.update(signed), cipher.final()]);
+  const encrypted = Buffer.concat([cipher.update(message), cipher.final()]);
   const authTag = cipher.getAuthTag();
+  const combinedContent = Buffer.concat([iv, authTag, encrypted]).toString(
+    "base64"
+  );
 
-  return {
-    encryptedContent: encrypted.toString("base64"),
-    iv: iv.toString("base64"),
-    authTag: authTag.toString("base64"),
-  };
+  return combinedContent;
 }
 
-export async function decryptVC(
+export async function decrypt(
   label: string,
-  dbCredential: DbCredential
-): Promise<VerifiableCredential> {
+  encrypted: string
+): Promise<string> {
   const [privateKey] = await db
     .select()
     .from(privateKeyTable)
@@ -126,24 +87,20 @@ export async function decryptVC(
     throw new Error("keyNotFound");
   }
 
-  // Generate encryption key from private key
   const encryptionKey = crypto
-    .createHash("sha256")
+    .createHash(HASHING_ALGORITHM)
     .update(privateKey.pem)
     .digest();
 
-  const iv = Buffer.from(dbCredential.iv, "base64");
-  const authTag = Buffer.from(dbCredential.authTag, "base64");
-  const encrypted = Buffer.from(dbCredential.encryptedContent, "base64");
+  const combinedBuffer = Buffer.from(encrypted, "base64");
+  const iv = combinedBuffer.subarray(0, IV_LENGTH);
+  const authTag = combinedBuffer.subarray(IV_LENGTH, IV_LENGTH + 16);
+  const content = combinedBuffer.subarray(IV_LENGTH + 16);
 
-  const decipher = crypto.createDecipheriv(ALGORITHM, encryptionKey, iv);
-
+  const decipher = crypto.createDecipheriv(CIPHER_ALGORITHM, encryptionKey, iv);
   decipher.setAuthTag(authTag);
 
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]);
+  const decrypted = Buffer.concat([decipher.update(content), decipher.final()]);
 
   return JSON.parse(decrypted.toString());
 }

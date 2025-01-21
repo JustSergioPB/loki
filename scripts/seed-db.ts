@@ -1,3 +1,6 @@
+/**
+ * 
+ * 
 import { confirmUserAccount, signUpUser } from "@/lib/models/auth.model";
 import { createRootDID } from "@/lib/models/did.model";
 import { createForm, publishForm } from "@/lib/models/form.model";
@@ -5,9 +8,8 @@ import { exit } from "process";
 import { faker } from "@faker-js/faker";
 import { verifyOrg } from "@/lib/models/org.model";
 import { createEmailBridge } from "@/lib/models/email-bridge.model";
-import { FORMS } from "@/lib/consts/form.consts";
 
-async function main() {
+ async function main() {
   const { user, userToken, org } = await signUpUser({
     fullName: process.env.USER_FULLNAME!,
     email: process.env.USER_EMAIL!,
@@ -33,3 +35,4 @@ async function main() {
 }
 
 main();
+ */

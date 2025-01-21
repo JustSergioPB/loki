@@ -36,9 +36,9 @@ export const didTableRelations = relations(didTable, ({ one }) => ({
   }),
 }));
 
-export type DbDID = typeof didTable.$inferSelect & {
-  user?: DbUser;
-  org?: DbOrg;
-};
+export type DbDID = typeof didTable.$inferSelect;
 
-export type DbCreateDID = typeof didTable.$inferInsert;
+export type DIDWithOwner = DbDID & {
+  org: DbOrg;
+  user?: DbUser;
+};

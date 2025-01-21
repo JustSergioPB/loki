@@ -2,7 +2,7 @@ export const formVersionErrorMessages = [
   "cantBePublished",
   "cantBeArchived",
   "notFound",
-  "publishedVersionNotFound",
+  "notPublished",
   "latestVersionNotFound",
 ] as const;
 export type FormVersionErrorMessage = (typeof formVersionErrorMessages)[number];

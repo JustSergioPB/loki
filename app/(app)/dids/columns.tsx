@@ -3,9 +3,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import DIDDialog from "./dialog";
-import { DbDID } from "@/db/schema/dids";
+import { DIDWithOwner } from "@/db/schema/dids";
 
-export const orgColumns: ColumnDef<DbDID>[] = [
+export const orgColumns: ColumnDef<DIDWithOwner>[] = [
   {
     accessorKey: "did",
     header: function CellHeader() {
@@ -20,7 +20,7 @@ export const orgColumns: ColumnDef<DbDID>[] = [
       return t("org");
     },
     cell: function CellComponent({ row }) {
-      return row.original.org?.name;
+      return row.original.org.name;
     },
   },
   {

@@ -297,7 +297,7 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
           const: "DataIntegrityProof",
         },
         cryptosuite: {
-          const: "Ed25519Signature2020",
+          enum: ["Ed25519Signature2020"],
         },
         created: {
           type: "string",

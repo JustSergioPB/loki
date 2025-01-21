@@ -1,5 +1,6 @@
-import { verifyEmailBridgeRequestAndEmitVC } from "@/lib/models/email-bridge-request.model";
-import { emailBridgeChallengeSchema } from "@/lib/schemas/email-bridge-request.schema";
+import { validateCredentialRequest } from "@/lib/models/credential-request.model";
+import { createCredential } from "@/lib/models/credential.model";
+import { credentialChallengeSchema } from "@/lib/schemas/credential-challenge.schema";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
@@ -11,10 +12,13 @@ export async function PATCH(
   const body = await request.json();
 
   try {
-    const parsed = await emailBridgeChallengeSchema.parseAsync(body);
-    const verifiableCredential = await verifyEmailBridgeRequestAndEmitVC(
-      id,
-      parsed
+    const parsed = await credentialChallengeSchema.parseAsync(body);
+    const [unsignedCredential, credentialRequest] =
+      await validateCredentialRequest(id, parsed);
+    const verifiableCredential = await createCredential(
+      credentialRequest,
+      unsignedCredential,
+      parsed.holder
     );
 
     return NextResponse.json({ ...verifiableCredential }, { status: 200 });

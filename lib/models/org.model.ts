@@ -7,7 +7,6 @@ import { AuthUser, userTable } from "@/db/schema/users";
 import { createOrgDID, createUserDID } from "./did.model";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
-import { emitDelegationProof } from "./auth.model";
 
 export type CreateOrgProps = Pick<DbOrg, "name" | "tier">;
 
@@ -106,14 +105,7 @@ export async function verifyOrg(
   });
 
   const orgDID = await createOrgDID(id);
-  const userDID = await createUserDID(orgDID, queryResult[0].users.id);
-
-  await emitDelegationProof(
-    queryResult[0].orgs.name,
-    queryResult[0].users,
-    orgDID,
-    userDID
-  );
+  await createUserDID(orgDID, queryResult[0].users.id);
 
   return updatedOrg;
 }

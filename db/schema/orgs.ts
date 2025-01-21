@@ -9,7 +9,7 @@ import { formVersionTable } from "./form-versions";
 import { formTable } from "./forms";
 import { orgStatus, orgTiers } from "@/lib/types/org";
 import { bridgeTypes } from "@/lib/types/bridge";
-import { emailBridgeRequestTable } from "./email-bridge-request";
+import { credentialRequestTable } from "./credential-request";
 
 export const orgTier = pgEnum("orgTier", orgTiers);
 export const orgStatuses = pgEnum("orgStatus", orgStatus);
@@ -32,7 +32,7 @@ export const orgTableRelations = relations(orgTable, ({ many }) => ({
   auditLogs: many(auditLogTable),
   crendetials: many(credentialTable),
   dids: many(didTable),
-  emailBridgeRequests: many(emailBridgeRequestTable),
+  emailBridgeRequests: many(credentialRequestTable),
   formVersions: many(formVersionTable),
   forms: many(formTable),
   userTokens: many(userTokenTable),

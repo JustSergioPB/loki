@@ -2,6 +2,7 @@ export const DIDErrorMessages = [
   "missingOrgDID",
   "missingUserDID",
   "missingRootDID",
+  "missingAssertionMethod",
 ] as const;
 export type UserDIDErrorMessage = (typeof DIDErrorMessages)[number];
 

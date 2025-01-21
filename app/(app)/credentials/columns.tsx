@@ -3,10 +3,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import CredentialDialog from "./dialog";
-import { DbCredential } from "@/db/schema/credentials";
+import { CredentialWithIssuer } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
 
-export const credentialColumns: ColumnDef<DbCredential>[] = [
+export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
@@ -14,7 +14,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("titleProp");
     },
     cell: function CellCompodnent({ row }) {
-      return row.original.formVersion?.credentialSchema.title;
+      return row.original.formVersion.credentialSchema.title;
     },
   },
   {
@@ -25,7 +25,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
     },
     cell: function CellComponent({ row }) {
       const type =
-        row.original.formVersion?.credentialSchema.properties.type.const ?? [];
+        row.original.formVersion.credentialSchema.properties.type.const ?? [];
       return (
         <div className="flex items-center gap-1">
           {type.slice(1, 3).map((type, idx) => (
@@ -54,7 +54,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("issuer");
     },
     cell: function CellCompodnent({ row }) {
-      return row.original.user?.fullName;
+      return row.original.issuer?.fullName;
     },
   },
   {

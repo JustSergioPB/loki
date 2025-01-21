@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslations } from "next-intl";
-import { DbDID } from "@/db/schema/dids";
+import { DIDWithOwner } from "@/db/schema/dids";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import DIDStatus from "@/components/app/did-status";
 import KeyStatus from "@/components/app/key-status";
 
 type Props = {
-  did: DbDID;
+  did: DIDWithOwner;
   deleteHref: string;
 };
 
@@ -63,7 +63,7 @@ export default function DIDDetails({ did, deleteHref }: Props) {
           {did.did}
         </Field>
         <Field icon={<Building className="size-4" />} label={tOrg("org")}>
-          {did.org?.name}
+          {did.org.name}
         </Field>
         <Field icon={<User className="size-4" />} label={tUser("user")}>
           {did.user?.fullName}

@@ -1,4 +1,4 @@
-import { DbDID, didTable } from "@/db/schema/dids";
+import { DbDID, didTable, DIDWithOwner } from "@/db/schema/dids";
 import { DIDDocument, VerificationMethod } from "../types/did";
 import { db } from "@/db";
 import { AuthUser, userTable } from "@/db/schema/users";
@@ -102,7 +102,7 @@ export async function createUserDID(
 export async function searchDIDs(
   authUser: AuthUser,
   query: Query
-): Promise<QueryResult<DbDID>> {
+): Promise<QueryResult<DIDWithOwner>> {
   const queryResult = await db
     .select()
     .from(didTable)

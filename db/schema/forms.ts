@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { pgTable, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
-import { DbFormVersion, formVersionTable } from "./form-versions";
+import { formVersionTable } from "./form-versions";
 
 export const formTable = pgTable(
   "forms",
@@ -31,7 +31,5 @@ export const formTableRelations = relations(formTable, ({ one, many }) => ({
   versions: many(formVersionTable),
 }));
 
-export type DbForm = typeof formTable.$inferSelect & {
-  versions: DbFormVersion[];
-};
+export type DbForm = typeof formTable.$inferSelect;
 export type DbFormCreate = typeof formTable.$inferInsert;
