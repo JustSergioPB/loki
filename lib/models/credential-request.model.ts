@@ -1,13 +1,11 @@
 import { db } from "@/db";
 import {
   credentialRequestTable,
-  CredentialRequestWithIssuer,
   DbCredentialRequest,
 } from "@/db/schema/credential-request";
 import { formVersionTable } from "@/db/schema/form-versions";
 import { FormVersionError } from "../errors/form-version.error";
-import { decrypt, encrypt } from "./key.model";
-import { UnsignedVerifiableCredential } from "../types/verifiable-crendential";
+import { encrypt } from "./key.model";
 import * as uuid from "uuid";
 import { and, eq, isNull } from "drizzle-orm";
 import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
@@ -17,13 +15,17 @@ import { didTable } from "@/db/schema/dids";
 import { ClaimSchema } from "../schemas/claim.schema";
 import { DIDError } from "../errors/did.error";
 import { orgTable } from "@/db/schema/orgs";
+import { credentialTable, DbCredential } from "@/db/schema/credentials";
+import { AuthUser } from "@/db/schema/users";
+import { auditLogTable } from "@/db/schema/audit-logs";
 
 const BASE_URL = process.env.BASE_URL!;
 
 export async function createCredentialRequest(
   formVersionId: string,
-  data: ClaimSchema
-): Promise<DbCredentialRequest> {
+  data: ClaimSchema,
+  authUser?: AuthUser
+): Promise<[DbCredentialRequest, DbCredential]> {
   const formVersionQuery = await db
     .select()
     .from(formVersionTable)
@@ -31,7 +33,10 @@ export async function createCredentialRequest(
     .innerJoin(orgTable, eq(orgTable.id, formVersionTable.orgId))
     .leftJoin(
       didTable,
-      and(eq(didTable.orgId, formVersionTable.orgId), isNull(didTable.userId))
+      and(
+        eq(didTable.orgId, formVersionTable.orgId),
+        authUser ? eq(didTable.userId, authUser.id) : isNull(didTable.userId)
+      )
     );
 
   if (!formVersionQuery[0]) {
@@ -62,7 +67,7 @@ export async function createCredentialRequest(
     description: credentialSchema.description,
     issuer: {
       name: orgs.name,
-      id: dids.document.controller,
+      id: `${BASE_URL}/dids/${dids.document.controller}`,
     },
     validFrom:
       data.validFrom?.toISOString() ??
@@ -75,49 +80,72 @@ export async function createCredentialRequest(
     },
     credentialSchema: {
       id: `${BASE_URL}/form-versions/${id}`,
-      type: credentialSchema.properties.credentialSchema.properties.type.const,
+      type: credentialSchema.properties.credentialSchema.properties?.type.const,
     },
   };
 
   const encrypted = await encrypt(encryptionLabel, JSON.stringify(credential));
 
-  const [insertedCredentialRequest] = await db
-    .insert(credentialRequestTable)
-    .values({
-      encryptedContent: encrypted,
-      issuerId: dids.document.controller,
-      formVersionId: id,
-      orgId: orgs.id,
-    })
-    .returning();
+  return await db.transaction(async (tx) => {
+    const [insertedCredential] = await tx
+      .insert(credentialTable)
+      .values({
+        encryptedContent: encrypted,
+        issuerId: dids.document.controller,
+        formVersionId: id,
+        orgId: orgs.id,
+      })
+      .returning();
+    const [insertedCredentialRequest] = await tx
+      .insert(credentialRequestTable)
+      .values({
+        orgId: orgs.id,
+        credentialId: insertedCredential.id,
+      })
+      .returning();
 
-  return insertedCredentialRequest;
+    if (authUser) {
+      await tx.insert(auditLogTable).values([
+        {
+          entityId: insertedCredential.id,
+          entityType: "credential",
+          value: insertedCredential,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "create",
+        },
+        {
+          entityId: insertedCredentialRequest.id,
+          entityType: "credentialRequest",
+          value: insertedCredentialRequest,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "create",
+        },
+      ]);
+    }
+
+    return [insertedCredentialRequest, insertedCredential];
+  });
 }
 
 export async function validateCredentialRequest(
   id: string,
   challenge: CredentialChallengeSchema
-): Promise<[UnsignedVerifiableCredential, CredentialRequestWithIssuer]> {
+): Promise<DbCredentialRequest> {
   const credentialRequestQuery = await db
     .select()
     .from(credentialRequestTable)
-    .where(eq(credentialRequestTable.id, id))
-    .innerJoin(didTable, eq(didTable.did, credentialRequestTable.issuerId));
+    .where(eq(credentialRequestTable.id, id));
 
   if (!credentialRequestQuery[0]) {
     throw new CredentialRequestError("notFound");
   }
 
-  const {
-    credentialRequests: { encryptedContent, expiresAt, code },
-    dids: {
-      document: { assertionMethod },
-    },
-  } = credentialRequestQuery[0];
-
+  const { expiresAt, code } = credentialRequestQuery[0];
   const { publicKeyMultibase, type } = challenge.holder.verificationMethod[0];
 
-  if (!code || !encryptedContent) {
+  if (!code) {
     throw new CredentialRequestError("isBurnt");
   }
 
@@ -136,13 +164,12 @@ export async function validateCredentialRequest(
     throw new CredentialRequestError("invalidChallenge");
   }
 
-  const decrypted = await decrypt(assertionMethod[0], encryptedContent);
+  const [updatedCredentialRequest] = await db
+    .update(credentialRequestTable)
+    .set({
+      code: null,
+    })
+    .where(eq(credentialRequestTable.id, id));
 
-  return [
-    JSON.parse(decrypted),
-    {
-      ...credentialRequestQuery[0].credentialRequests,
-      issuer: credentialRequestQuery[0].dids,
-    },
-  ];
+  return updatedCredentialRequest;
 }

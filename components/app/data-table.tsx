@@ -41,15 +41,18 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="flex flex-col flex-1">
-      <div className="flex-1 border-b">
-        <Table>
+    <div className=" flex-1 flex flex-col">
+      <div className="flex-1 border-b flex flex-col">
+        <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="first:pl-6 last:pr-6">
+                    <TableHead
+                      key={header.id}
+                      className="first:pl-6 last:pr-6"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -70,7 +73,7 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="first:pl-6 last:pr-6">
+                    <TableCell key={cell.id} className="first:pl-6 last:pr-6 last:flex last:justify-end">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

@@ -101,7 +101,7 @@ export async function createUserDID(
 
 export async function searchDIDs(
   authUser: AuthUser,
-  query: Query
+  query: Query<DIDWithOwner>
 ): Promise<QueryResult<DIDWithOwner>> {
   const queryResult = await db
     .select()

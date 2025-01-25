@@ -24,6 +24,8 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import { TagsInput } from "@/components/ui/tags-input";
 import { DbFormVersion } from "@/db/schema/form-versions";
+import { GoBackButton } from "@/components/app/go-back-button";
+import PageSubheader from "@/components/app/page-subheader";
 
 export default function FormForm({
   formVersion,
@@ -37,12 +39,15 @@ export default function FormForm({
   const validUntil = formVersion?.credentialSchema.properties.validUntil;
 
   const [isLoading, setIsLoading] = useState(false);
+  const types = formVersion?.credentialSchema.properties.type.const as
+    | string[]
+    | undefined;
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: formVersion?.credentialSchema.title ?? "",
-      type: formVersion?.credentialSchema.properties.type.const.slice(1) ?? [],
+      type: types ? types.slice(1) : [],
       description: formVersion?.credentialSchema.description ?? "",
       content:
         JSON.stringify(
@@ -50,8 +55,8 @@ export default function FormForm({
           null,
           1
         ) ?? "",
-      validFrom: validFrom ? new Date(validFrom.const) : undefined,
-      validUntil: validUntil ? new Date(validUntil.const) : undefined,
+      validFrom: validFrom?.const ? new Date(validFrom.const) : undefined,
+      validUntil: validUntil?.const ? new Date(validUntil.const) : undefined,
     },
   });
 
@@ -75,11 +80,11 @@ export default function FormForm({
   }
 
   return (
-    <section className="p-6 space-y-6 lg:w-[640px]">
+    <section className="p-6 space-y-6 overflow-y-auto">
+      <GoBackButton variant="ghost" />
       <PageHeader
         title={t(formVersion ? "editTitle" : "createTitle")}
         subtitle={t(formVersion ? "editDescription" : "createDescription")}
-        className="p-0"
       />
       {formVersion && formVersion?.status !== "draft" && (
         <InfoPanel
@@ -90,7 +95,7 @@ export default function FormForm({
         />
       )}
       {formVersion &&
-        formVersion?.credentialSchema.properties.type.const.includes(
+        formVersion?.credentialSchema.properties.type.const?.includes(
           "Bridge"
         ) && (
           <InfoPanel
@@ -101,11 +106,7 @@ export default function FormForm({
           />
         )}
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6"
-          id={formVersion ? `form-form-${formVersion.formId}` : "new"}
-        >
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 w-2/5">
           <FormField
             control={form.control}
             name="title"
@@ -158,15 +159,11 @@ export default function FormForm({
               </FormItem>
             )}
           />
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold">
-              {tVersion("validityTitle")}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {tVersion("validitySubtitle")}
-            </p>
-          </div>
-          <div className="flex items-end justify-between">
+          <PageSubheader
+            title={tVersion("validityTitle")}
+            subtitle={tVersion("validitySubtitle")}
+          />
+          <div className="flex justify-between">
             <FormField
               control={form.control}
               name="validFrom"
@@ -178,15 +175,17 @@ export default function FormForm({
                       {...field}
                       format={[
                         ["days", "months", "years"],
-                        ["hours", "minutes", "am/pm"],
+                        ["hours", "minutes", "seconds"],
                       ]}
+                      dtOptions={{
+                        hour12: false,
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <span className="text-sm font-semibold mb-3">-</span>
             <FormField
               control={form.control}
               name="validUntil"
@@ -198,8 +197,11 @@ export default function FormForm({
                       {...field}
                       format={[
                         ["days", "months", "years"],
-                        ["hours", "minutes", "am/pm"],
+                        ["hours", "minutes", "seconds"],
                       ]}
+                      dtOptions={{
+                        hour12: false,
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -226,9 +228,11 @@ export default function FormForm({
               </FormItem>
             )}
           />
-          <LoadingButton loading={isLoading} type="submit">
-            {tGeneric("submit")}
-          </LoadingButton>
+          <div className="flex justify-end">
+            <LoadingButton loading={isLoading} type="submit">
+              {tGeneric("submit")}
+            </LoadingButton>
+          </div>
         </form>
       </Form>
     </section>

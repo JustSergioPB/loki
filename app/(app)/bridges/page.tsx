@@ -25,7 +25,7 @@ export default async function Bridges() {
 
   return (
     <Page>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6" />
       <section className="px-6 grid gap-6 grid-cols-4">
         {bridges.map((bridge) => (
           <Card key={bridge.type} className="space-y-2">

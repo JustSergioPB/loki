@@ -50,12 +50,19 @@ export default function EmailBridgeForm({ formVersion, onSubmit }: Props) {
   });
 
   function extractDomainsFromForm(formVersion: DbFormVersion): string[] {
-    const emailJsonSchema = formVersion.credentialSchema.properties
-      .credentialSubject.properties["email"] as {
-      type: "string";
-      format: "email";
-      pattern: string;
-    };
+    const emailJsonSchema =
+      formVersion.credentialSchema.properties?.credentialSubject?.properties?.[
+        "email"
+      ];
+
+    if (
+      !emailJsonSchema ||
+      emailJsonSchema.type !== "string" ||
+      !emailJsonSchema.pattern
+    ) {
+      throw new Error("malformedEmailJsonSchema");
+    }
+
     try {
       // Look for the domain part of the pattern after @
       const domainMatch = emailJsonSchema.pattern.match(/@\((.*?)\)\$/);

@@ -23,7 +23,9 @@ export default function AppBreadcrumb() {
           {parts[1] ? (
             <BreadcrumbLink href={`/${parts[0]}`}>{t(parts[0])}</BreadcrumbLink>
           ) : (
-            <BreadcrumbPage className="font-semibold">{t(parts[0])}</BreadcrumbPage>
+            <BreadcrumbPage className="font-semibold">
+              {t(parts[0])}
+            </BreadcrumbPage>
           )}
         </BreadcrumbItem>
         {parts[1] && (

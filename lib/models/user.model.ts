@@ -97,7 +97,7 @@ export async function deactivate(
 
 export async function searchUsers(
   authUser: AuthUser,
-  query: Query
+  query: Query<DbUser>
 ): Promise<QueryResult<DbUser>> {
   const queryResult = await db
     .select()

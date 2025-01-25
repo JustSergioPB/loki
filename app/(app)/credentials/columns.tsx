@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import CredentialDialog from "./dialog";
 import { CredentialWithIssuer } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
+import CredentialStatus from "@/components/app/credential-status";
 
 export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
   {
@@ -24,8 +25,8 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
       return t("type");
     },
     cell: function CellComponent({ row }) {
-      const type =
-        row.original.formVersion.credentialSchema.properties.type.const ?? [];
+      const type = (row.original.formVersion.credentialSchema.properties.type
+        .const ?? []) as string[];
       return (
         <div className="flex items-center gap-1">
           {type.slice(1, 3).map((type, idx) => (
@@ -55,6 +56,23 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
     },
     cell: function CellCompodnent({ row }) {
       return row.original.issuer?.fullName;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: function CellHeader() {
+      const t = useTranslations("Org");
+      return t("status");
+    },
+    cell: function CellComponent({ row }) {
+      const t = useTranslations("Org");
+      const status = row.original.status;
+
+      return (
+        <CredentialStatus status={status}>
+          {t(`statuses.${status}`)}
+        </CredentialStatus>
+      );
     },
   },
   {

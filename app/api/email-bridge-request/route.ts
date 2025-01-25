@@ -8,9 +8,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const parsed = await emailBridgeRequestSchema.parseAsync(body);
-    const { id } = await createEmailCredentialRequest(parsed);
+    const [credentialRequest] = await createEmailCredentialRequest(parsed);
 
-    return NextResponse.json({ id }, { status: 200 });
+    return NextResponse.json({ id: credentialRequest.id }, { status: 200 });
   } catch (error) {
     console.error(error);
     if (error instanceof ZodError) {

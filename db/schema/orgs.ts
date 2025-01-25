@@ -32,7 +32,7 @@ export const orgTableRelations = relations(orgTable, ({ many }) => ({
   auditLogs: many(auditLogTable),
   crendetials: many(credentialTable),
   dids: many(didTable),
-  emailBridgeRequests: many(credentialRequestTable),
+  credentialsRequests: many(credentialRequestTable),
   formVersions: many(formVersionTable),
   forms: many(formTable),
   userTokens: many(userTokenTable),

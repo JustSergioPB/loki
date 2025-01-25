@@ -27,7 +27,7 @@ export default async function AppLayout({
           </div>
           <ThemeToggle />
         </header>
-        <section className="flex-1 min-h-0 overflow-y-auto">{children}</section>
+        {children}
       </SidebarInset>
     </SidebarProvider>
   );

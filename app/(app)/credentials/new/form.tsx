@@ -1,0 +1,73 @@
+"use client";
+
+import { toast } from "sonner";
+import { DbFormVersion } from "@/db/schema/form-versions";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { createCredentialRequestAction } from "@/lib/actions/credential-request.actions";
+import SelectForm from "./select-form";
+import { Label } from "@/components/ui/label";
+import { ClaimSchema } from "@/lib/schemas/claim.schema";
+import CredentialSchemaForm from "./credential-schema-form";
+import { GoBackButton } from "@/components/app/go-back-button";
+import PageHeader from "@/components/app/page-header";
+
+type Props = {
+  formVersions: DbFormVersion[];
+};
+
+export default function CredentialForm({ formVersions }: Props) {
+  const t = useTranslations("Credential");
+  const tForm = useTranslations("Form");
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedFormVersion, setSelectedFormVersion] =
+    useState<DbFormVersion | null>(null);
+
+  async function handleSubmit(values: ClaimSchema) {
+    if (!selectedFormVersion) {
+      toast.error("formNotSelected");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { success, error } = await createCredentialRequestAction(
+      selectedFormVersion.id,
+      values
+    );
+
+    if (success) {
+      toast.success(success.message);
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  }
+
+  return (
+    <>
+      <section className="space-y-6 basis-2/5 border-r p-6">
+        <GoBackButton variant="ghost" />
+        <PageHeader
+          title={t("createTitle")}
+          subtitle={t("createDescription")}
+        />
+        <Label>{tForm("form")}</Label>
+        <SelectForm
+          value={selectedFormVersion?.id ?? ""}
+          options={formVersions}
+          onSelect={(formVersion) => setSelectedFormVersion(formVersion)}
+        />
+      </section>
+      {selectedFormVersion && (
+        <CredentialSchemaForm
+          credentialSchema={selectedFormVersion.credentialSchema}
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+          className="basis-3/5 p-10 h-full overflow-y-auto bg-gray-100"
+        />
+      )}
+    </>
+  );
+}

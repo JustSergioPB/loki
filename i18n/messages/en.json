@@ -138,7 +138,22 @@
     "seeTitle": "Credential details",
     "seeDescription": "This page contains the information of the credential",
     "proof": "Proof",
-    "holder": "Holder"
+    "holder": "Holder",
+    "status": "Status",
+    "statuses": {
+      "pending": "Pending",
+      "signed": "Signed"
+    },
+    "credential": "Credential",
+    "createTitle": "Create credential",
+    "createDescription": "Select the form template you want to use, fill the data and generate a QR that can be scanned by the holder",
+    "selectDescription": "Select the form that you want to use as template",
+    "fillTitle": "2. Fill the credential data",
+    "searchForm": "Select a form...",
+    "searchFormPlaceholder": "Credential ID...",
+    "searchFormNotFound": "Form not found",
+    "validityTitle": "Validity",
+    "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)"
   },
   "Bridge": {
     "title": "Bridges",
@@ -165,10 +180,12 @@
     "editTitle": "Edit form",
     "editDescription": "Edit the form bellow to update it's contents",
     "seeTitle": "Form details",
-    "seeDescription": "This page contains the information of the form's latest version",
+    "seeDescription": "This page contains the information of the form's latest version and it's preview",
     "deleteTitle": "Delete form",
     "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
-    "deleteLabel": "Type the form's title to confirm"
+    "deleteLabel": "Type the form's title to confirm",
+    "searchSucceeded": "Your search may have results",
+    "searchFailed": "Something went wrong with your search"
   },
   "FormVersion": {
     "version": "Version",
@@ -276,7 +293,9 @@
     "id": "ID",
     "warning": "Warning",
     "warningMessage": "This action is irreversible, please be sure",
-    "verify": "Verify"
+    "verify": "Verify",
+    "loading": "Loading...",
+    "goBack": "Go back"
   },
   "Navigation": {
     "home": "Home",

@@ -28,7 +28,11 @@ export default async function Users({
 
   return (
     <Page>
-      <PageHeader title={t("title")} subtitle={t("subtitle")}>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        className="p-6"
+      >
         <NewUser>{t("user")}</NewUser>
       </PageHeader>
       <DataTable

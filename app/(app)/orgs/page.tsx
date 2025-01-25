@@ -27,7 +27,11 @@ export default async function Orgs({
 
   return (
     <Page>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        className="p-6"
+      />
       <DataTable
         columns={orgColumns}
         data={queryResult.items}

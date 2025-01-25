@@ -25,7 +25,7 @@ export default function Field({
       )}
       {...props}
     >
-      <div className="flex items-center gap-1 text-neutral-500">
+      <div className="flex items-center gap-1 text-muted-foreground">
         {icon}
         <label className="block font-normal">{label}</label>
       </div>

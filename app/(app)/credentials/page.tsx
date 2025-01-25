@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
 import { searchCredentials } from "@/lib/models/credential.model";
+import NewCredential from "./new";
 
 export default async function Credentials({
   searchParams,
@@ -27,7 +28,13 @@ export default async function Credentials({
 
   return (
     <Page>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        className="p-6"
+      >
+        <NewCredential>{t("credential")}</NewCredential>
+      </PageHeader>
       <DataTable
         columns={credentialColumns}
         data={queryResult.items}

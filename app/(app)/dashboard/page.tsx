@@ -14,9 +14,7 @@ export default async function Dashboard() {
   return (
     <div className="p-6">
       {user.role === "admin" ? (
-        <div className="space-x-4">
-          <RootDIDButton />
-        </div>
+        <RootDIDButton />
       ) : (
         <p>{t("title")}</p>
       )}

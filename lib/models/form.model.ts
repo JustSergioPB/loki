@@ -107,15 +107,30 @@ export async function getFormById(
 
 export async function searchForms(
   authUser: AuthUser,
-  query: Query
+  query: Query<DbFormVersion>
 ): Promise<QueryResult<DbFormVersion>> {
+  const { credentialSchema, status } = query;
+
   const formQuery = await db
     .select()
     .from(formTable)
-    .where(eq(formTable.orgId, authUser.orgId))
+    .where(
+      and(
+        eq(formTable.orgId, authUser.orgId),
+        credentialSchema?.title
+          ? eq(formTable.title, credentialSchema?.title)
+          : undefined
+      )
+    )
     .limit(query.pageSize)
     .offset(query.page * query.pageSize)
-    .innerJoin(formVersionTable, eq(formVersionTable.formId, formTable.id))
+    .innerJoin(
+      formVersionTable,
+      and(
+        eq(formVersionTable.formId, formTable.id),
+        status ? eq(formVersionTable.status, status) : undefined
+      )
+    )
     .orderBy(asc(formVersionTable.createdAt));
 
   const [{ count: countResult }] = await db
@@ -270,12 +285,33 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
   ];
 
   const properties: CredentialSchemaProperties = {
-    "@context": { const: ["https://www.w3.org/ns/credentials/v2"] },
-    title: { const: props.title },
-    type: { const: ["VerifiableCredential", ...props.type] },
-    issuer: { type: "string", format: "uri" },
-    id: { type: "string", format: "uri" },
+    "@context": {
+      title: "context",
+      type: "array",
+      items: {
+        title: "items",
+        type: "string",
+      },
+      const: ["https://www.w3.org/ns/credentials/v2"],
+    },
+    title: {
+      title: "title",
+      const: props.title,
+      type: "string",
+    },
+    type: {
+      title: "type",
+      type: "array",
+      items: {
+        title: "items",
+        type: "string",
+      },
+      const: ["VerifiableCredential", ...props.type],
+    },
+    issuer: { title: "issuer", type: "string", format: "uri" },
+    id: { title: "credentialID", type: "string", format: "uri" },
     credentialSubject: {
+      title: "credentialSubject",
       properties: {
         id: { type: "string", format: "uri" },
         ...props.content.properties,
@@ -285,32 +321,43 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
     },
     credentialSchema: {
       type: "object",
+      title: "credentialSchema",
       properties: {
-        id: { type: "string", format: "uri" },
-        type: { const: "JsonSchema" },
+        id: { title: "id", type: "string", format: "uri" },
+        type: { title: "Type", type: "string", const: "JsonSchema" },
       },
       required: ["id", "type"],
     },
     proof: {
+      title: "psroof",
       properties: {
         type: {
+          title: "Type",
+          type: "string",
           const: "DataIntegrityProof",
         },
         cryptosuite: {
+          title: "Cryptosuite",
+          type: "string",
           enum: ["Ed25519Signature2020"],
         },
         created: {
+          title: "created",
           type: "string",
           format: "datetime",
         },
         verificationMethod: {
+          title: "verificationMethod",
           type: "string",
           format: "uri",
         },
         proofPurpose: {
+          title: "proofPurpose",
+          type: "string",
           const: "assertionMethod",
         },
         proofValue: {
+          title: "proofValue",
           type: "string",
         },
       },
@@ -328,17 +375,31 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
 
   if (props.validFrom) {
     required.push("validFrom");
-    properties.validFrom = { const: props.validFrom.toISOString() };
+    properties.validFrom = {
+      const: props.validFrom.toISOString(),
+      title: "validFrom",
+      type: "string",
+      format: "datetime",
+    };
   }
 
   if (props.validUntil) {
     required.push("validUntil");
-    properties.validUntil = { const: props.validUntil.toISOString() };
+    properties.validUntil = {
+      const: props.validUntil.toISOString(),
+      title: "validUntil",
+      type: "string",
+      format: "datetime",
+    };
   }
 
   if (props.description) {
     required.push("description");
-    properties.description = { const: props.description };
+    properties.description = {
+      title: "description",
+      const: props.description,
+      type: "string",
+    };
   }
 
   return {

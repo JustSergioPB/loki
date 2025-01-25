@@ -141,7 +141,7 @@ export async function searchBridgesByOrg(orgId: string): Promise<Bridge[]> {
     type: bridge,
     formVersion:
       bridgeQuery.find(({ formVersions }) =>
-        formVersions?.credentialSchema.properties.type.const.includes(
+        formVersions?.credentialSchema.properties.type.const?.includes(
           BRIDGE_CREDENTIAL_TYPE[bridge]
         )
       )?.formVersions ?? undefined,

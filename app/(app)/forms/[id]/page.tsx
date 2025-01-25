@@ -5,6 +5,7 @@ import { getAction } from "@/lib/helpers/search-params";
 import FormForm from "../form";
 import FormDetails from "./details";
 import { getFormById } from "@/lib/models/form.model";
+import Page from "@/components/app/page";
 
 export default async function Form({
   params,
@@ -32,6 +33,8 @@ export default async function Form({
   return action === "edit" ? (
     <FormForm formVersion={formVersion} />
   ) : (
-    <FormDetails formVersion={formVersion} />
+    <Page type="horizontal">
+      <FormDetails formVersion={formVersion} />
+    </Page>
   );
 }

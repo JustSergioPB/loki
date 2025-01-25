@@ -8,7 +8,6 @@ import {
   Rss,
   Text,
   Heading1,
-  FileJson,
   Timer,
   TimerOff,
   ClipboardType,
@@ -25,6 +24,8 @@ import DeleteFormVersion from "./delete";
 import PublishFormVersion from "./publish";
 import DateDisplay from "@/components/app/date";
 import { DbFormVersion } from "@/db/schema/form-versions";
+import { GoBackButton } from "@/components/app/go-back-button";
+import CredentialPreview from "@/components/app/credential-preview";
 
 export default function FormDetails({
   formVersion,
@@ -38,29 +39,29 @@ export default function FormDetails({
   const validUntil = formVersion.credentialSchema.properties.validUntil;
 
   return (
-    <section className="p-6 lg:w-[620px] space-y-6">
-      <PageHeader
-        title={tForm("seeTitle")}
-        subtitle={tForm("seeDescription")}
-        className="p-0"
-      />
-      <div className="flex items-center gap-4">
-        <Link
-          href={`/forms/${formVersion.formId}?action=edit`}
-          className={cn(buttonVariants({ size: "sm" }))}
-        >
-          <Pencil className="size-3" />
-          {tGeneric("edit")}
-        </Link>
-        {formVersion.status === "draft" && (
-          <PublishFormVersion formVersion={formVersion} />
-        )}
-        {formVersion.status === "published" && (
-          <ArchiveFormVersion formVersion={formVersion} />
-        )}
-        <DeleteFormVersion formVersion={formVersion} />
-      </div>
-      <section className="space-y-4">
+    <>
+      <section className="p-6 space-y-6 basis-2/5 border-r">
+        <GoBackButton variant="ghost" />
+        <PageHeader
+          title={tForm("seeTitle")}
+          subtitle={tForm("seeDescription")}
+        />
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/forms/${formVersion.formId}?action=edit`}
+            className={cn(buttonVariants({ size: "sm" }))}
+          >
+            <Pencil className="size-3" />
+            {tGeneric("edit")}
+          </Link>
+          {formVersion.status === "draft" && (
+            <PublishFormVersion formVersion={formVersion} />
+          )}
+          {formVersion.status === "published" && (
+            <ArchiveFormVersion formVersion={formVersion} />
+          )}
+          <DeleteFormVersion formVersion={formVersion} />
+        </div>
         <Field
           icon={<Heading1 className="size-4" />}
           label={tForm("titleProp")}
@@ -77,10 +78,10 @@ export default function FormDetails({
         >
           <div className="flex items-center gap-1 flex-wrap">
             {formVersion.credentialSchema.properties.type.const
-              .slice(1)
+              ?.slice(1)
               .map((type, idx) => (
                 <Badge variant="secondary" key={`${type}-${idx}`}>
-                  {type}
+                  {type as string}
                 </Badge>
               ))}
           </div>
@@ -104,28 +105,13 @@ export default function FormDetails({
         </Field>
         <Field icon={<Timer className="size-4" />} label={t("validFrom")}>
           <DateDisplay
-            date={validFrom ? new Date(validFrom.const) : undefined}
+            date={validFrom?.const ? new Date(validFrom.const) : undefined}
           />
         </Field>
         <Field icon={<TimerOff className="size-4" />} label={t("validUntil")}>
           <DateDisplay
-            date={validUntil ? new Date(validUntil.const) : undefined}
+            date={validUntil?.const ? new Date(validUntil.const) : undefined}
           />
-        </Field>
-        <Field
-          icon={<FileJson className="size-4" />}
-          label={t("content")}
-          type="vertical"
-        >
-          <pre className="w-full rounded-md border p-2">
-            <code className="text-xs">
-              {JSON.stringify(
-                formVersion.credentialSchema.properties.credentialSubject,
-                null,
-                1
-              )}
-            </code>
-          </pre>
         </Field>
         <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
           {formVersion.id}
@@ -143,6 +129,9 @@ export default function FormDetails({
           <DateDisplay date={formVersion.createdAt} />
         </Field>
       </section>
-    </section>
+      <section className="basis-3/5 bg-gray-100 overflow-y-auto p-10">
+        <CredentialPreview credentialSchema={formVersion.credentialSchema} />
+      </section>
+    </>
   );
 }

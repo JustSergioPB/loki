@@ -1,18 +1,23 @@
-import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
-import { credentialRequestTable } from "./credential-request";
 import { DbUser } from "./users";
-import { DbFormVersion } from "./form-versions";
+import { DbFormVersion, formVersionTable } from "./form-versions";
+import { didTable } from "./dids";
+import { credentialStatus } from "@/lib/types/credential";
+
+export const credentialStatuses = pgEnum("credentialStatus", credentialStatus);
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
   encryptedContent: varchar().notNull(),
-  credentialRequestId: uuid()
+  status: credentialStatuses().notNull().default("pending"),
+  formVersionId: uuid()
     .notNull()
-    .references(() => credentialRequestTable.id, {
-      onDelete: "cascade",
-    }),
+    .references(() => formVersionTable.id, { onDelete: "cascade" }),
+  issuerId: varchar()
+    .notNull()
+    .references(() => didTable.did, { onDelete: "cascade" }),
   orgId: uuid()
     .notNull()
     .references(() => orgTable.id, { onDelete: "cascade" }),
@@ -29,9 +34,13 @@ export const credentialTableRelations = relations(
       fields: [credentialTable.orgId],
       references: [orgTable.id],
     }),
-    credentialRequest: one(credentialRequestTable, {
-      fields: [credentialTable.credentialRequestId],
-      references: [credentialRequestTable.id],
+    issuer: one(didTable, {
+      fields: [credentialTable.issuerId],
+      references: [didTable.did],
+    }),
+    formVersion: one(formVersionTable, {
+      fields: [credentialTable.formVersionId],
+      references: [formVersionTable.id],
     }),
   })
 );

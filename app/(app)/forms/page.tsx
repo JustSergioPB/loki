@@ -30,7 +30,11 @@ export default async function Forms({
 
   return (
     <Page>
-      <PageHeader title={t("title")} subtitle={t("subtitle")}>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        className="p-6"
+      >
         <Link className={buttonVariants()} href="/forms/new">
           <CirclePlus />
           {t("form")}

@@ -20,6 +20,7 @@ import PageHeader from "@/components/app/page-header";
 import DeleteCredential from "./delete";
 import { getCredentialById } from "@/lib/models/credential.model";
 import DateDisplay from "@/components/app/date";
+import CredentialStatus from "@/components/app/credential-status";
 
 export default async function Credential({
   params,
@@ -49,11 +50,7 @@ export default async function Credential({
 
   return (
     <section className="p-6 lg:w-[620px] space-y-6">
-      <PageHeader
-        title={t("seeTitle")}
-        subtitle={t("seeDescription")}
-        className="p-0"
-      />
+      <PageHeader title={t("seeTitle")} subtitle={t("seeDescription")} />
       <div>
         <DeleteCredential credential={credential} />
       </div>
@@ -79,6 +76,11 @@ export default async function Credential({
               </Badge>
             ))}
           </div>
+        </Field>
+        <Field icon={<Badge className="size-4" />} label={t("status")}>
+          <CredentialStatus status={credential.status}>
+            {t(`statuses.${credential.status}`)}
+          </CredentialStatus>
         </Field>
         <Field
           icon={<Text className="size-4" />}

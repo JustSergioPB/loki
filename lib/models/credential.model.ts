@@ -18,21 +18,28 @@ import * as canonicalize from "json-canonicalize";
 import { getSignature } from "../helpers/signature";
 import {
   SigningVerifiableCredential,
-  UnsignedVerifiableCredential,
   VerifiableCredential,
 } from "../types/verifiable-crendential";
 import { DIDDocument } from "../types/did";
-import {
-  credentialRequestTable,
-  CredentialRequestWithIssuer,
-} from "@/db/schema/credential-request";
+import { orgTable } from "@/db/schema/orgs";
+import { CredentialError } from "../errors/credential.error";
 
-export async function createCredential(
-  credentialRequest: CredentialRequestWithIssuer,
-  unsignedCredential: UnsignedVerifiableCredential,
+export async function signCredential(
+  id: string,
   holder: DIDDocument
 ): Promise<[VerifiableCredential, DbCredential]> {
-  const { id: credentialRequestId, issuer } = credentialRequest;
+  const credentialQuery = await db
+    .select()
+    .from(credentialTable)
+    .where(eq(credentialTable.id, id))
+    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
+    .innerJoin(orgTable, eq(orgTable.id, didTable.orgId));
+
+  if (!credentialQuery[0]) {
+    throw new CredentialError("notFound");
+  }
+
+  const issuer = credentialQuery[0].dids;
 
   const verificationMethod = issuer.document.verificationMethod.find(
     (verificationMethod) =>
@@ -43,7 +50,11 @@ export async function createCredential(
     throw new DIDError("missingAssertionMethod");
   }
 
-  const { credentialSubject, ...rest } = unsignedCredential;
+  const unsignedCredential = await decrypt(
+    verificationMethod.id,
+    credentialQuery[0].credentials.encryptedContent
+  );
+  const { credentialSubject, ...rest } = JSON.parse(unsignedCredential);
 
   const credential: SigningVerifiableCredential = {
     ...rest,
@@ -71,12 +82,12 @@ export async function createCredential(
   );
 
   const [insertedCredential] = await db
-    .insert(credentialTable)
-    .values({
+    .update(credentialTable)
+    .set({
       encryptedContent: encrypted,
-      credentialRequestId,
-      orgId: issuer.orgId,
+      status: "signed",
     })
+    .where(eq(credentialTable.id, id))
     .returning();
 
   return [credential as VerifiableCredential, insertedCredential];
@@ -118,7 +129,7 @@ export async function getCredentialById(
 
 export async function searchCredentials(
   authUser: AuthUser,
-  query: Query
+  query: Query<CredentialWithIssuer>
 ): Promise<QueryResult<CredentialWithIssuer>> {
   const queryResult = await db
     .select()
@@ -128,14 +139,10 @@ export async function searchCredentials(
     .offset(query.page * query.pageSize)
     .orderBy(asc(credentialTable.createdAt))
     .innerJoin(
-      credentialRequestTable,
-      eq(credentialTable.credentialRequestId, credentialRequestTable.id)
-    )
-    .innerJoin(
       formVersionTable,
-      eq(credentialRequestTable.formVersionId, formVersionTable.id)
+      eq(credentialTable.formVersionId, formVersionTable.id)
     )
-    .innerJoin(didTable, eq(didTable.did, credentialRequestTable.issuerId))
+    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
     .leftJoin(userTable, eq(userTable.id, didTable.userId));
 
   const [{ count: countResult }] = await db

@@ -25,15 +25,16 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
       return t("type");
     },
     cell: function CellComponent({ row }) {
+      const type = (row.original.credentialSchema.properties.type.const ??
+        []) as string[];
+
       return (
         <div className="flex items-center gap-1">
-          {row.original.credentialSchema.properties.type.const
-            .slice(1, 3)
-            .map((type, idx) => (
-              <Badge variant="secondary" key={`${type}-${idx}`}>
-                {type}
-              </Badge>
-            ))}
+          {type.slice(1, 3).map((type, idx) => (
+            <Badge variant="secondary" key={`${type}-${idx}`}>
+              {type.toString()}
+            </Badge>
+          ))}
         </div>
       );
     },

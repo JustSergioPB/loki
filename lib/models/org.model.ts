@@ -23,7 +23,9 @@ export async function createOrg(props: CreateOrgProps): Promise<DbOrg> {
   return insertedOrg;
 }
 
-export async function searchOrgs(query: Query): Promise<QueryResult<DbOrg>> {
+export async function searchOrgs(
+  query: Query<DbOrg>
+): Promise<QueryResult<DbOrg>> {
   const queryResult = await db
     .select()
     .from(orgTable)
