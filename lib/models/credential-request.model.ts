@@ -2,10 +2,9 @@ import { db } from "@/db";
 import {
   credentialRequestTable,
   DbCredentialRequest,
-} from "@/db/schema/credential-request";
+} from "@/db/schema/credential-requests";
 import { formVersionTable } from "@/db/schema/form-versions";
 import { FormVersionError } from "../errors/form-version.error";
-import { encrypt } from "./key.model";
 import * as uuid from "uuid";
 import { and, eq, isNull } from "drizzle-orm";
 import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
@@ -58,7 +57,8 @@ export async function createCredentialRequest(
   }
 
   //TODO: Add step to check if the claim matches the form
-  const encryptionLabel = dids.document.assertionMethod[0];
+  //const encryptionLabel = dids.document.assertionMethod[0];
+
   const credential = {
     "@context": credentialSchema.properties["@context"].const,
     type: credentialSchema.properties.type.const,
@@ -76,7 +76,7 @@ export async function createCredentialRequest(
       data.validUntil?.toISOString() ??
       credentialSchema.properties.validUntil?.const,
     credentialSubject: {
-      ...data.claims,
+      ...data.credentialSubject,
     },
     credentialSchema: {
       id: `${BASE_URL}/form-versions/${id}`,
@@ -84,13 +84,11 @@ export async function createCredentialRequest(
     },
   };
 
-  const encrypted = await encrypt(encryptionLabel, JSON.stringify(credential));
-
   return await db.transaction(async (tx) => {
     const [insertedCredential] = await tx
       .insert(credentialTable)
       .values({
-        encryptedContent: encrypted,
+        encryptedContent: JSON.stringify(credential),
         issuerId: dids.document.controller,
         formVersionId: id,
         orgId: orgs.id,
@@ -172,4 +170,55 @@ export async function validateCredentialRequest(
     .where(eq(credentialRequestTable.id, id));
 
   return updatedCredentialRequest;
+}
+
+export async function renewCredentialRequest(
+  id: string,
+  authUser?: AuthUser
+): Promise<DbCredentialRequest> {
+  const credentialRequestQuery = await db
+    .select()
+    .from(credentialRequestTable)
+    .where(
+      and(
+        eq(credentialRequestTable.id, id),
+        authUser ? eq(credentialRequestTable.orgId, authUser.orgId) : undefined
+      )
+    );
+
+  if (!credentialRequestQuery[0]) {
+    throw new CredentialRequestError("notFound");
+  }
+
+  const { code } = credentialRequestQuery[0];
+
+  if (!code) {
+    throw new CredentialRequestError("isBurnt");
+  }
+
+  return db.transaction(async (tx) => {
+    const [updatedCredentialRequest] = await tx
+      .update(credentialRequestTable)
+      .set({
+        code: Math.floor(Math.random() * 1000000),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      })
+      .where(eq(credentialRequestTable.id, id))
+      .returning();
+
+    if (authUser) {
+      await tx.insert(auditLogTable).values([
+        {
+          entityId: updatedCredentialRequest.id,
+          entityType: "credentialRequest",
+          value: updatedCredentialRequest,
+          orgId: authUser.orgId,
+          userId: authUser.id,
+          action: "create",
+        },
+      ]);
+    }
+
+    return updatedCredentialRequest;
+  });
 }

@@ -59,7 +59,9 @@ export default function FormDialog({
   }
 
   async function onActionNavigate(action: "see" | "edit") {
-    router.push(`${pathname}/${formVersion.formId}?action=${action}`);
+    let route = `${pathname}/${formVersion.formId}`;
+    if (action === "edit") route = `${route}/edit`;
+    router.push(route);
   }
 
   async function onDelete() {

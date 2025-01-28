@@ -80,7 +80,7 @@ export async function publishFormAction(
 
     return { success: { data: true, message: t("publishSucceeded") } };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return { error: { message: t("publishFailed") } };
   }
 }
@@ -97,7 +97,7 @@ export async function archiveFormAction(
 
     return { success: { data: true, message: t("archiveSucceeded") } };
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return { error: { message: t("archiveFailed") } };
   }
 }

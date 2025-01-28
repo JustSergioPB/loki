@@ -313,7 +313,10 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
     credentialSubject: {
       title: "credentialSubject",
       properties: {
-        id: { type: "string", format: "uri" },
+        id: {
+          type: "string",
+          pattern: "/^did:[a-z0-9]+:[a-zA-Z0-9_.%-]+(:[a-zA-Z0-9_.%-]+)*$/",
+        },
         ...props.content.properties,
       },
       type: "object",

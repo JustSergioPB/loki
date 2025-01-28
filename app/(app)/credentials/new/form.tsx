@@ -11,6 +11,7 @@ import { ClaimSchema } from "@/lib/schemas/claim.schema";
 import CredentialSchemaForm from "./credential-schema-form";
 import { GoBackButton } from "@/components/app/go-back-button";
 import PageHeader from "@/components/app/page-header";
+import { useRouter } from "next/navigation";
 
 type Props = {
   formVersions: DbFormVersion[];
@@ -22,6 +23,8 @@ export default function CredentialForm({ formVersions }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFormVersion, setSelectedFormVersion] =
     useState<DbFormVersion | null>(null);
+
+  const router = useRouter();
 
   async function handleSubmit(values: ClaimSchema) {
     if (!selectedFormVersion) {
@@ -37,6 +40,7 @@ export default function CredentialForm({ formVersions }: Props) {
     );
 
     if (success) {
+      router.push(`/credentials/${success.data}`);
       toast.success(success.message);
     } else {
       toast.error(error.message);

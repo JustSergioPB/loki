@@ -61,11 +61,11 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
   {
     accessorKey: "status",
     header: function CellHeader() {
-      const t = useTranslations("Org");
+      const t = useTranslations("Credential");
       return t("status");
     },
     cell: function CellComponent({ row }) {
-      const t = useTranslations("Org");
+      const t = useTranslations("Credential");
       const status = row.original.status;
 
       return (

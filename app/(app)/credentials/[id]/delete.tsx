@@ -53,7 +53,7 @@ export default function DeleteCredential({
       onOpenChange={(open) => (!open ? onClose() : onOpen())}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-red-500">
+        <Button variant="outline" size="sm" className="text-red-500">
           <Trash className="size-3" />
           {tGeneric("delete")}
         </Button>

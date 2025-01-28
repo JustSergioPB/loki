@@ -149,12 +149,13 @@ async function buildDocument(
 ): Promise<DIDDocument> {
   const did = `did:uuid:${uuid.v7()}`;
   const baseUrl = `${BASE_URL}/dids/${did}`;
-  const publicKey = await generateKeyPair(did);
+  const verificationMethodId = `${did}#key-0`;
+  const publicKey = await generateKeyPair(verificationMethodId);
 
   const verificationMethods: VerificationMethod[] = [
     {
       ...publicKey,
-      id: `${did}#key-0`,
+      id: verificationMethodId,
       controllers: [did, ...additionalContollers],
     },
   ];

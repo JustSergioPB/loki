@@ -9,7 +9,7 @@ import { formVersionTable } from "./form-versions";
 import { formTable } from "./forms";
 import { orgStatus, orgTiers } from "@/lib/types/org";
 import { bridgeTypes } from "@/lib/types/bridge";
-import { credentialRequestTable } from "./credential-request";
+import { credentialRequestTable } from "./credential-requests";
 
 export const orgTier = pgEnum("orgTier", orgTiers);
 export const orgStatuses = pgEnum("orgStatus", orgStatus);

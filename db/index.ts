@@ -9,7 +9,7 @@ import * as formVersions from "./schema/form-versions";
 import * as forms from "./schema/forms";
 import * as dids from "./schema/dids";
 import * as privateKeys from "./schema/private-keys";
-import * as emailBridgeRequest from "./schema/credential-request";
+import * as emailBridgeRequest from "./schema/credential-requests";
 
 const connectionString = process.env.DATABASE_URL!;
 export const client = postgres(connectionString, { prepare: false });

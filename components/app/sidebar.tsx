@@ -30,9 +30,14 @@ import { useTranslations } from "next-intl";
 import NavUser from "./nav-user";
 import Banner from "./banner";
 import { AuthUser } from "@/db/schema/users";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { buttonVariants } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 export default function AppSidebar({ user }: { user: AuthUser }) {
   const t = useTranslations("Navigation");
+  const pathname = usePathname();
 
   const groups = [
     {
@@ -98,11 +103,14 @@ export default function AppSidebar({ user }: { user: AuthUser }) {
               <SidebarMenu>
                 {group.children.map((child) => (
                   <SidebarMenuItem key={child.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={child.url}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.includes(child.url)}
+                    >
+                      <Link href={child.url}>
                         <child.icon />
                         <span>{child.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

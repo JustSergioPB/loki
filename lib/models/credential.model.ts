@@ -9,7 +9,6 @@ import { eq, and, isNull, asc, count } from "drizzle-orm";
 import { didTable } from "@/db/schema/dids";
 import { AuthUser, userTable } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
-import { decrypt, encrypt } from "./key.model";
 import { DIDError } from "../errors/did.error";
 import { PlainCredential } from "../types/credential";
 import { Query } from "../generics/query";
@@ -23,6 +22,10 @@ import {
 import { DIDDocument } from "../types/did";
 import { orgTable } from "@/db/schema/orgs";
 import { CredentialError } from "../errors/credential.error";
+import {
+  credentialRequestTable,
+  DbCredentialRequest,
+} from "@/db/schema/credential-requests";
 
 export async function signCredential(
   id: string,
@@ -50,11 +53,9 @@ export async function signCredential(
     throw new DIDError("missingAssertionMethod");
   }
 
-  const unsignedCredential = await decrypt(
-    verificationMethod.id,
+  const { credentialSubject, ...rest } = JSON.parse(
     credentialQuery[0].credentials.encryptedContent
   );
-  const { credentialSubject, ...rest } = JSON.parse(unsignedCredential);
 
   const credential: SigningVerifiableCredential = {
     ...rest,
@@ -76,15 +77,10 @@ export async function signCredential(
     canonicalize.canonicalize(credential)
   );
 
-  const encrypted = await encrypt(
-    issuer.document.assertionMethod[0],
-    JSON.stringify(credential)
-  );
-
   const [insertedCredential] = await db
     .update(credentialTable)
     .set({
-      encryptedContent: encrypted,
+      encryptedContent: JSON.stringify(credential),
       status: "signed",
     })
     .where(eq(credentialTable.id, id))
@@ -112,19 +108,42 @@ export async function getCredentialById(
     return null;
   }
 
-  if (!queryResult[0].dids) {
-    throw new DIDError("missingOrgDID");
-  }
-
-  const plainCredential = await decrypt(
-    queryResult[0].dids.document.assertionMethod[0],
-    queryResult[0].credentials.encryptedContent
-  );
-
   return {
     ...queryResult[0].credentials,
-    plainCredential: JSON.parse(plainCredential),
+    plainCredential: JSON.parse(queryResult[0].credentials.encryptedContent),
   };
+}
+
+export async function getCredentialByIdWithChallenge(
+  authUser: AuthUser,
+  id: string
+): Promise<[PlainCredential, DbCredentialRequest] | null> {
+  const queryResult = await db
+    .select()
+    .from(credentialTable)
+    .where(
+      and(eq(credentialTable.orgId, authUser.orgId), eq(credentialTable.id, id))
+    )
+    .innerJoin(
+      credentialRequestTable,
+      eq(credentialRequestTable.credentialId, credentialTable.id)
+    )
+    .innerJoin(
+      didTable,
+      and(eq(didTable.orgId, authUser.orgId), isNull(didTable.userId))
+    );
+
+  if (!queryResult[0]) {
+    return null;
+  }
+
+  return [
+    {
+      ...queryResult[0].credentials,
+      plainCredential: JSON.parse(queryResult[0].credentials.encryptedContent),
+    },
+    queryResult[0].credentialRequests,
+  ];
 }
 
 export async function searchCredentials(

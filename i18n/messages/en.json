@@ -155,6 +155,18 @@
     "validityTitle": "Validity",
     "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)"
   },
+  "CredentialRequest": {
+    "scanTitle": "Challenge QR",
+    "scanSubtitle": "By scanning this QR the holder will be able to claim the credential",
+    "renew": "Renew",
+    "status": "Status",
+    "statuses": {
+      "expired": "Expired",
+      "used": "Used",
+      "pending": "Pending"
+    },
+    "qrCode": "QR Code"
+  },
   "Bridge": {
     "title": "Bridges",
     "subtitle": "Handle everything related to bridges in here. You can configure them and toggle on/off them. Bridges allow your holders to generate credentials from Web2 data.",
@@ -214,7 +226,8 @@
     "validFrom": "Valid from",
     "validUntil": "Valid until",
     "validityTitle": "Validity",
-    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered."
+    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered.",
+    "seeTitle": "Form details"
   },
   "ConfirmAccount": {
     "title": "Confirm your account",
@@ -262,7 +275,10 @@
     "keyStatuses": {
       "active": "Active",
       "revoked": "Revoked"
-    }
+    },
+    "deleteTitle": "Delete DID",
+    "deleteDescription": "Everything related to this DID will be deleted, consider revoking the keys instead",
+    "deleteLabel": "Type the did's id to confirm"
   },
   "Table": {
     "noResults": "No results found"

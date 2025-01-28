@@ -18,7 +18,7 @@ export default function PageHeader({
       className={cn("flex items-center justify-between", className)}
     >
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold leading-none">{title}</h1>
+        <h1 className="text-2xl font-bold leading-none">{title}</h1>
         {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
       </div>
       {children}

@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { LoadingButton } from "@/components/app/loading-button";
 import {
-  getDefaultJsonSchemaValues,
-  jsonSchemaToZod,
+  credentialSubjectToZod,
+  getDefaultCredentialSubject,
 } from "@/lib/helpers/json-schema";
 import {
   Form,
@@ -59,11 +59,11 @@ export default function CredentialSchemaForm({
       z.object({
         validUntil: z.coerce.date().optional(),
         validFrom: z.coerce.date().optional(),
-        claims: jsonSchemaToZod(credentialSubject),
+        credentialSubject: credentialSubjectToZod(credentialSubject),
       })
     ),
     defaultValues: {
-      claims: getDefaultJsonSchemaValues(credentialSubject) as object,
+      credentialSubject: getDefaultCredentialSubject(credentialSubject),
       validUntil: undefined,
       validFrom: undefined,
     },
@@ -146,16 +146,29 @@ export default function CredentialSchemaForm({
                 )}
               />
             </div>
-            {Object.entries(credentialSubject.properties ?? {})
-              .filter(([key]) => key !== "id")
-              .map(([key, schema]) => (
-                <JsonSchemaForm
-                  key={key}
-                  path={`credentialSubject.${key}`}
-                  jsonSchema={schema}
-                  className="w-full"
-                />
-              ))}
+            <FormField
+              name="credentialSubject"
+              render={() => (
+                <FormItem>
+                  <FormControl>
+                    <div className="space-y-4">
+                      {Object.entries(credentialSubject.properties ?? {})
+                        .filter(([key]) => key !== "id")
+                        .map(([key, schema]) => (
+                          <JsonSchemaForm
+                            key={key}
+                            path={`credentialSubject.${key}`}
+                            jsonSchema={schema}
+                            className="w-full"
+                            required
+                          />
+                        ))}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
           <CardFooter className="flex justify-end">
             <LoadingButton

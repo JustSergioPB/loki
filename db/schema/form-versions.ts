@@ -5,7 +5,7 @@ import { formTable } from "./forms";
 import { formVersionStatuses } from "@/lib/types/form";
 import { CredentialSchema } from "@/lib/types/credential-schema";
 import { credentialTable } from "./credentials";
-import { credentialRequestTable } from "./credential-request";
+import { credentialRequestTable } from "./credential-requests";
 
 export const formVersionStatus = pgEnum(
   "formVersionStatus",

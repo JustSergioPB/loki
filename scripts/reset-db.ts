@@ -1,7 +1,7 @@
 import { db } from "@/db/index";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { didTable } from "@/db/schema/dids";
-import { credentialRequestTable } from "@/db/schema/credential-request";
+import { credentialRequestTable } from "@/db/schema/credential-requests";
 import { formVersionTable } from "@/db/schema/form-versions";
 import { formTable } from "@/db/schema/forms";
 import { orgTable } from "@/db/schema/orgs";
