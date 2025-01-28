@@ -121,6 +121,7 @@ export default async function Credential({
           />
           <RenewChallengeButton
             id={challenge.id}
+            credentialId={credential.id}
             disabled={challengeStatus !== "expired"}
           />
           <section className="space-y-4">

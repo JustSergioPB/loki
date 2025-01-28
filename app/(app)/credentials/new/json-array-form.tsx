@@ -71,6 +71,7 @@ export default function JsonArrayForm({ path, jsonSchema, className }: Props) {
                     path={`${path}.${index}`}
                     jsonSchema={jsonSchema.items!}
                     className="flex-1"
+                    required={true}
                   />
                 </div>
               ))}

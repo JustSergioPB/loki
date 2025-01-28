@@ -32,8 +32,6 @@ import Banner from "./banner";
 import { AuthUser } from "@/db/schema/users";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { buttonVariants } from "../ui/button";
-import { cn } from "@/lib/utils";
 
 export default function AppSidebar({ user }: { user: AuthUser }) {
   const t = useTranslations("Navigation");
