@@ -41,7 +41,7 @@ export default function JsonObjectForm({ path, jsonSchema, className }: Props) {
             <JsonSchemaHeader jsonSchema={jsonSchema} />
           </FormLabel>
           <FormControl>
-            <section className={cn("space-y-2", className)}>
+            <section className={cn("grid grid-cols-2 gap-4", className)}>
               {Object.entries(properties).map(([key, schema]) => (
                 <JsonSchemaForm
                   key={key}

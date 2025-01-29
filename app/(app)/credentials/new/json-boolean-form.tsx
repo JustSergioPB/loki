@@ -6,7 +6,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { JsonBooleanType } from "@/lib/types/json-schema";
-import { cn } from "@/lib/utils";
 import { useFormContext } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -28,16 +27,11 @@ export default function JsonBooleanForm({
       control={control}
       name={path}
       render={({ field }) => (
-        <FormItem>
-          <div className={cn("flex items-center justify-between", className)}>
-            <FormLabel>{jsonSchema.title}</FormLabel>
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-          </div>
+        <FormItem className={className}>
+          <FormLabel>{jsonSchema.title}</FormLabel>
+          <FormControl>
+            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}

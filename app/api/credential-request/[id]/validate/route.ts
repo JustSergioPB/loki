@@ -14,7 +14,7 @@ export async function PATCH(
   try {
     const parsed = await credentialChallengeSchema.parseAsync(body);
     const credentialRequest = await validateCredentialRequest(id, parsed);
-    const verifiableCredential = await signCredential(
+    const [verifiableCredential] = await signCredential(
       credentialRequest.credentialId,
       parsed.holder
     );

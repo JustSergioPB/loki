@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { ALGORITHM_MAP, SupportedAlgorithm } from "../types/algorithms";
+import { ALGORITHM_MAP, SupportedType } from "../types/algorithms";
 import { PREFFIX_MAP, SupportedPreffix } from "../types/encoding";
 import { baseDecode } from "./encoder";
 import { privateKeyTable } from "@/db/schema/private-keys";
@@ -23,7 +23,7 @@ export async function getSignature(
     type: "pkcs8",
     format: "pem",
     key: privateKey.pem,
-    passphrase: process.env.PASSPHRASE!,
+    passphrase: process.env.PK_PASSPHRASE!,
   });
 
   return crypto.sign(null, Buffer.from(message), key).toString("base64");
@@ -36,23 +36,24 @@ export function verifySignature(
   message: string
 ): boolean {
   const preffix = publicKeyMultibase[0] as SupportedPreffix;
-  const type = publicKeyType as SupportedAlgorithm;
+  const alg = publicKeyType as SupportedType;
 
   if (!PREFFIX_MAP[preffix]) {
     throw new Error("unsupportedPreffix");
   }
 
-  if (!ALGORITHM_MAP[type]) {
+  if (!ALGORITHM_MAP[alg]) {
     throw new Error("unsupportedAlgorithm");
   }
 
   const base = PREFFIX_MAP[preffix];
 
   return crypto.verify(
-    ALGORITHM_MAP[type],
+    ALGORITHM_MAP[alg],
     Buffer.from(message),
     crypto.createPublicKey({
       format: "der",
+      type: "spki",
       key: Buffer.from(
         baseDecode(publicKeyMultibase.slice(1), base.base, base.alphabet)
       ),

@@ -24,22 +24,15 @@ export const ICON_MAP: Record<JsonType, ReactNode> = {
 };
 
 export default function JsonSchemaHeader({
-  jsonSchema: { title, description, type },
+  jsonSchema: { title, description },
 }: Props) {
   return (
     (title || description) && (
-      <div className="flex gap-2">
-        <div className="flex items-center justify-center bg-muted rounded-md size-10 shrink-0">
-          {ICON_MAP[type]}
-        </div>
-        <div>
-          {title && (
-            <p className="font-semibold text-lg leading-none">{title}</p>
-          )}
-          {description && (
-            <p className="text-muted-foreground leading-tight">{description}</p>
-          )}
-        </div>
+      <div>
+        {title && <p className="font-semibold text-xl leading-none mb-1">{title}</p>}
+        {description && (
+          <p className="text-muted-foreground leading-tight">{description}</p>
+        )}
       </div>
     )
   );

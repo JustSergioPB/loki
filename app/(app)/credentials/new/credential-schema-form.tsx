@@ -29,7 +29,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock } from "lucide-react";
 
 type Props = {
   isLoading: boolean;
@@ -72,7 +71,7 @@ export default function CredentialSchemaForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className={cn(className)}>
-        <Card>
+        <Card className="p-12 rounded-md">
           <CardHeader>
             <CardTitle className="text-2xl">{credentialSchema.title}</CardTitle>
             <CardDescription>{credentialSchema.description}</CardDescription>
@@ -85,73 +84,65 @@ export default function CredentialSchemaForm({
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex gap-2">
-              <div className="flex items-center justify-center bg-muted rounded-md size-10 shrink-0">
-                <Clock className="size-5" />
+            <section className="space-y-4">
+              <p className="font-semibold text-xl leading-none">
+                {t("validityTitle")}
+              </p>
+              <div className="flex gap-4">
+                <FormField
+                  control={form.control}
+                  name="validFrom"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>{tVersion("validFrom")}</FormLabel>
+                      <FormControl>
+                        <DatetimePicker
+                          {...field}
+                          className="w-full"
+                          format={[
+                            ["days", "months", "years"],
+                            ["hours", "minutes", "seconds"],
+                          ]}
+                          dtOptions={{
+                            hour12: false,
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="validUntil"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>{tVersion("validUntil")}</FormLabel>
+                      <FormControl>
+                        <DatetimePicker
+                          {...field}
+                          className="w-full"
+                          format={[
+                            ["days", "months", "years"],
+                            ["hours", "minutes", "seconds"],
+                          ]}
+                          dtOptions={{
+                            hour12: false,
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <div>
-                <p className="font-semibold text-lg leading-none">
-                  {t("validityTitle")}
-                </p>
-                <p className="text-muted-foreground leading-tight">
-                  {t("validitySubtitle")}
-                </p>
-              </div>
-            </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="validFrom"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between">
-                    <FormLabel>{tVersion("validFrom")}</FormLabel>
-                    <FormControl>
-                      <DatetimePicker
-                        {...field}
-                        format={[
-                          ["days", "months", "years"],
-                          ["hours", "minutes", "seconds"],
-                        ]}
-                        className="w-72"
-                        dtOptions={{
-                          hour12: false,
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="validUntil"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between">
-                    <FormLabel>{tVersion("validUntil")}</FormLabel>
-                    <FormControl>
-                      <DatetimePicker
-                        {...field}
-                        className="w-72"
-                        format={[
-                          ["days", "months", "years"],
-                          ["hours", "minutes", "seconds"],
-                        ]}
-                        dtOptions={{
-                          hour12: false,
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            </section>
             <FormField
               name="credentialSubject"
               render={() => (
                 <FormItem>
                   <FormControl>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {Object.entries(credentialSubject.properties ?? {})
                         .filter(([key]) => key !== "id")
                         .map(([key, schema]) => (

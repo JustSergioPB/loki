@@ -64,7 +64,10 @@ export default async function Credential({
   }
 
   const qrCode = await QrCode.toDataURL(
-    JSON.stringify({ credentialId: id, challenge: challenge.code }),
+    JSON.stringify({
+      credentialRequestId: challenge.id,
+      challenge: challenge.code,
+    }),
     {
       errorCorrectionLevel: "high",
     }
@@ -122,7 +125,7 @@ export default async function Credential({
           <RenewChallengeButton
             id={challenge.id}
             credentialId={credential.id}
-            disabled={challengeStatus !== "expired"}
+            disabled={challengeStatus !== "pending"}
           />
           <section className="space-y-4">
             <Field

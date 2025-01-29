@@ -6,7 +6,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { JsonStringFormat, JsonStringType } from "@/lib/types/json-schema";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useFormContext } from "react-hook-form";
 import { HTMLInputTypeAttribute } from "react";
@@ -43,22 +42,19 @@ export default function JsonStringForm({
       control={control}
       name={path}
       render={({ field }) => (
-        <FormItem>
-          <div className={cn("flex items-center justify-between", className)}>
-            <FormLabel>{title}</FormLabel>
-            <FormControl>
-              <Input
-                className="w-72"
-                placeholder={placeholder}
-                type={format ? FORMAT_MAP[format] : "text"}
-                minLength={minLength}
-                maxLength={maxLength}
-                pattern={pattern}
-                required={required}
-                {...field}
-              />
-            </FormControl>
-          </div>
+        <FormItem className={className}>
+          <FormLabel>{title}</FormLabel>
+          <FormControl>
+            <Input
+              placeholder={placeholder}
+              type={format ? FORMAT_MAP[format] : "text"}
+              minLength={minLength}
+              maxLength={maxLength}
+              pattern={pattern}
+              required={required}
+              {...field}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}

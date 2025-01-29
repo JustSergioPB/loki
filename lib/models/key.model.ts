@@ -4,7 +4,7 @@ import { privateKeyTable } from "@/db/schema/private-keys";
 import { Key } from "@/lib/types/key";
 import * as crypto from "crypto";
 import { PREFFIX_MAP, SupportedPreffix } from "../types/encoding";
-import { ALGORITHM_MAP, SupportedAlgorithm } from "../types/algorithms";
+import { TYPE_MAP } from "../types/algorithms";
 import { baseEncode } from "../helpers/encoder";
 
 const CIPHER_ALGORITHM = "aes-256-gcm";
@@ -12,11 +12,11 @@ const IV_LENGTH = 12;
 const ITERATIONS = 100000;
 const KEY_LENGTH = 32;
 const PREFFIX: SupportedPreffix = "z";
-const KEYGEN_ALGORITHM: SupportedAlgorithm = "ed25519";
+const KEYGEN_ALGORITHM = "ed25519";
 const HASHING_ALGORITHM = "sha256";
 
 export async function generateKeyPair(label: string): Promise<Key> {
-  const keyPair = crypto.generateKeyPairSync(KEYGEN_ALGORITHM, {
+  const keyPair = crypto.generateKeyPairSync("ed25519", {
     publicKeyEncoding: {
       type: "spki",
       format: "der",
@@ -40,7 +40,7 @@ export async function generateKeyPair(label: string): Promise<Key> {
     .returning();
 
   return {
-    type: ALGORITHM_MAP[KEYGEN_ALGORITHM],
+    type: TYPE_MAP[KEYGEN_ALGORITHM],
     publicKeyMultibase: `${PREFFIX}${baseEncode(
       keyPair.publicKey,
       base.base,

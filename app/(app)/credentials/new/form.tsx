@@ -50,28 +50,35 @@ export default function CredentialForm({ formVersions }: Props) {
   }
 
   return (
-    <>
-      <section className="space-y-6 basis-2/5 border-r p-6">
-        <GoBackButton variant="ghost" />
+    <section className="flex flex-1">
+      <section className="border-r basis-3/5 flex flex-col">
+        <div className="px-6 py-4 border-b">
+          <GoBackButton variant="ghost" size="sm" />
+        </div>
+        <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
+          {selectedFormVersion && (
+            <CredentialSchemaForm
+              isLoading={isLoading}
+              credentialSchema={selectedFormVersion.credentialSchema}
+              onSubmit={handleSubmit}
+            />
+          )}
+        </div>
+      </section>
+      <section className="basis-2/5 p-6 space-y-6">
         <PageHeader
           title={t("createTitle")}
           subtitle={t("createDescription")}
         />
-        <Label>{tForm("form")}</Label>
-        <SelectForm
-          value={selectedFormVersion?.id ?? ""}
-          options={formVersions}
-          onSelect={(formVersion) => setSelectedFormVersion(formVersion)}
-        />
+        <div className="space-y-2">
+          <Label>{tForm("form")}</Label>
+          <SelectForm
+            value={selectedFormVersion?.id ?? ""}
+            options={formVersions}
+            onSelect={(formVersion) => setSelectedFormVersion(formVersion)}
+          />
+        </div>
       </section>
-      {selectedFormVersion && (
-        <CredentialSchemaForm
-          credentialSchema={selectedFormVersion.credentialSchema}
-          isLoading={isLoading}
-          onSubmit={handleSubmit}
-          className="basis-3/5 p-10 h-full overflow-y-auto bg-gray-100"
-        />
-      )}
-    </>
+    </section>
   );
 }

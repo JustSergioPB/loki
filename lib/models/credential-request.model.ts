@@ -58,6 +58,7 @@ export async function createCredentialRequest(
 
   //TODO: Add step to check if the claim matches the form
   //const encryptionLabel = dids.document.assertionMethod[0];
+  console.log(data)
 
   const credential = {
     "@context": credentialSchema.properties["@context"].const,
@@ -167,7 +168,8 @@ export async function validateCredentialRequest(
     .set({
       code: null,
     })
-    .where(eq(credentialRequestTable.id, id));
+    .where(eq(credentialRequestTable.id, id))
+    .returning();
 
   return updatedCredentialRequest;
 }

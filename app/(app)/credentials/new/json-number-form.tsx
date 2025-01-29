@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { JsonNumberType } from "@/lib/types/json-schema";
-import { cn } from "@/lib/utils";
 import { useFormContext } from "react-hook-form";
 
 type Props = {
@@ -34,21 +33,18 @@ export default function JsonNumberForm({
       control={control}
       name={path}
       render={({ field }) => (
-        <FormItem>
-          <div className={cn("flex items-center justify-between", className)}>
-            <FormLabel>{title}</FormLabel>
-            <FormControl>
-              <Input
-                placeholder={placeholder}
-                className="w-72"
-                type="number"
-                min={exclusiveMinimum ? exclusiveMinimum + 1 : minimum}
-                max={exclusiveMaximum ? exclusiveMaximum - 1 : maximum}
-                required={required}
-                {...field}
-              />
-            </FormControl>
-          </div>
+        <FormItem className={className}>
+          <FormLabel>{title}</FormLabel>
+          <FormControl>
+            <Input
+              placeholder={placeholder}
+              type="number"
+              min={exclusiveMinimum ? exclusiveMinimum + 1 : minimum}
+              max={exclusiveMaximum ? exclusiveMaximum - 1 : maximum}
+              required={required}
+              {...field}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}
