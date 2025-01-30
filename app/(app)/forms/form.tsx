@@ -64,14 +64,12 @@ export default function FormForm({
     setIsLoading(true);
 
     const { success, error } = formVersion
-      ? await updateFormAction(formVersion.formId, values)
+      ? await updateFormAction(formVersion.id, values)
       : await createFormAction(values);
 
     if (success) {
       toast.success(success.message);
-      redirect(
-        formVersion ? `/forms/${formVersion.formId}?action=see` : "/forms"
-      );
+      redirect(formVersion ? `/forms/${formVersion.id}?action=see` : "/forms");
     } else {
       toast.error(error.message);
     }
@@ -106,7 +104,10 @@ export default function FormForm({
           />
         )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 w-2/5">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-6 w-2/5"
+        >
           <FormField
             control={form.control}
             name="title"

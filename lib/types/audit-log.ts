@@ -9,7 +9,6 @@ export const auditableEntities = [
   "org-did",
   "user-did",
   "did",
-  "form",
   "formVersion",
   "privateKey",
   "credential",

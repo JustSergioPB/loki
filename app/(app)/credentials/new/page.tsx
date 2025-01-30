@@ -10,10 +10,11 @@ export default async function CreateCredential() {
     redirect("/login");
   }
 
-  const formVersions = await searchForms(user, {
+  const formVersions = await searchForms({
     page: 0,
     pageSize: 100,
     status: "published",
+    orgId: user.orgId,
   });
 
   return <CredentialForm formVersions={formVersions.items} />;

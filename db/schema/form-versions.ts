@@ -1,7 +1,15 @@
 import { relations } from "drizzle-orm";
-import { jsonb, pgEnum, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  timestamp,
+  unique,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
-import { formTable } from "./forms";
 import { formVersionStatuses } from "@/lib/types/form";
 import { CredentialSchema } from "@/lib/types/credential-schema";
 import { credentialTable } from "./credentials";
@@ -12,21 +20,32 @@ export const formVersionStatus = pgEnum(
   formVersionStatuses
 );
 
-export const formVersionTable = pgTable("formVersions", {
-  id: uuid().primaryKey().notNull().defaultRandom(),
-  credentialSchema: jsonb().notNull().$type<CredentialSchema>(),
-  status: formVersionStatus().notNull().default("draft"),
-  formId: uuid()
-    .references(() => formTable.id, { onDelete: "cascade" })
-    .notNull(),
-  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp({ withTimezone: true })
-    .notNull()
-    .$onUpdate(() => new Date()),
-  orgId: uuid()
-    .references(() => orgTable.id, { onDelete: "cascade" })
-    .notNull(),
-});
+export const formVersionTable = pgTable(
+  "formVersions",
+  {
+    id: uuid().primaryKey().notNull().defaultRandom(),
+    title: varchar({ length: 255 }).notNull(),
+    version: integer().notNull().default(0),
+    credentialSchema: jsonb().notNull().$type<CredentialSchema>(),
+    status: formVersionStatus().notNull().default("draft"),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .$onUpdate(() => new Date()),
+    orgId: uuid()
+      .references(() => orgTable.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => [
+    {
+      orgTitleIdx: unique("uniqueTitlePerOrg").on(
+        table.orgId,
+        table.title,
+        table.version
+      ),
+    },
+  ]
+);
 
 export const formVersionTableRelations = relations(
   formVersionTable,
@@ -37,12 +56,7 @@ export const formVersionTableRelations = relations(
       fields: [formVersionTable.orgId],
       references: [orgTable.id],
     }),
-    form: one(formTable, {
-      fields: [formVersionTable.formId],
-      references: [formTable.id],
-    }),
   })
 );
 
 export type DbFormVersion = typeof formVersionTable.$inferSelect;
-export type DbFormVersionCreate = typeof formVersionTable.$inferInsert;

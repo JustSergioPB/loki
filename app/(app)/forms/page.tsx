@@ -26,15 +26,11 @@ export default async function Forms({
     redirect("/login");
   }
 
-  const queryResult = await searchForms(user, query);
+  const queryResult = await searchForms({ ...query, orgId: user.orgId });
 
   return (
     <Page>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        className="p-6"
-      >
+      <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6">
         <Link className={buttonVariants()} href="/forms/new">
           <CirclePlus />
           {t("form")}

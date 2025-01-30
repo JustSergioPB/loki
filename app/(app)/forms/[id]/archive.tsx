@@ -25,7 +25,7 @@ export default function ArchiveFormVersion({
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await archiveFormAction(formVersion.formId);
+    const { success, error } = await archiveFormAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -38,11 +38,11 @@ export default function ArchiveFormVersion({
   }
 
   async function onClose() {
-    router.push(`/forms/${formVersion.formId}?action=see`);
+    router.push(`/forms/${formVersion.id}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${formVersion.formId}?action=archive`);
+    router.push(`/forms/${formVersion.id}?action=archive`);
   }
 
   return (
@@ -64,7 +64,7 @@ export default function ArchiveFormVersion({
           label={t("archiveLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={formVersion.formId}
+          id={formVersion.id}
           variant="warning"
         />
       </DialogContent>

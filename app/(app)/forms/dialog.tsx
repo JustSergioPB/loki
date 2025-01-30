@@ -53,13 +53,13 @@ export default function FormDialog({
 
   function onActionTrigger(action: "delete" | "publish" | "archive") {
     const params = new URLSearchParams(searchParams);
-    params.set("id", formVersion.formId.toString());
+    params.set("id", formVersion.id.toString());
     params.set("action", action);
     router.push(`${pathname}?${params.toString()}`);
   }
 
   async function onActionNavigate(action: "see" | "edit") {
-    let route = `${pathname}/${formVersion.formId}`;
+    let route = `${pathname}/${formVersion.id}`;
     if (action === "edit") route = `${route}/edit`;
     router.push(route);
   }
@@ -67,7 +67,7 @@ export default function FormDialog({
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await deleteFormAction(formVersion.formId);
+    const { success, error } = await deleteFormAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -82,7 +82,7 @@ export default function FormDialog({
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await publishFormAction(formVersion.formId);
+    const { success, error } = await publishFormAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -97,7 +97,7 @@ export default function FormDialog({
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await archiveFormAction(formVersion.formId);
+    const { success, error } = await archiveFormAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -117,7 +117,7 @@ export default function FormDialog({
   }
 
   return (
-    <Dialog open={!!action && id === formVersion.formId} onOpenChange={onClose}>
+    <Dialog open={!!action && id === formVersion.id} onOpenChange={onClose}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -165,7 +165,7 @@ export default function FormDialog({
             label={tVersion("publishLabel")}
             onSubmit={onPublish}
             loading={isLoading}
-            id={formVersion.formId}
+            id={formVersion.id}
             variant="warning"
           />
         )}
@@ -177,7 +177,7 @@ export default function FormDialog({
             label={tVersion("archiveLabel")}
             onSubmit={onArchive}
             loading={isLoading}
-            id={formVersion.formId}
+            id={formVersion.id}
             variant="warning"
           />
         )}
@@ -189,7 +189,7 @@ export default function FormDialog({
             label={t("deleteLabel")}
             onSubmit={onDelete}
             loading={isLoading}
-            id={formVersion.formId}
+            id={formVersion.id}
             variant="danger"
           />
         )}

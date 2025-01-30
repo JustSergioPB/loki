@@ -6,7 +6,6 @@ import { auditLogTable } from "./audit-logs";
 import { credentialTable } from "./credentials";
 import { didTable } from "./dids";
 import { formVersionTable } from "./form-versions";
-import { formTable } from "./forms";
 import { orgStatus, orgTiers } from "@/lib/types/org";
 import { bridgeTypes } from "@/lib/types/bridge";
 import { credentialRequestTable } from "./credential-requests";
@@ -34,7 +33,6 @@ export const orgTableRelations = relations(orgTable, ({ many }) => ({
   dids: many(didTable),
   credentialsRequests: many(credentialRequestTable),
   formVersions: many(formVersionTable),
-  forms: many(formTable),
   userTokens: many(userTokenTable),
   users: many(userTable),
 }));

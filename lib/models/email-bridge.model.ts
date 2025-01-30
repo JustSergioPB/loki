@@ -12,9 +12,8 @@ import {
 } from "../types/bridge";
 import { createForm, publishForm, updateForm } from "./form.model";
 import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
-import { formTable } from "@/db/schema/forms";
-import { FormError } from "../errors/form.error";
 import { FormSchema } from "../schemas/form.schema";
+import { FormVersionError } from "../errors/form-version.error";
 
 const EMAIL_BRIDGE_TITLE = "Email bridge";
 
@@ -36,7 +35,7 @@ export async function createEmailBridge(
     buildForm(domains, orgQuery[0].name)
   );
 
-  await publishForm(authUser, formVersion.formId);
+  await publishForm(authUser, formVersion.id);
 
   return formVersion;
 }
@@ -50,10 +49,10 @@ export async function updateEmailBridge(
     .from(orgTable)
     .where(eq(orgTable.id, authUser.orgId))
     .innerJoin(
-      formTable,
+      formVersionTable,
       and(
-        eq(orgTable.id, formTable.orgId),
-        like(formTable.title, EMAIL_BRIDGE_TITLE)
+        eq(orgTable.id, formVersionTable.orgId),
+        like(formVersionTable.title, EMAIL_BRIDGE_TITLE)
       )
     );
 
@@ -61,13 +60,13 @@ export async function updateEmailBridge(
     throw new OrgError("notFound");
   }
 
-  if (!orgQuery[0].forms) {
-    throw new FormError("notFound");
+  if (!orgQuery[0].formVersions) {
+    throw new FormVersionError("notFound");
   }
 
   const formVersion = await updateForm(
     authUser,
-    orgQuery[0].forms.id,
+    orgQuery[0].formVersions.id,
     buildForm(domains, orgQuery[0].orgs.name)
   );
 
@@ -85,10 +84,10 @@ export async function toggleEmailBridge(
     .from(orgTable)
     .where(eq(orgTable.id, authUser.orgId))
     .innerJoin(
-      formTable,
+      formVersionTable,
       and(
-        eq(orgTable.id, formTable.orgId),
-        like(formTable.title, EMAIL_BRIDGE_TITLE)
+        eq(orgTable.id, formVersionTable.orgId),
+        like(formVersionTable.title, EMAIL_BRIDGE_TITLE)
       )
     );
 
@@ -96,8 +95,8 @@ export async function toggleEmailBridge(
     throw new OrgError("notFound");
   }
 
-  if (value && !bridgeQuery[0].forms) {
-    throw new FormError("notFound");
+  if (value && !bridgeQuery[0].formVersions) {
+    throw new FormVersionError("notFound");
   }
 
   if (value && bridgeQuery[0].orgs.activeBridges.includes("email")) {

@@ -25,7 +25,7 @@ export default function PublishFormVersion({
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await publishFormAction(formVersion.formId);
+    const { success, error } = await publishFormAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -38,11 +38,11 @@ export default function PublishFormVersion({
   }
 
   async function onClose() {
-    router.push(`/forms/${formVersion.formId}?action=see`);
+    router.push(`/forms/${formVersion.id}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${formVersion.formId}?action=publish`);
+    router.push(`/forms/${formVersion.id}?action=publish`);
   }
 
   return (
@@ -64,7 +64,7 @@ export default function PublishFormVersion({
           label={t("publishLabel")}
           onSubmit={onPublish}
           loading={isLoading}
-          id={formVersion.formId}
+          id={formVersion.id}
           variant="warning"
         />
       </DialogContent>

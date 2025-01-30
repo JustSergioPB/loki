@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/helpers/dal";
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound, redirect } from "next/navigation";
 import { getFormById } from "@/lib/models/form.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
@@ -44,10 +44,14 @@ export default async function Form({
     redirect("/login");
   }
 
-  const formVersion = await getFormById(user, id);
+  const formVersion = await getFormById(id);
 
   if (!formVersion) {
     notFound();
+  }
+
+  if (user.orgId !== formVersion.orgId) {
+    forbidden();
   }
 
   return (
@@ -69,7 +73,7 @@ export default async function Form({
           <PageHeader title={t("seeTitle")} />
           <div className="flex items-center gap-2">
             <Link
-              href={`/forms/${formVersion.formId}/edit`}
+              href={`/forms/${formVersion.id}/edit`}
               className={cn(buttonVariants({ size: "sm" }))}
             >
               <Pencil className="size-3" />

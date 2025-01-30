@@ -26,7 +26,7 @@ export default function DeleteFormVersion({
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await deleteFormAction(formVersion.formId);
+    const { success, error } = await deleteFormAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -39,11 +39,11 @@ export default function DeleteFormVersion({
   }
 
   async function onClose() {
-    router.push(`/forms/${formVersion.formId}?action=see`);
+    router.push(`/forms/${formVersion.id}?action=see`);
   }
 
   async function onOpen() {
-    router.push(`/forms/${formVersion.formId}?action=delete`);
+    router.push(`/forms/${formVersion.id}?action=delete`);
   }
 
   return (
@@ -65,7 +65,7 @@ export default function DeleteFormVersion({
           label={t("deleteLabel")}
           onSubmit={onArchive}
           loading={isLoading}
-          id={formVersion.formId}
+          id={formVersion.id}
           variant="danger"
         />
       </DialogContent>

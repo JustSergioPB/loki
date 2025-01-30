@@ -5,13 +5,11 @@ import {
   CredentialSchemaProperties,
 } from "../types/credential-schema";
 import { AuthUser } from "@/db/schema/users";
-import { formTable } from "@/db/schema/forms";
 import { db } from "@/db";
 import { eq, asc, and, count } from "drizzle-orm";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { FormVersionStatus } from "../types/form";
 import { FormVersionError } from "../errors/form-version.error";
-import { FormError } from "../errors/form.error";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
 
@@ -22,41 +20,23 @@ export async function createForm(
   const credentialSchema = buildCredentialSchema(data);
 
   return await db.transaction(async (tx) => {
-    const [insertedForm] = await tx
-      .insert(formTable)
-      .values({
-        title: data.title,
-        orgId: authUser.orgId,
-      })
-      .returning();
-
     const [insertedFormVersion] = await tx
       .insert(formVersionTable)
       .values({
+        title: data.title,
         credentialSchema,
-        formId: insertedForm.id,
         orgId: authUser.orgId,
       })
       .returning();
 
-    await tx.insert(auditLogTable).values([
-      {
-        entityId: insertedForm.id,
-        entityType: "form",
-        action: "create",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: insertedForm,
-      },
-      {
-        entityId: insertedFormVersion.id,
-        entityType: "formVersion",
-        action: "create",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: insertedFormVersion,
-      },
-    ]);
+    await tx.insert(auditLogTable).values({
+      entityId: insertedFormVersion.id,
+      entityType: "formVersion",
+      action: "create",
+      userId: authUser.id,
+      orgId: authUser.orgId,
+      value: insertedFormVersion,
+    });
 
     return insertedFormVersion;
   });
@@ -70,76 +50,67 @@ export async function updateForm(
   const latestVersionQuery = await db
     .select()
     .from(formVersionTable)
-    .where(eq(formVersionTable.formId, id))
+    .where(eq(formVersionTable.id, id))
     .orderBy(asc(formVersionTable.createdAt))
     .limit(1);
 
   const credentialSchema = buildCredentialSchema(data);
 
   if (!latestVersionQuery[0] || latestVersionQuery[0].status !== "draft") {
-    return await createFormVersion(authUser, id, credentialSchema);
+    return await createFormVersion(
+      authUser,
+      latestVersionQuery[0].version,
+      credentialSchema
+    );
   }
 
-  return await updateFormVersion(
-    authUser,
-    latestVersionQuery[0],
-    credentialSchema
+  return await updateFormVersion(authUser, id, credentialSchema);
+}
+
+export async function getFormById(id: string): Promise<DbFormVersion | null> {
+  return (
+    (await db.query.formVersionTable.findFirst({
+      where: eq(formVersionTable.id, id),
+    })) ?? null
   );
 }
 
-export async function getFormById(
-  authUser: AuthUser,
-  id: string
-): Promise<DbFormVersion | null> {
-  const queryResult = await db
-    .select()
-    .from(formTable)
-    .where(and(eq(formTable.orgId, authUser.orgId), eq(formTable.id, id)))
-    .innerJoin(formVersionTable, eq(formVersionTable.formId, id))
-    .orderBy(asc(formVersionTable.createdAt));
-
-  if (!queryResult[0]) {
-    throw new FormError("notFound");
-  }
-
-  return queryResult[0].formVersions;
-}
-
 export async function searchForms(
-  authUser: AuthUser,
   query: Query<DbFormVersion>
 ): Promise<QueryResult<DbFormVersion>> {
-  const { credentialSchema, status } = query;
+  const { credentialSchema, status, orgId } = query;
 
   const formQuery = await db
     .select()
-    .from(formTable)
+    .from(formVersionTable)
     .where(
       and(
-        eq(formTable.orgId, authUser.orgId),
         credentialSchema?.title
-          ? eq(formTable.title, credentialSchema?.title)
-          : undefined
+          ? eq(formVersionTable.title, credentialSchema?.title)
+          : undefined,
+        orgId ? eq(formVersionTable.orgId, orgId) : undefined,
+        status ? eq(formVersionTable.status, status) : undefined
       )
     )
     .limit(query.pageSize)
     .offset(query.page * query.pageSize)
-    .innerJoin(
-      formVersionTable,
-      and(
-        eq(formVersionTable.formId, formTable.id),
-        status ? eq(formVersionTable.status, status) : undefined
-      )
-    )
     .orderBy(asc(formVersionTable.createdAt));
 
   const [{ count: countResult }] = await db
     .select({ count: count() })
-    .from(formTable)
-    .where(eq(formTable.orgId, authUser.orgId));
+    .from(formVersionTable)
+    .where(
+      and(
+        credentialSchema?.title
+          ? eq(formVersionTable.title, credentialSchema?.title)
+          : undefined,
+        orgId ? eq(formVersionTable.orgId, orgId) : undefined,
+        status ? eq(formVersionTable.status, status) : undefined
+      )
+    );
 
   return {
-    items: formQuery.map(({ formVersions }) => formVersions),
+    items: formQuery,
     count: countResult,
   };
 }
@@ -164,13 +135,13 @@ export async function deleteForm(
 ): Promise<void> {
   await db.transaction(async (tx) => {
     const [deleted] = await tx
-      .delete(formTable)
-      .where(eq(formTable.id, id))
+      .delete(formVersionTable)
+      .where(eq(formVersionTable.id, id))
       .returning();
 
     await tx.insert(auditLogTable).values({
       entityId: id,
-      entityType: "form",
+      entityType: "formVersion",
       action: "delete",
       orgId: authUser.orgId,
       userId: authUser.id,
@@ -181,37 +152,21 @@ export async function deleteForm(
 
 async function createFormVersion(
   authUser: AuthUser,
-  id: string,
+  prevVersion: number,
   credentialSchema: CredentialSchema
 ): Promise<DbFormVersion> {
   return await db.transaction(async (tx) => {
-    await tx
-      .update(formTable)
-      .set({
-        title: credentialSchema.title,
-      })
-      .where(eq(formTable.id, id));
-
     const [insertedFormVersion] = await tx
       .insert(formVersionTable)
       .values({
+        title: credentialSchema.title,
         credentialSchema,
-        formId: id,
         orgId: authUser.orgId,
+        version: prevVersion + 1,
       })
       .returning();
 
     await tx.insert(auditLogTable).values([
-      {
-        entityId: id,
-        entityType: "form",
-        action: "update",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: {
-          title: credentialSchema.title,
-        },
-      },
       {
         entityId: insertedFormVersion.id,
         entityType: "formVersion",
@@ -228,38 +183,22 @@ async function createFormVersion(
 
 async function updateFormVersion(
   authUser: AuthUser,
-  prevFormVersion: DbFormVersion,
+  id: string,
   credentialSchema: CredentialSchema
 ): Promise<DbFormVersion> {
   return await db.transaction(async (tx) => {
-    await tx
-      .update(formTable)
-      .set({
-        title: credentialSchema.title,
-      })
-      .where(eq(formTable.id, prevFormVersion.formId));
-
-    const [insertedFormVersion] = await tx
+    const [updatedFormVersion] = await tx
       .update(formVersionTable)
       .set({
+        title: credentialSchema.title,
         credentialSchema,
       })
-      .where(eq(formVersionTable.id, prevFormVersion.id))
+      .where(eq(formVersionTable.id, id))
       .returning();
 
     await tx.insert(auditLogTable).values([
       {
-        entityId: prevFormVersion.formId,
-        entityType: "form",
-        action: "update",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: {
-          title: credentialSchema.title,
-        },
-      },
-      {
-        entityId: prevFormVersion.id,
+        entityId: id,
         entityType: "formVersion",
         action: "update",
         userId: authUser.id,
@@ -270,7 +209,7 @@ async function updateFormVersion(
       },
     ]);
 
-    return insertedFormVersion;
+    return updatedFormVersion;
   });
 }
 
@@ -420,18 +359,15 @@ async function changeFormStatus(
   id: string,
   status: FormVersionStatus
 ): Promise<DbFormVersion> {
-  const latestVersionQuery = await db
-    .select()
-    .from(formVersionTable)
-    .where(eq(formVersionTable.formId, id))
-    .orderBy(asc(formVersionTable.createdAt))
-    .limit(1);
+  const latestVersionQuery = await db.query.formVersionTable.findFirst({
+    where: eq(formVersionTable.id, id),
+  });
 
-  if (!latestVersionQuery[0]) {
+  if (!latestVersionQuery) {
     throw new FormVersionError("latestVersionNotFound");
   }
 
-  if (latestVersionQuery[0].status !== "draft" && status === "published") {
+  if (latestVersionQuery.status !== "draft" && status === "published") {
     throw new FormVersionError("cantBePublished");
   }
 
@@ -441,7 +377,7 @@ async function changeFormStatus(
       .set({
         status,
       })
-      .where(eq(formVersionTable.id, latestVersionQuery[0].id))
+      .where(eq(formVersionTable.id, latestVersionQuery.id))
       .returning();
 
     await tx.insert(auditLogTable).values({
