@@ -110,11 +110,14 @@ export async function toggleEmailBridge(
   let activeBridges: BridgeType[] = [];
 
   if (value) {
-    activeBridges = [...bridgeQuery[0].orgs.activeBridges, "email"];
+    activeBridges = [
+      ...(bridgeQuery[0].orgs.activeBridges as BridgeType[]),
+      "email",
+    ];
   } else {
     const emailIndex = bridgeQuery[0].orgs.activeBridges.indexOf("email");
     bridgeQuery[0].orgs.activeBridges.splice(emailIndex, 1);
-    activeBridges = [...bridgeQuery[0].orgs.activeBridges];
+    activeBridges = [...bridgeQuery[0].orgs.activeBridges] as BridgeType[];
   }
 
   await db.transaction(async (tx) => {

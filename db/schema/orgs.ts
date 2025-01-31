@@ -7,19 +7,17 @@ import { credentialTable } from "./credentials";
 import { didTable } from "./dids";
 import { formVersionTable } from "./form-versions";
 import { orgStatus, orgTiers } from "@/lib/types/org";
-import { bridgeTypes } from "@/lib/types/bridge";
 import { credentialRequestTable } from "./credential-requests";
 
 export const orgTier = pgEnum("orgTier", orgTiers);
 export const orgStatuses = pgEnum("orgStatus", orgStatus);
-export const orgBridge = pgEnum("orgBridge", bridgeTypes);
 
 export const orgTable = pgTable("orgs", {
   id: uuid().primaryKey().notNull().defaultRandom(),
   name: varchar({ length: 255 }).notNull().unique(),
   tier: orgTier().notNull().default("starter"),
   status: orgStatuses().notNull().default("verifying"),
-  activeBridges: orgBridge().array().notNull(),
+  activeBridges: varchar().array().notNull(),
   verifiedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })
