@@ -59,7 +59,7 @@ export default function CredentialForm({ formVersions }: Props) {
           {selectedFormVersion && (
             <CredentialSchemaForm
               isLoading={isLoading}
-              credentialSchema={selectedFormVersion.credentialSchema}
+              formVersion={selectedFormVersion}
               onSubmit={handleSubmit}
             />
           )}

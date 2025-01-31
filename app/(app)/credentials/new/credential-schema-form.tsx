@@ -1,4 +1,3 @@
-import { CredentialSchema } from "@/lib/types/credential-schema";
 import { ClaimSchema } from "@/lib/schemas/claim.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -29,17 +28,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DbFormVersion } from "@/db/schema/form-versions";
 
 type Props = {
   isLoading: boolean;
-  credentialSchema: CredentialSchema;
+  formVersion: DbFormVersion;
   className?: string;
   disabled?: boolean;
   onSubmit: (data: ClaimSchema) => void;
 };
 
 export default function CredentialSchemaForm({
-  credentialSchema,
+  formVersion,
   isLoading,
   onSubmit,
   className,
@@ -50,8 +50,13 @@ export default function CredentialSchemaForm({
   const tVersion = useTranslations("FormVersion");
 
   const {
-    properties: { credentialSubject, type },
-  } = credentialSchema;
+    credentialSubject,
+    title,
+    description,
+    types,
+    validFrom,
+    validUntil,
+  } = formVersion;
 
   const form = useForm<ClaimSchema>({
     resolver: zodResolver(
@@ -63,8 +68,8 @@ export default function CredentialSchemaForm({
     ),
     defaultValues: {
       credentialSubject: getDefaultCredentialSubject(credentialSubject),
-      validUntil: undefined,
-      validFrom: undefined,
+      validUntil: validFrom ? new Date(validFrom) : undefined,
+      validFrom: validUntil ? new Date(validUntil) : undefined,
     },
   });
 
@@ -73,12 +78,12 @@ export default function CredentialSchemaForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className={cn(className)}>
         <Card className="p-12 rounded-md">
           <CardHeader>
-            <CardTitle className="text-2xl">{credentialSchema.title}</CardTitle>
-            <CardDescription>{credentialSchema.description}</CardDescription>
+            <CardTitle className="text-2xl">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
             <div className="flex items-center gap-1">
-              {type.const?.slice(1).map((type, idx) => (
+              {types.slice(1).map((type, idx) => (
                 <Badge variant="secondary" key={`${type}-${idx}`}>
-                  {type as string}
+                  {type}
                 </Badge>
               ))}
             </div>

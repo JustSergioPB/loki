@@ -1,241 +1,109 @@
 "use client";
 
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
-import { FormSchema, formSchema } from "@/lib/schemas/form.schema";
-import { createFormAction, updateFormAction } from "@/lib/actions/form.actions";
 import { useState } from "react";
-import { LoadingButton } from "@/components/app/loading-button";
-import { Textarea } from "@/components/ui/textarea";
 import InfoPanel from "@/components/app/info-panel";
-import { DatetimePicker } from "@/components/ui/datetime-picker";
-import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
-import { TagsInput } from "@/components/ui/tags-input";
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { GoBackButton } from "@/components/app/go-back-button";
-import PageSubheader from "@/components/app/page-subheader";
+import { Clock, FileJson } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import ContentForm from "./content-form";
+import ValidityForm from "./validity-form";
+import { cn } from "@/lib/utils";
 
-export default function FormForm({
-  formVersion,
-}: {
-  formVersion?: DbFormVersion;
-}) {
+type Props = {
+  value?: DbFormVersion;
+  mode?: "new" | "edit";
+};
+
+export default function FormForm({ value, mode }: Props) {
   const t = useTranslations("Form");
   const tVersion = useTranslations("FormVersion");
+  const [step, setStep] = useState<number>(0);
+  const [formVersion, setFormVersion] = useState(value);
   const tGeneric = useTranslations("Generic");
-  const validFrom = formVersion?.credentialSchema.properties.validFrom;
-  const validUntil = formVersion?.credentialSchema.properties.validUntil;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const types = formVersion?.credentialSchema.properties.type.const as
-    | string[]
-    | undefined;
-
-  const form = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: formVersion?.credentialSchema.title ?? "",
-      type: types ? types.slice(1) : [],
-      description: formVersion?.credentialSchema.description ?? "",
-      content:
-        JSON.stringify(
-          formVersion?.credentialSchema.properties.credentialSubject,
-          null,
-          1
-        ) ?? "",
-      validFrom: validFrom?.const ? new Date(validFrom.const) : undefined,
-      validUntil: validUntil?.const ? new Date(validUntil.const) : undefined,
+  const items = [
+    {
+      title: "Content",
+      url: "/content",
+      icon: FileJson,
     },
-  });
-
-  async function handleSubmit(values: FormSchema) {
-    setIsLoading(true);
-
-    const { success, error } = formVersion
-      ? await updateFormAction(formVersion.id, values)
-      : await createFormAction(values);
-
-    if (success) {
-      toast.success(success.message);
-      redirect(formVersion ? `/forms/${formVersion.id}?action=see` : "/forms");
-    } else {
-      toast.error(error.message);
-    }
-
-    setIsLoading(false);
-  }
+    {
+      title: "Validity",
+      url: "/validity",
+      icon: Clock,
+    },
+  ];
 
   return (
-    <section className="p-6 space-y-6 overflow-y-auto">
-      <GoBackButton variant="ghost" />
-      <PageHeader
-        title={t(formVersion ? "editTitle" : "createTitle")}
-        subtitle={t(formVersion ? "editDescription" : "createDescription")}
-      />
-      {formVersion && formVersion?.status !== "draft" && (
-        <InfoPanel
-          variant="warning"
-          type="vertical"
-          label={tGeneric("warning")}
-          message={tVersion("formNotInDraft")}
-        />
-      )}
-      {formVersion &&
-        formVersion?.credentialSchema.properties.type.const?.includes(
-          "Bridge"
-        ) && (
-          <InfoPanel
-            variant="danger"
-            type="vertical"
-            label={tGeneric("warning")}
-            message={tVersion("dontEditBridge")}
-          />
-        )}
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6 w-2/5"
-        >
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("titleProp")}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t("titlePlaceholder")}
-                    type="text"
-                    required
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{tVersion("type")}</FormLabel>
-                <FormControl>
-                  <TagsInput
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{tVersion("description")}</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder={tVersion("descriptionPlaceholder")}
-                    className="resize-none"
-                    rows={4}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <PageSubheader
-            title={tVersion("validityTitle")}
-            subtitle={tVersion("validitySubtitle")}
-          />
-          <div className="flex justify-between">
-            <FormField
-              control={form.control}
-              name="validFrom"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{tVersion("validFrom")}</FormLabel>
-                  <FormControl>
-                    <DatetimePicker
-                      {...field}
-                      format={[
-                        ["days", "months", "years"],
-                        ["hours", "minutes", "seconds"],
-                      ]}
-                      dtOptions={{
-                        hour12: false,
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <section className="flex flex-1">
+      <section className="border-r basis-3/5 flex flex-col">
+        <div className="px-6 py-4 border-b">
+          <GoBackButton variant="ghost" size="sm" />
+        </div>
+        <div className="p-6">
+          {step === 0 && (
+            <ContentForm
+              formVersion={formVersion}
+              onSubmit={(formVersion: DbFormVersion) => {
+                setFormVersion(formVersion);
+                setStep(1);
+              }}
             />
-            <FormField
-              control={form.control}
-              name="validUntil"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{tVersion("validUntil")}</FormLabel>
-                  <FormControl>
-                    <DatetimePicker
-                      {...field}
-                      format={[
-                        ["days", "months", "years"],
-                        ["hours", "minutes", "seconds"],
-                      ]}
-                      dtOptions={{
-                        hour12: false,
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          )}
+          {step === 1 && (
+            <ValidityForm
+              formVersion={formVersion}
+              onSubmit={() => setStep(2)}
             />
-          </div>
-          <FormField
-            control={form.control}
-            name="content"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{tVersion("content")}</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder={tVersion("contentPlaceholder")}
-                    className="resize-none"
-                    rows={12}
-                    required
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          )}
+        </div>
+      </section>
+      <section className="basis-2/5 p-6 flex flex-col">
+        <div className="space-y-6">
+          <PageHeader
+            title={t(formVersion ? "editTitle" : "createTitle")}
+            subtitle={t(formVersion ? "editDescription" : "createDescription")}
           />
-          <div className="flex justify-end">
-            <LoadingButton loading={isLoading} type="submit">
-              {tGeneric("submit")}
-            </LoadingButton>
+          {formVersion && formVersion.status !== "draft" && (
+            <InfoPanel
+              variant="warning"
+              type="vertical"
+              label={tGeneric("warning")}
+              message={tVersion("formNotInDraft")}
+            />
+          )}
+          {formVersion && formVersion.types.includes("Bridge") && (
+            <InfoPanel
+              variant="danger"
+              type="vertical"
+              label={tGeneric("warning")}
+              message={tVersion("dontEditBridge")}
+            />
+          )}
+          <div className="flex space-x-2 lg:flex-col lg:space-x-0 space-y-2">
+            {items.map((item, index) => (
+              <Button
+                key={item.url}
+                className={cn(
+                  "justify-start",
+                  index === step
+                    ? "bg-muted hover:bg-muted"
+                    : "hover:bg-transparent hover:underline"
+                )}
+                variant="ghost"
+                onClick={() => setStep(index)}
+                disabled={mode === "new" && step !== index}
+              >
+                <item.icon />
+                {item.title}
+              </Button>
+            ))}
           </div>
-        </form>
-      </Form>
+        </div>
+      </section>
     </section>
   );
 }

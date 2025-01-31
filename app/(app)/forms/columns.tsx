@@ -15,7 +15,7 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
       return t("titleProp");
     },
     cell: function CellComponent({ row }) {
-      return row.original.credentialSchema.title;
+      return row.original.title;
     },
   },
   {
@@ -25,14 +25,11 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
       return t("type");
     },
     cell: function CellComponent({ row }) {
-      const type = (row.original.credentialSchema.properties.type.const ??
-        []) as string[];
-
       return (
         <div className="flex items-center gap-1">
-          {type.slice(1, 3).map((type, idx) => (
+          {row.original.types.slice(1, 3).map((type, idx) => (
             <Badge variant="secondary" key={`${type}-${idx}`}>
-              {type.toString()}
+              {type}
             </Badge>
           ))}
         </div>
@@ -45,8 +42,8 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
       const t = useTranslations("FormVersion");
       return t("version");
     },
-    cell: function CellComponent() {
-      return <Badge>V{0}</Badge>;
+    cell: function CellComponent({ row }) {
+      return <Badge>V{row.original.version}</Badge>;
     },
   },
   {

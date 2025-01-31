@@ -10,7 +10,7 @@ import Page from "@/components/app/page";
 import Link from "next/link";
 import { CirclePlus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { searchForms } from "@/lib/models/form.model";
+import { searchFormVersions } from "@/lib/models/form.model";
 
 export default async function Forms({
   searchParams,
@@ -26,7 +26,7 @@ export default async function Forms({
     redirect("/login");
   }
 
-  const queryResult = await searchForms({ ...query, orgId: user.orgId });
+  const queryResult = await searchFormVersions({ ...query, orgId: user.orgId });
 
   return (
     <Page>

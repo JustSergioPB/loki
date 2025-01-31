@@ -42,8 +42,7 @@ export default function SelectForm({ value, options, onSelect }: Props) {
           )}
         >
           {value
-            ? options.find((formVersion) => formVersion.id === value)
-                ?.credentialSchema.title
+            ? options.find((formVersion) => formVersion.id === value)?.title
             : t("searchForm")}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -63,7 +62,7 @@ export default function SelectForm({ value, options, onSelect }: Props) {
                     setOpen(false);
                   }}
                 >
-                  {formVersion.credentialSchema.title}
+                  {formVersion.title}
                   <Check
                     className={cn(
                       "ml-auto",

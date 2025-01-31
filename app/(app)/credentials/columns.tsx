@@ -15,7 +15,7 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
       return t("titleProp");
     },
     cell: function CellCompodnent({ row }) {
-      return row.original.formVersion.credentialSchema.title;
+      return row.original.formVersion.title;
     },
   },
   {
@@ -25,11 +25,9 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
       return t("type");
     },
     cell: function CellComponent({ row }) {
-      const type = (row.original.formVersion.credentialSchema.properties.type
-        .const ?? []) as string[];
       return (
         <div className="flex items-center gap-1">
-          {type.slice(1, 3).map((type, idx) => (
+          {row.original.formVersion.types.slice(1, 3).map((type, idx) => (
             <Badge variant="secondary" key={`${type}-${idx}`}>
               {type}
             </Badge>

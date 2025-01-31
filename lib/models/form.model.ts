@@ -8,23 +8,26 @@ import { AuthUser } from "@/db/schema/users";
 import { db } from "@/db";
 import { eq, asc, and, count } from "drizzle-orm";
 import { auditLogTable } from "@/db/schema/audit-logs";
-import { FormVersionStatus } from "../types/form";
+import { FormVersionStatus } from "../types/form-version";
 import { FormVersionError } from "../errors/form-version.error";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
+import { ValiditySchema } from "../schemas/validity.schema";
 
-export async function createForm(
+export async function createFormVersion(
   authUser: AuthUser,
-  data: FormSchema
+  data: FormSchema,
+  version: number = 0
 ): Promise<DbFormVersion> {
-  const credentialSchema = buildCredentialSchema(data);
-
   return await db.transaction(async (tx) => {
     const [insertedFormVersion] = await tx
       .insert(formVersionTable)
       .values({
         title: data.title,
-        credentialSchema,
+        types: data.types,
+        description: data.description,
+        credentialSubject: data.credentialSubject,
+        version,
         orgId: authUser.orgId,
       })
       .returning();
@@ -42,32 +45,76 @@ export async function createForm(
   });
 }
 
-export async function updateForm(
+export async function updateFormVersionContent(
   authUser: AuthUser,
   id: string,
   data: FormSchema
 ): Promise<DbFormVersion> {
-  const latestVersionQuery = await db
-    .select()
-    .from(formVersionTable)
-    .where(eq(formVersionTable.id, id))
-    .orderBy(asc(formVersionTable.createdAt))
-    .limit(1);
+  const latestVersion = await db.query.formVersionTable.findFirst({
+    where: eq(formVersionTable.id, id),
+  });
 
-  const credentialSchema = buildCredentialSchema(data);
-
-  if (!latestVersionQuery[0] || latestVersionQuery[0].status !== "draft") {
-    return await createFormVersion(
-      authUser,
-      latestVersionQuery[0].version,
-      credentialSchema
-    );
+  if (latestVersion && latestVersion.status !== "draft") {
+    return await createFormVersion(authUser, data, latestVersion.version + 1);
   }
 
-  return await updateFormVersion(authUser, id, credentialSchema);
+  return await db.transaction(async (tx) => {
+    const [updatedFormVersion] = await tx
+      .update(formVersionTable)
+      .set({
+        title: data.title,
+        types: data.types,
+        description: data.description,
+        credentialSubject: data.credentialSubject,
+      })
+      .where(eq(formVersionTable.id, id))
+      .returning();
+
+    await tx.insert(auditLogTable).values([
+      {
+        entityId: id,
+        entityType: "formVersion",
+        action: "update",
+        userId: authUser.id,
+        orgId: authUser.orgId,
+        value: updatedFormVersion,
+      },
+    ]);
+
+    return updatedFormVersion;
+  });
 }
 
-export async function getFormById(id: string): Promise<DbFormVersion | null> {
+export async function updateFormVersionValidity(
+  authUser: AuthUser,
+  id: string,
+  data: ValiditySchema
+) {
+  return await db.transaction(async (tx) => {
+    const [updatedFormVersion] = await tx
+      .update(formVersionTable)
+      .set(data)
+      .where(eq(formVersionTable.id, id))
+      .returning();
+
+    await tx.insert(auditLogTable).values([
+      {
+        entityId: id,
+        entityType: "formVersion",
+        action: "update",
+        userId: authUser.id,
+        orgId: authUser.orgId,
+        value: data,
+      },
+    ]);
+
+    return updatedFormVersion;
+  });
+}
+
+export async function getFormVersionById(
+  id: string
+): Promise<DbFormVersion | null> {
   return (
     (await db.query.formVersionTable.findFirst({
       where: eq(formVersionTable.id, id),
@@ -75,19 +122,17 @@ export async function getFormById(id: string): Promise<DbFormVersion | null> {
   );
 }
 
-export async function searchForms(
+export async function searchFormVersions(
   query: Query<DbFormVersion>
 ): Promise<QueryResult<DbFormVersion>> {
-  const { credentialSchema, status, orgId } = query;
+  const { title, status, orgId } = query;
 
   const formQuery = await db
     .select()
     .from(formVersionTable)
     .where(
       and(
-        credentialSchema?.title
-          ? eq(formVersionTable.title, credentialSchema?.title)
-          : undefined,
+        title ? eq(formVersionTable.title, title) : undefined,
         orgId ? eq(formVersionTable.orgId, orgId) : undefined,
         status ? eq(formVersionTable.status, status) : undefined
       )
@@ -101,9 +146,7 @@ export async function searchForms(
     .from(formVersionTable)
     .where(
       and(
-        credentialSchema?.title
-          ? eq(formVersionTable.title, credentialSchema?.title)
-          : undefined,
+        title ? eq(formVersionTable.title, title) : undefined,
         orgId ? eq(formVersionTable.orgId, orgId) : undefined,
         status ? eq(formVersionTable.status, status) : undefined
       )
@@ -115,21 +158,21 @@ export async function searchForms(
   };
 }
 
-export async function publishForm(
+export async function publishFormVersion(
   authUser: AuthUser,
   id: string
 ): Promise<DbFormVersion> {
   return await changeFormStatus(authUser, id, "published");
 }
 
-export async function archiveForm(
+export async function archiveFormVersion(
   authUser: AuthUser,
   id: string
 ): Promise<DbFormVersion> {
   return await changeFormStatus(authUser, id, "archived");
 }
 
-export async function deleteForm(
+export async function deleteFormVersion(
   authUser: AuthUser,
   id: string
 ): Promise<void> {
@@ -150,70 +193,9 @@ export async function deleteForm(
   });
 }
 
-async function createFormVersion(
-  authUser: AuthUser,
-  prevVersion: number,
-  credentialSchema: CredentialSchema
-): Promise<DbFormVersion> {
-  return await db.transaction(async (tx) => {
-    const [insertedFormVersion] = await tx
-      .insert(formVersionTable)
-      .values({
-        title: credentialSchema.title,
-        credentialSchema,
-        orgId: authUser.orgId,
-        version: prevVersion + 1,
-      })
-      .returning();
-
-    await tx.insert(auditLogTable).values([
-      {
-        entityId: insertedFormVersion.id,
-        entityType: "formVersion",
-        action: "create",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: insertedFormVersion,
-      },
-    ]);
-
-    return insertedFormVersion;
-  });
-}
-
-async function updateFormVersion(
-  authUser: AuthUser,
-  id: string,
-  credentialSchema: CredentialSchema
-): Promise<DbFormVersion> {
-  return await db.transaction(async (tx) => {
-    const [updatedFormVersion] = await tx
-      .update(formVersionTable)
-      .set({
-        title: credentialSchema.title,
-        credentialSchema,
-      })
-      .where(eq(formVersionTable.id, id))
-      .returning();
-
-    await tx.insert(auditLogTable).values([
-      {
-        entityId: id,
-        entityType: "formVersion",
-        action: "update",
-        userId: authUser.id,
-        orgId: authUser.orgId,
-        value: {
-          credentialSchema,
-        },
-      },
-    ]);
-
-    return updatedFormVersion;
-  });
-}
-
-function buildCredentialSchema(props: FormSchema): CredentialSchema {
+export function buildCredentialSchema(
+  formVersion: DbFormVersion
+): CredentialSchema {
   const required = [
     "@context",
     "title",
@@ -235,7 +217,7 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
     },
     title: {
       title: "title",
-      const: props.title,
+      const: formVersion.title,
       type: "string",
     },
     type: {
@@ -245,7 +227,7 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
         title: "items",
         type: "string",
       },
-      const: ["VerifiableCredential", ...props.type],
+      const: ["VerifiableCredential", ...formVersion.types],
     },
     issuer: { title: "issuer", type: "string", format: "uri" },
     id: { title: "credentialID", type: "string", format: "uri" },
@@ -254,12 +236,13 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
       properties: {
         id: {
           type: "string",
+          title: "holder",
           pattern: "/^did:[a-z0-9]+:[a-zA-Z0-9_.%-]+(:[a-zA-Z0-9_.%-]+)*$/",
         },
-        ...props.content.properties,
+        ...(formVersion.credentialSubject.properties ?? {}),
       },
       type: "object",
-      required: ["id", ...props.content.required],
+      required: ["id", ...(formVersion.credentialSubject.required ?? [])],
     },
     credentialSchema: {
       type: "object",
@@ -315,39 +298,39 @@ function buildCredentialSchema(props: FormSchema): CredentialSchema {
     },
   };
 
-  if (props.validFrom) {
+  if (formVersion.validFrom) {
     required.push("validFrom");
     properties.validFrom = {
-      const: props.validFrom.toISOString(),
+      const: formVersion.validFrom.toISOString(),
       title: "validFrom",
       type: "string",
       format: "datetime",
     };
   }
 
-  if (props.validUntil) {
+  if (formVersion.validUntil) {
     required.push("validUntil");
     properties.validUntil = {
-      const: props.validUntil.toISOString(),
+      const: formVersion.validUntil.toISOString(),
       title: "validUntil",
       type: "string",
       format: "datetime",
     };
   }
 
-  if (props.description) {
+  if (formVersion.description) {
     required.push("description");
     properties.description = {
       title: "description",
-      const: props.description,
+      const: formVersion.description,
       type: "string",
     };
   }
 
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    title: props.title,
-    description: props.description,
+    title: formVersion.title,
+    description: formVersion.description ?? undefined,
     properties,
     required,
     type: "object",

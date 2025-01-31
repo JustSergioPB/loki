@@ -1,6 +1,6 @@
 import { getUser } from "@/lib/helpers/dal";
 import { forbidden, notFound, redirect } from "next/navigation";
-import { getFormById } from "@/lib/models/form.model";
+import { getFormVersionById } from "@/lib/models/form.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
 import PageHeader from "@/components/app/page-header";
@@ -22,7 +22,7 @@ import DateDisplay from "@/components/app/date";
 import Field from "@/components/app/field";
 import { Badge } from "@/components/ui/badge";
 import StatusTag, { StatusTagVariant } from "@/components/app/status-tag";
-import { FormVersionStatus } from "@/lib/types/form";
+import { FormVersionStatus } from "@/lib/types/form-version";
 
 const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
   draft: "warning",
@@ -44,7 +44,7 @@ export default async function Form({
     redirect("/login");
   }
 
-  const formVersion = await getFormById(id);
+  const formVersion = await getFormVersionById(id);
 
   if (!formVersion) {
     notFound();
@@ -63,7 +63,7 @@ export default async function Form({
         <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
           <pre className="w-full rounded-md border p-2 bg-card">
             <code className="text-xs">
-              {JSON.stringify(formVersion.credentialSchema, null, 1)}
+              {JSON.stringify(formVersion.credentialSubject, null, 1)}
             </code>
           </pre>
         </div>

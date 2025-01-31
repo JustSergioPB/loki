@@ -10,7 +10,11 @@ import {
   BridgeType,
   bridgeTypes,
 } from "../types/bridge";
-import { createForm, publishForm, updateForm } from "./form.model";
+import {
+  createFormVersion,
+  publishFormVersion,
+  updateFormVersionContent,
+} from "./form.model";
 import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
 import { FormSchema } from "../schemas/form.schema";
 import { FormVersionError } from "../errors/form-version.error";
@@ -30,12 +34,12 @@ export async function createEmailBridge(
     throw new OrgError("notFound");
   }
 
-  const formVersion = await createForm(
+  const formVersion = await createFormVersion(
     authUser,
     buildForm(domains, orgQuery[0].name)
   );
 
-  await publishForm(authUser, formVersion.id);
+  await publishFormVersion(authUser, formVersion.id);
 
   return formVersion;
 }
@@ -64,13 +68,13 @@ export async function updateEmailBridge(
     throw new FormVersionError("notFound");
   }
 
-  const formVersion = await updateForm(
+  const formVersion = await updateFormVersionContent(
     authUser,
     orgQuery[0].formVersions.id,
     buildForm(domains, orgQuery[0].orgs.name)
   );
 
-  await publishForm(authUser, formVersion.id);
+  await publishFormVersion(authUser, formVersion.id);
 
   return formVersion;
 }
@@ -140,9 +144,7 @@ export async function searchBridgesByOrg(orgId: string): Promise<Bridge[]> {
     type: bridge,
     formVersion:
       bridgeQuery.find(({ formVersions }) =>
-        formVersions?.credentialSchema.properties.type.const?.includes(
-          BRIDGE_CREDENTIAL_TYPE[bridge]
-        )
+        formVersions?.types.includes(BRIDGE_CREDENTIAL_TYPE[bridge])
       )?.formVersions ?? undefined,
   }));
 }
@@ -151,8 +153,8 @@ function buildForm(domains: string[], orgName: string): FormSchema {
   return {
     title: EMAIL_BRIDGE_TITLE,
     description: `This credential proves that the email belongs to ${orgName}`,
-    type: ["Bridge", BRIDGE_CREDENTIAL_TYPE["email"]],
-    content: {
+    types: ["Bridge", BRIDGE_CREDENTIAL_TYPE["email"]],
+    credentialSubject: {
       properties: {
         email: {
           type: "string",

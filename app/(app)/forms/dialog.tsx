@@ -20,10 +20,10 @@ import { useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
 import {
-  deleteFormAction,
-  publishFormAction,
-  archiveFormAction,
-} from "@/lib/actions/form.actions";
+  deleteFormVersionAction,
+  publishFormVersionAction,
+  archiveFormVersionAction,
+} from "@/lib/actions/form-version.actions";
 import { toast } from "sonner";
 import { DbFormVersion } from "@/db/schema/form-versions";
 
@@ -67,7 +67,7 @@ export default function FormDialog({
   async function onDelete() {
     setIsLoading(true);
 
-    const { success, error } = await deleteFormAction(formVersion.id);
+    const { success, error } = await deleteFormVersionAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -82,7 +82,7 @@ export default function FormDialog({
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await publishFormAction(formVersion.id);
+    const { success, error } = await publishFormVersionAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -97,7 +97,7 @@ export default function FormDialog({
   async function onArchive() {
     setIsLoading(true);
 
-    const { success, error } = await archiveFormAction(formVersion.id);
+    const { success, error } = await archiveFormVersionAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -159,7 +159,7 @@ export default function FormDialog({
       <DialogContent className="max-h-[95vh] overflow-y-auto">
         {action === "publish" && (
           <ConfirmDialog
-            keyword={formVersion.credentialSchema.title}
+            keyword={formVersion.title}
             title={tVersion("publishTitle")}
             description={tVersion("publishDescription")}
             label={tVersion("publishLabel")}
@@ -171,7 +171,7 @@ export default function FormDialog({
         )}
         {action === "archive" && (
           <ConfirmDialog
-            keyword={formVersion.credentialSchema.title}
+            keyword={formVersion.title}
             title={tVersion("archiveTitle")}
             description={tVersion("archiveDescription")}
             label={tVersion("archiveLabel")}
@@ -183,7 +183,7 @@ export default function FormDialog({
         )}
         {action === "delete" && (
           <ConfirmDialog
-            keyword={formVersion.credentialSchema.title}
+            keyword={formVersion.title}
             title={t("deleteTitle")}
             description={t("deleteDescription")}
             label={t("deleteLabel")}

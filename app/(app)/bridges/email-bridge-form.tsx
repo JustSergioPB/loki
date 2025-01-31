@@ -50,10 +50,7 @@ export default function EmailBridgeForm({ formVersion, onSubmit }: Props) {
   });
 
   function extractDomainsFromForm(formVersion: DbFormVersion): string[] {
-    const emailJsonSchema =
-      formVersion.credentialSchema.properties?.credentialSubject?.properties?.[
-        "email"
-      ];
+    const emailJsonSchema = formVersion.credentialSubject.properties?.["email"];
 
     if (
       !emailJsonSchema ||

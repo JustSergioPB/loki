@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/helpers/dal";
-import { searchForms } from "@/lib/models/form.model";
+import { searchFormVersions } from "@/lib/models/form.model";
 import { redirect } from "next/navigation";
 import CredentialForm from "./form";
 
@@ -10,7 +10,7 @@ export default async function CreateCredential() {
     redirect("/login");
   }
 
-  const formVersions = await searchForms({
+  const formVersions = await searchFormVersions({
     page: 0,
     pageSize: 100,
     status: "published",

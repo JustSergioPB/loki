@@ -17,6 +17,7 @@ import { orgTable } from "@/db/schema/orgs";
 import { credentialTable, DbCredential } from "@/db/schema/credentials";
 import { AuthUser } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
+import { buildCredentialSchema } from "./form.model";
 
 const BASE_URL = process.env.BASE_URL!;
 
@@ -42,13 +43,9 @@ export async function createCredentialRequest(
     throw new FormVersionError("notFound");
   }
 
-  const {
-    formVersions: { status, id, credentialSchema },
-    dids,
-    orgs,
-  } = formVersionQuery[0];
+  const { formVersions, dids, orgs } = formVersionQuery[0];
 
-  if (status !== "published") {
+  if (formVersions.status !== "published") {
     throw new FormVersionError("notPublished");
   }
 
@@ -58,7 +55,7 @@ export async function createCredentialRequest(
 
   //TODO: Add step to check if the claim matches the form
   //const encryptionLabel = dids.document.assertionMethod[0];
-  console.log(data)
+  const credentialSchema = buildCredentialSchema(formVersions);
 
   const credential = {
     "@context": credentialSchema.properties["@context"].const,
@@ -80,7 +77,7 @@ export async function createCredentialRequest(
       ...data.credentialSubject,
     },
     credentialSchema: {
-      id: `${BASE_URL}/form-versions/${id}`,
+      id: `${BASE_URL}/form/${formVersionId}`,
       type: credentialSchema.properties.credentialSchema.properties?.type.const,
     },
   };
@@ -91,7 +88,7 @@ export async function createCredentialRequest(
       .values({
         encryptedContent: JSON.stringify(credential),
         issuerId: dids.document.controller,
-        formVersionId: id,
+        formVersionId,
         orgId: orgs.id,
       })
       .returning();

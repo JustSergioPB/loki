@@ -5,45 +5,68 @@ import { ActionResult } from "../generics/action-result";
 import { authorize } from "../helpers/dal";
 import { getTranslations } from "next-intl/server";
 import {
-  archiveForm,
-  createForm,
-  deleteForm,
-  publishForm,
-  updateForm,
+  archiveFormVersion,
+  createFormVersion,
+  deleteFormVersion,
+  publishFormVersion,
+  updateFormVersionContent,
+  updateFormVersionValidity,
 } from "../models/form.model";
 import { UserRole } from "../types/user";
+import { ValiditySchema } from "../schemas/validity.schema";
+import { DbFormVersion } from "@/db/schema/form-versions";
 
 //TODO: Add correct error messages on catch
 
 const ALLOWED_ROLES: UserRole[] = ["org-admin", "admin"];
 
-export async function createFormAction(
+export async function createFormVersionAction(
   data: FormSchema
-): Promise<ActionResult<void>> {
+): Promise<ActionResult<DbFormVersion>> {
   const t = await getTranslations("Form");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
 
-    await createForm(authUser, data);
+    const created = await createFormVersion(authUser, data);
 
-    return { success: { data: undefined, message: t("createSucceded") } };
+    return {
+      success: { data: created, message: t("createSucceded") },
+    };
   } catch (error) {
     console.error(error);
     return { error: { message: t("createFailed") } };
   }
 }
 
-export async function updateFormAction(
+export async function updateFormVersionContentAction(
   id: string,
   data: FormSchema
+): Promise<ActionResult<DbFormVersion>> {
+  const t = await getTranslations("Form");
+
+  try {
+    const authUser = await authorize(ALLOWED_ROLES);
+
+    const updated = await updateFormVersionContent(authUser, id, data);
+
+    return { success: { data: updated, message: t("updateSucceded") } };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("updateFailed") } };
+  }
+}
+
+export async function updateFormVersionValidityAction(
+  id: string,
+  data: ValiditySchema
 ): Promise<ActionResult<void>> {
   const t = await getTranslations("Form");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
 
-    await updateForm(authUser, id, data);
+    await updateFormVersionValidity(authUser, id, data);
 
     return { success: { data: undefined, message: t("updateSucceded") } };
   } catch (error) {
@@ -52,14 +75,14 @@ export async function updateFormAction(
   }
 }
 
-export async function deleteFormAction(
+export async function deleteFormVersionAction(
   id: string
 ): Promise<ActionResult<void>> {
   const t = await getTranslations("Form");
   try {
     const authUser = await authorize(ALLOWED_ROLES);
 
-    await deleteForm(authUser, id);
+    await deleteFormVersion(authUser, id);
 
     return { success: { data: undefined, message: t("deleteSucceded") } };
   } catch (error) {
@@ -68,7 +91,7 @@ export async function deleteFormAction(
   }
 }
 
-export async function publishFormAction(
+export async function publishFormVersionAction(
   id: string
 ): Promise<ActionResult<boolean>> {
   const t = await getTranslations("FormVersions");
@@ -76,7 +99,7 @@ export async function publishFormAction(
   try {
     const authUser = await authorize(ALLOWED_ROLES);
 
-    await publishForm(authUser, id);
+    await publishFormVersion(authUser, id);
 
     return { success: { data: true, message: t("publishSucceeded") } };
   } catch (error) {
@@ -85,7 +108,7 @@ export async function publishFormAction(
   }
 }
 
-export async function archiveFormAction(
+export async function archiveFormVersionAction(
   id: string
 ): Promise<ActionResult<boolean>> {
   const t = await getTranslations("FormVersions");
@@ -93,7 +116,7 @@ export async function archiveFormAction(
   try {
     const authUser = await authorize(ALLOWED_ROLES);
 
-    await archiveForm(authUser, id);
+    await archiveFormVersion(authUser, id);
 
     return { success: { data: true, message: t("archiveSucceeded") } };
   } catch (error) {

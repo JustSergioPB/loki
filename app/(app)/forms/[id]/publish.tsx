@@ -4,7 +4,7 @@ import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { DbFormVersion } from "@/db/schema/form-versions";
-import { publishFormAction } from "@/lib/actions/form.actions";
+import { publishFormVersionAction } from "@/lib/actions/form-version.actions";
 import { Rss } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,7 +25,7 @@ export default function PublishFormVersion({
   async function onPublish() {
     setIsLoading(true);
 
-    const { success, error } = await publishFormAction(formVersion.id);
+    const { success, error } = await publishFormVersionAction(formVersion.id);
 
     if (success) {
       toast.success(success.message);
@@ -58,7 +58,7 @@ export default function PublishFormVersion({
       </DialogTrigger>
       <DialogContent>
         <ConfirmDialog
-          keyword={formVersion.credentialSchema.title}
+          keyword={formVersion.title}
           title={t("publishTitle")}
           description={t("publishDescription")}
           label={t("publishLabel")}
