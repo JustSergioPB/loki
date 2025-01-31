@@ -16,7 +16,7 @@ export default function DeleteFormVersion({
 }: {
   formVersion: DbFormVersion;
 }) {
-  const t = useTranslations("Form");
+  const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
   const router = useRouter();
   const searchParams = useSearchParams();

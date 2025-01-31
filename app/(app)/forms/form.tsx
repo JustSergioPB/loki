@@ -11,18 +11,20 @@ import { Button } from "@/components/ui/button";
 import ContentForm from "./content-form";
 import ValidityForm from "./validity-form";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
+import { redirect } from "next/navigation";
 
 type Props = {
   value?: DbFormVersion;
-  mode?: "new" | "edit";
+  mode?: "create" | "edit";
 };
 
 export default function FormForm({ value, mode }: Props) {
-  const t = useTranslations("Form");
-  const tVersion = useTranslations("FormVersion");
+  const t = useTranslations("FormVersion");
+  const tGeneric = useTranslations("Generic");
+  const tStepper = useTranslations("Stepper");
   const [step, setStep] = useState<number>(0);
   const [formVersion, setFormVersion] = useState(value);
-  const tGeneric = useTranslations("Generic");
 
   const items = [
     {
@@ -49,30 +51,36 @@ export default function FormForm({ value, mode }: Props) {
               formVersion={formVersion}
               onSubmit={(formVersion: DbFormVersion) => {
                 setFormVersion(formVersion);
-                setStep(1);
+                if (mode === "create") {
+                  setStep(1);
+                }
               }}
             />
           )}
           {step === 1 && (
             <ValidityForm
               formVersion={formVersion}
-              onSubmit={() => setStep(2)}
+              onSubmit={() => {
+                if (mode === "create") {
+                  redirect("/forms");
+                }
+              }}
             />
           )}
         </div>
       </section>
       <section className="basis-2/5 p-6 flex flex-col">
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1">
           <PageHeader
-            title={t(formVersion ? "editTitle" : "createTitle")}
-            subtitle={t(formVersion ? "editDescription" : "createDescription")}
+            title={t(mode === "edit" ? "editTitle" : "createTitle")}
+            subtitle={t("createDescription")}
           />
           {formVersion && formVersion.status !== "draft" && (
             <InfoPanel
               variant="warning"
               type="vertical"
               label={tGeneric("warning")}
-              message={tVersion("formNotInDraft")}
+              message={t("formNotInDraft")}
             />
           )}
           {formVersion && formVersion.types.includes("Bridge") && (
@@ -80,10 +88,10 @@ export default function FormForm({ value, mode }: Props) {
               variant="danger"
               type="vertical"
               label={tGeneric("warning")}
-              message={tVersion("dontEditBridge")}
+              message={t("dontEditBridge")}
             />
           )}
-          <div className="flex space-x-2 lg:flex-col lg:space-x-0 space-y-2">
+          <div className="flex flex-col space-y-2">
             {items.map((item, index) => (
               <Button
                 key={item.url}
@@ -95,7 +103,7 @@ export default function FormForm({ value, mode }: Props) {
                 )}
                 variant="ghost"
                 onClick={() => setStep(index)}
-                disabled={mode === "new" && step !== index}
+                disabled={mode === "create" && step !== index}
               >
                 <item.icon />
                 {item.title}
@@ -103,6 +111,14 @@ export default function FormForm({ value, mode }: Props) {
             ))}
           </div>
         </div>
+        {mode === "create" && (
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm">
+              {tStepper("step")} {step + 1} {tStepper("of")} 2
+            </p>
+            <Progress value={step === 0 ? 50 : 100} />
+          </div>
+        )}
       </section>
     </section>
   );

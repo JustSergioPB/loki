@@ -8,7 +8,7 @@ import { createCredentialRequestAction } from "@/lib/actions/credential-request.
 import SelectForm from "./select-form";
 import { Label } from "@/components/ui/label";
 import { ClaimSchema } from "@/lib/schemas/claim.schema";
-import CredentialSchemaForm from "./credential-schema-form";
+import CredentialForm from "./credential-form";
 import { GoBackButton } from "@/components/app/go-back-button";
 import PageHeader from "@/components/app/page-header";
 import { useRouter } from "next/navigation";
@@ -17,9 +17,9 @@ type Props = {
   formVersions: DbFormVersion[];
 };
 
-export default function CredentialForm({ formVersions }: Props) {
+export default function VerifiableCredentialForm({ formVersions }: Props) {
   const t = useTranslations("Credential");
-  const tForm = useTranslations("Form");
+  const tForm = useTranslations("FormVersion");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFormVersion, setSelectedFormVersion] =
     useState<DbFormVersion | null>(null);
@@ -57,7 +57,7 @@ export default function CredentialForm({ formVersions }: Props) {
         </div>
         <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
           {selectedFormVersion && (
-            <CredentialSchemaForm
+            <CredentialForm
               isLoading={isLoading}
               formVersion={selectedFormVersion}
               onSubmit={handleSubmit}

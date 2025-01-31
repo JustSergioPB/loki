@@ -38,7 +38,7 @@ type Props = {
   onSubmit: (data: ClaimSchema) => void;
 };
 
-export default function CredentialSchemaForm({
+export default function CredentialForm({
   formVersion,
   isLoading,
   onSubmit,
@@ -81,7 +81,7 @@ export default function CredentialSchemaForm({
             <CardTitle className="text-2xl">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
             <div className="flex items-center gap-1">
-              {types.slice(1).map((type, idx) => (
+              {types.map((type, idx) => (
                 <Badge variant="secondary" key={`${type}-${idx}`}>
                   {type}
                 </Badge>

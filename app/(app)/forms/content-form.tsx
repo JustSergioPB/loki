@@ -28,8 +28,7 @@ type Props = {
 };
 
 export default function ContentForm({ formVersion, onSubmit }: Props) {
-  const t = useTranslations("Form");
-  const tVersion = useTranslations("FormVersion");
+  const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +90,7 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
           name="types"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{tVersion("type")}</FormLabel>
+              <FormLabel>{t("type")}</FormLabel>
               <FormControl>
                 <TagsInput value={field.value} onValueChange={field.onChange} />
               </FormControl>
@@ -104,10 +103,10 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{tVersion("description")}</FormLabel>
+              <FormLabel>{t("description")}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder={tVersion("descriptionPlaceholder")}
+                  placeholder={t("descriptionPlaceholder")}
                   className="resize-none"
                   rows={4}
                   {...field}
@@ -122,10 +121,10 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
           name="credentialSubject"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{tVersion("content")}</FormLabel>
+              <FormLabel>{t("content")}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder={tVersion("contentPlaceholder")}
+                  placeholder={t("contentPlaceholder")}
                   className="resize-none"
                   rows={12}
                   required

@@ -1,4 +1,5 @@
 import { JsonSchemaType, JsonType } from "@/lib/types/json-schema";
+import { cn } from "@/lib/utils";
 import {
   Binary,
   CircleSlash2,
@@ -11,6 +12,7 @@ import { ReactNode } from "react";
 
 type Props = {
   jsonSchema: JsonSchemaType;
+  variant?: "title" | "subtitle";
 };
 
 export const ICON_MAP: Record<JsonType, ReactNode> = {
@@ -25,11 +27,21 @@ export const ICON_MAP: Record<JsonType, ReactNode> = {
 
 export default function JsonSchemaHeader({
   jsonSchema: { title, description },
+  variant = "title",
 }: Props) {
   return (
     (title || description) && (
       <div>
-        {title && <p className="font-semibold text-xl leading-none mb-1">{title}</p>}
+        {title && (
+          <p
+            className={cn(
+              "font-semibold leading-none",
+              variant === "title" ? "text-xl" : "text-base"
+            )}
+          >
+            {title}
+          </p>
+        )}
         {description && (
           <p className="text-muted-foreground leading-tight">{description}</p>
         )}

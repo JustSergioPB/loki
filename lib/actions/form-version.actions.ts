@@ -23,7 +23,7 @@ const ALLOWED_ROLES: UserRole[] = ["org-admin", "admin"];
 export async function createFormVersionAction(
   data: FormSchema
 ): Promise<ActionResult<DbFormVersion>> {
-  const t = await getTranslations("Form");
+  const t = await getTranslations("FormVersion");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
@@ -43,7 +43,7 @@ export async function updateFormVersionContentAction(
   id: string,
   data: FormSchema
 ): Promise<ActionResult<DbFormVersion>> {
-  const t = await getTranslations("Form");
+  const t = await getTranslations("FormVersion");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
@@ -61,7 +61,7 @@ export async function updateFormVersionValidityAction(
   id: string,
   data: ValiditySchema
 ): Promise<ActionResult<void>> {
-  const t = await getTranslations("Form");
+  const t = await getTranslations("FormVersion");
 
   try {
     const authUser = await authorize(ALLOWED_ROLES);
@@ -78,7 +78,7 @@ export async function updateFormVersionValidityAction(
 export async function deleteFormVersionAction(
   id: string
 ): Promise<ActionResult<void>> {
-  const t = await getTranslations("Form");
+  const t = await getTranslations("FormVersion");
   try {
     const authUser = await authorize(ALLOWED_ROLES);
 

@@ -181,7 +181,7 @@
       }
     }
   },
-  "Form": {
+  "FormVersion": {
     "title": "Forms",
     "subtitle": "Handle everything related to your organization's forms in here. You can create, edit, see, delete, publish and archive your forms.",
     "form": "Form",
@@ -197,9 +197,7 @@
     "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
     "deleteLabel": "Type the form's title to confirm",
     "searchSucceeded": "Your search may have results",
-    "searchFailed": "Something went wrong with your search"
-  },
-  "FormVersion": {
+    "searchFailed": "Something went wrong with your search",
     "version": "Version",
     "status": "Status",
     "description": "Description",
@@ -226,8 +224,7 @@
     "validFrom": "Valid from",
     "validUntil": "Valid until",
     "validityTitle": "Validity",
-    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered.",
-    "seeTitle": "Form details"
+    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered."
   },
   "ConfirmAccount": {
     "title": "Confirm your account",
@@ -326,5 +323,9 @@
     "wall": "Wall",
     "administration": "Administration",
     "dids": "DIDs"
+  },
+  "Stepper": {
+    "of": "of",
+    "step": "Step"
   }
 }

@@ -54,14 +54,12 @@ export default function JsonArrayForm({ path, jsonSchema, className }: Props) {
           <FormControl>
             <section className={cn("space-y-4", className)}>
               {fields.map((_: unknown, index: number) => (
-                <div key={index} className="w-full border-b py-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">Item {index}</p>
+                <div key={index} className="w-full">
+                  <div className="flex items-center justify-end">
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="mb-1"
                       onClick={() => remove(index)}
                     >
                       <Trash className="size-4" />

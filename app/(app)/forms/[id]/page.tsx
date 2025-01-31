@@ -60,13 +60,7 @@ export default async function Form({
         <div className="px-6 py-4 border-b">
           <GoBackButton variant="ghost" size="sm" />
         </div>
-        <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
-          <pre className="w-full rounded-md border p-2 bg-card">
-            <code className="text-xs">
-              {JSON.stringify(formVersion.credentialSubject, null, 1)}
-            </code>
-          </pre>
-        </div>
+        <div className="p-6 bg-muted flex-auto overflow-y-auto h-0"></div>
       </section>
       <section className="basis-2/5 flex flex-col">
         <section className="p-6 space-y-6">

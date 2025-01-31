@@ -6,7 +6,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { JsonSchemaType } from "@/lib/types/json-schema";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectTrigger,
@@ -49,31 +48,23 @@ export default function JsonSchemaForm({
         name={path}
         render={({ field }) => (
           <FormItem>
-            <div className={cn("flex items-center justify-between", className)}>
-              <FormLabel>{title}</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-72">
-                      <SelectValue placeholder="Select one" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {jsonSchema.enum!.map((value, index) => (
-                      <SelectItem
-                        value={index.toString()}
-                        key={index.toString()}
-                      >
-                        {value ? value.toString() : null}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-            </div>
+            <FormLabel>{title}</FormLabel>
+            <FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select one" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {jsonSchema.enum!.map((value, index) => (
+                    <SelectItem value={index.toString()} key={index.toString()}>
+                      {value ? value.toString() : null}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

@@ -11,7 +11,7 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
-      const t = useTranslations("Form");
+      const t = useTranslations("FormVersion");
       return t("titleProp");
     },
     cell: function CellComponent({ row }) {
@@ -27,7 +27,7 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
     cell: function CellComponent({ row }) {
       return (
         <div className="flex items-center gap-1">
-          {row.original.types.slice(1, 3).map((type, idx) => (
+          {row.original.types.slice(0, 2).map((type, idx) => (
             <Badge variant="secondary" key={`${type}-${idx}`}>
               {type}
             </Badge>

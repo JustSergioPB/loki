@@ -24,5 +24,5 @@ export default async function EditForm({
     forbidden();
   }
 
-  return <FormForm value={formVersion} />;
+  return <FormForm value={formVersion} mode="edit"/>;
 }

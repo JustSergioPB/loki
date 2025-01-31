@@ -11,7 +11,7 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
-      const t = useTranslations("Form");
+      const t = useTranslations("FormVersion");
       return t("titleProp");
     },
     cell: function CellCompodnent({ row }) {

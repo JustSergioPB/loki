@@ -16,11 +16,12 @@ import { DatetimePicker } from "@/components/ui/datetime-picker";
 import { LoadingButton } from "@/components/app/loading-button";
 import { useState } from "react";
 import { updateFormVersionValidityAction } from "@/lib/actions/form-version.actions";
+import PageHeader from "@/components/app/page-header";
 
 type Props = { formVersion?: DbFormVersion; onSubmit: () => void };
 
 export default function ValidityForm({ formVersion, onSubmit }: Props) {
-  const tVersion = useTranslations("FormVersion");
+  const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +45,8 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
       throw new Error("This cant be");
     }
 
+    console.log(values);
+
     const { success, error } = await updateFormVersionValidityAction(
       formVersion.id,
       values
@@ -62,16 +65,19 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(handleSubmit)}>
-        <div className="flex justify-between">
+        <PageHeader
+          title={t("validityTitle")}
+          subtitle={t("validitySubtitle")}
+        />
+        <div className="flex gap-6">
           <FormField
             control={form.control}
             name="validFrom"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{tVersion("validFrom")}</FormLabel>
+                <FormLabel>{t("validFrom")}</FormLabel>
                 <FormControl>
                   <DatetimePicker
-                    {...field}
                     format={[
                       ["days", "months", "years"],
                       ["hours", "minutes", "seconds"],
@@ -79,6 +85,8 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
                     dtOptions={{
                       hour12: false,
                     }}
+                    value={field.value}
+                    onChange={(date) => field.onChange(date)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -90,10 +98,9 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
             name="validUntil"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{tVersion("validUntil")}</FormLabel>
+                <FormLabel>{t("validUntil")}</FormLabel>
                 <FormControl>
                   <DatetimePicker
-                    {...field}
                     format={[
                       ["days", "months", "years"],
                       ["hours", "minutes", "seconds"],
@@ -101,6 +108,8 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
                     dtOptions={{
                       hour12: false,
                     }}
+                    value={field.value}
+                    onChange={(date) => field.onChange(date)}
                   />
                 </FormControl>
                 <FormMessage />

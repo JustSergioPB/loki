@@ -32,7 +32,7 @@ export default function FormDialog({
 }: {
   formVersion: DbFormVersion;
 }) {
-  const t = useTranslations("Form");
+  const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
   const tVersion = useTranslations("FormVersion");
   const searchParams = useSearchParams();

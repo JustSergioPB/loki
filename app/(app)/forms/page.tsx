@@ -19,7 +19,7 @@ export default async function Forms({
 }) {
   const query = await getParams(searchParams);
 
-  const t = await getTranslations("Form");
+  const t = await getTranslations("FormVersion");
   const user = await getUser();
 
   if (!user) {
