@@ -153,7 +153,10 @@
     "searchFormPlaceholder": "Credential ID...",
     "searchFormNotFound": "Form not found",
     "validityTitle": "Validity",
-    "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)"
+    "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)",
+    "form": "Form",
+    "validity": "Validity",
+    "presentations": "Documents"
   },
   "CredentialRequest": {
     "scanTitle": "Challenge QR",

@@ -22,12 +22,12 @@ export default function FormStepper() {
   const items = [
     {
       title: "content",
-      url: "/content",
+      url: "content",
       icon: FileJson,
     },
     {
       title: "validityTitle",
-      url: "/validity",
+      url: "validity",
       icon: Clock,
     },
   ];

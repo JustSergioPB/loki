@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import CredentialDialog from "./dialog";
+import CredentialDialog from "./credential-dialog";
 import { CredentialWithIssuer } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
 import CredentialStatus from "@/components/app/credential-status";

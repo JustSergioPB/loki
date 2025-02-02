@@ -11,7 +11,6 @@ import { CredentialChallengeSchema } from "../schemas/credential-challenge.schem
 import { CredentialRequestError } from "../errors/credential-request.error";
 import { verifySignature } from "../helpers/signature";
 import { didTable } from "@/db/schema/dids";
-import { ClaimSchema } from "../schemas/claim.schema";
 import { DIDError } from "../errors/did.error";
 import { orgTable } from "@/db/schema/orgs";
 import { credentialTable, DbCredential } from "@/db/schema/credentials";
@@ -23,7 +22,7 @@ const BASE_URL = process.env.BASE_URL!;
 
 export async function createCredentialRequest(
   formVersionId: string,
-  data: ClaimSchema,
+  data: object,
   authUser?: AuthUser
 ): Promise<[DbCredentialRequest, DbCredential]> {
   const formVersionQuery = await db
@@ -67,15 +66,7 @@ export async function createCredentialRequest(
       name: orgs.name,
       id: `${BASE_URL}/dids/${dids.document.controller}`,
     },
-    validFrom:
-      data.validFrom?.toISOString() ??
-      credentialSchema.properties.validFrom?.const,
-    validUntil:
-      data.validUntil?.toISOString() ??
-      credentialSchema.properties.validUntil?.const,
-    credentialSubject: {
-      ...data.credentialSubject,
-    },
+    credentialSubject: data,
     credentialSchema: {
       id: `${BASE_URL}/form/${formVersionId}`,
       type: credentialSchema.properties.credentialSchema.properties?.type.const,
@@ -86,7 +77,7 @@ export async function createCredentialRequest(
     const [insertedCredential] = await tx
       .insert(credentialTable)
       .values({
-        encryptedContent: JSON.stringify(credential),
+        content: credential,
         issuerId: dids.document.controller,
         formVersionId,
         orgId: orgs.id,

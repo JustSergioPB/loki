@@ -13,7 +13,7 @@ type Props = {
   disabled: boolean;
 };
 
-export default function RenewChallengeButton({
+export default function ChallengeRenewButton({
   credentialId,
   id,
   disabled,

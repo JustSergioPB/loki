@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function DeleteCredential({
+export default function CredentialDeleteDialog({
   credential,
 }: {
   credential: DbCredential | PlainCredential;

@@ -2,18 +2,18 @@
 
 import { getTranslations } from "next-intl/server";
 import { ActionResult } from "../generics/action-result";
-import { ClaimSchema } from "../schemas/claim.schema";
 import { authorize } from "../helpers/dal";
 import {
   createCredentialRequest,
   renewCredentialRequest,
 } from "../models/credential-request.model";
 import { revalidatePath } from "next/cache";
+import { DbCredential } from "@/db/schema/credentials";
 
 export async function createCredentialRequestAction(
   formVersionId: string,
-  data: ClaimSchema
-): Promise<ActionResult<string>> {
+  data: object
+): Promise<ActionResult<DbCredential>> {
   const t = await getTranslations("CredentialRequest");
 
   try {
@@ -26,7 +26,7 @@ export async function createCredentialRequestAction(
       authUser
     );
 
-    return { success: { data: credential.id, message: t("createSucceded") } };
+    return { success: { data: credential, message: t("createSucceded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("createFailed") } };

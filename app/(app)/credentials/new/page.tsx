@@ -1,7 +1,7 @@
 import { getUser } from "@/lib/helpers/dal";
 import { searchFormVersions } from "@/lib/models/form.model";
 import { redirect } from "next/navigation";
-import CredentialForm from "./form";
+import CredentialCreateForm from "../_components/credential-create-form";
 
 export default async function CreateCredential() {
   const user = await getUser();
@@ -17,5 +17,5 @@ export default async function CreateCredential() {
     orgId: user.orgId,
   });
 
-  return <CredentialForm formVersions={formVersions.items} />;
+  return <CredentialCreateForm formVersions={formVersions.items} />;
 }

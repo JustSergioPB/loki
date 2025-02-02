@@ -1,4 +1,11 @@
-import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgEnum,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DbUser } from "./users";
@@ -10,7 +17,7 @@ export const credentialStatuses = pgEnum("credentialStatus", credentialStatus);
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  encryptedContent: varchar().notNull(),
+  content: jsonb().notNull().$type<object>(),
   status: credentialStatuses().notNull().default("pending"),
   formVersionId: uuid()
     .notNull()

@@ -53,8 +53,6 @@ export default function FormValidityForm({
       throw new Error("This cant be");
     }
 
-    console.log(values);
-
     const { success, error } = await updateFormVersionValidityAction(
       formVersion.id,
       values
