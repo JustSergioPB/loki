@@ -11,7 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function ArchiveFormVersion({
+export default function FormArchiveDialog({
   formVersion,
 }: {
   formVersion: DbFormVersion;

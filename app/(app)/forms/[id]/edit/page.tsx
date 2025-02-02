@@ -1,7 +1,7 @@
 import { getUser } from "@/lib/helpers/dal";
-import FormForm from "../../form";
 import { forbidden, notFound, redirect } from "next/navigation";
 import { getFormVersionById } from "@/lib/models/form.model";
+import FormEditForm from "../../_components/form-edit-form";
 
 export default async function EditForm({
   params,
@@ -24,5 +24,5 @@ export default async function EditForm({
     forbidden();
   }
 
-  return <FormForm value={formVersion} mode="edit"/>;
+  return <FormEditForm formVersion={formVersion} />;
 }

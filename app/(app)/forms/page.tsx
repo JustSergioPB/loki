@@ -1,4 +1,4 @@
-import { formColumns } from "./columns";
+import { formColumns } from "./_components/form-columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";

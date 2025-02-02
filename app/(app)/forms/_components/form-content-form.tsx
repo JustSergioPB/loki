@@ -24,10 +24,15 @@ import { Input } from "@/components/ui/input";
 
 type Props = {
   formVersion?: DbFormVersion;
+  disabled?: boolean;
   onSubmit: (formVersion: DbFormVersion) => void;
 };
 
-export default function ContentForm({ formVersion, onSubmit }: Props) {
+export default function FormContentForm({
+  formVersion,
+  onSubmit,
+  disabled,
+}: Props) {
   const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
 
@@ -78,6 +83,7 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
                   placeholder={t("titlePlaceholder")}
                   type="text"
                   required
+                  disabled={disabled}
                   {...field}
                 />
               </FormControl>
@@ -92,7 +98,11 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
             <FormItem>
               <FormLabel>{t("type")}</FormLabel>
               <FormControl>
-                <TagsInput value={field.value} onValueChange={field.onChange} />
+                <TagsInput
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={disabled}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -109,6 +119,7 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
                   placeholder={t("descriptionPlaceholder")}
                   className="resize-none"
                   rows={4}
+                  disabled={disabled}
                   {...field}
                 />
               </FormControl>
@@ -128,6 +139,7 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
                   className="resize-none"
                   rows={12}
                   required
+                  disabled={disabled}
                   {...field}
                 />
               </FormControl>
@@ -136,7 +148,7 @@ export default function ContentForm({ formVersion, onSubmit }: Props) {
           )}
         />
         <div className="flex justify-end">
-          <LoadingButton loading={isLoading} type="submit">
+          <LoadingButton loading={isLoading} type="submit" disabled={disabled}>
             {tGeneric("submit")}
           </LoadingButton>
         </div>

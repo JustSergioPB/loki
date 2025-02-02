@@ -127,10 +127,12 @@ export default function FormDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => onActionNavigate("edit")}>
-            <Pencil />
-            {tGeneric("edit")}
-          </DropdownMenuItem>
+          {formVersion.status === "draft" && (
+            <DropdownMenuItem onClick={() => onActionNavigate("edit")}>
+              <Pencil />
+              {tGeneric("edit")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => onActionNavigate("see")}>
             <ArrowRight />
             {tGeneric("see")}

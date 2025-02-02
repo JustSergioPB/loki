@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import FormDialog from "./dialog";
+import FormDialog from "./form-dialog";
 import { Badge } from "@/components/ui/badge";
 import FormVersionStatus from "@/components/app/form-version-status";
 import { DbFormVersion } from "@/db/schema/form-versions";

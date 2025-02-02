@@ -47,6 +47,7 @@ const DatetimeGrid = forwardRef<
     className?: string;
     timescape: Pick<TimescapeReturn, "getRootProps" | "getInputProps">;
     placeholders: InputPlaceholders;
+    disabled?: boolean;
   }
 >(
   (
@@ -55,11 +56,13 @@ const DatetimeGrid = forwardRef<
       className,
       timescape,
       placeholders,
+      disabled,
     }: {
       format: DateTimeFormatDefaults;
       className?: string;
       timescape: Pick<TimescapeReturn, "getRootProps" | "getInputProps">;
       placeholders: InputPlaceholders;
+      disabled?: boolean;
     },
     ref
   ) => {
@@ -86,6 +89,7 @@ const DatetimeGrid = forwardRef<
                           })}
                           {...timescape.getInputProps(unit)}
                           placeholder={placeholders[unit]}
+                          disabled={disabled}
                         />
                         {i === 0 && j < group.length - 1 ? (
                           // date separator
@@ -127,6 +131,7 @@ interface DateTimeInput {
   onChange?: Options["onChangeDate"];
   dtOptions?: Options;
   className?: string;
+  disabled?: boolean;
 }
 
 const DEFAULT_TS_OPTIONS = {

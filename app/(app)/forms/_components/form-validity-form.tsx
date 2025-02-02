@@ -18,9 +18,17 @@ import { useState } from "react";
 import { updateFormVersionValidityAction } from "@/lib/actions/form-version.actions";
 import PageHeader from "@/components/app/page-header";
 
-type Props = { formVersion?: DbFormVersion; onSubmit: () => void };
+type Props = {
+  formVersion?: DbFormVersion;
+  disabled?: boolean;
+  onSubmit: () => void;
+};
 
-export default function ValidityForm({ formVersion, onSubmit }: Props) {
+export default function FormValidityForm({
+  formVersion,
+  disabled,
+  onSubmit,
+}: Props) {
   const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
 
@@ -87,6 +95,7 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
                     }}
                     value={field.value}
                     onChange={(date) => field.onChange(date)}
+                    disabled={disabled}
                   />
                 </FormControl>
                 <FormMessage />
@@ -110,6 +119,7 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
                     }}
                     value={field.value}
                     onChange={(date) => field.onChange(date)}
+                    disabled={disabled}
                   />
                 </FormControl>
                 <FormMessage />
@@ -118,7 +128,7 @@ export default function ValidityForm({ formVersion, onSubmit }: Props) {
           />
         </div>
         <div className="flex justify-end">
-          <LoadingButton loading={isLoading} type="submit">
+          <LoadingButton loading={isLoading} type="submit" disabled={disabled}>
             {tGeneric("submit")}
           </LoadingButton>
         </div>

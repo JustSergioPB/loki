@@ -25,7 +25,10 @@ export const verifySession = cache(async () => {
 
 export const getUser = cache(async () => {
   const session = await verifySession();
-  if (!session) return null;
+  if (!session) {
+    (await cookies()).delete("session");
+    return null;
+  }
 
   return (
     (await db.query.userTable.findFirst({
