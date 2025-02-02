@@ -3,116 +3,48 @@ import {
   credentialRequestTable,
   DbCredentialRequest,
 } from "@/db/schema/credential-requests";
-import { formVersionTable } from "@/db/schema/form-versions";
-import { FormVersionError } from "../errors/form-version.error";
-import * as uuid from "uuid";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
 import { CredentialRequestError } from "../errors/credential-request.error";
 import { verifySignature } from "../helpers/signature";
-import { didTable } from "@/db/schema/dids";
-import { DIDError } from "../errors/did.error";
-import { orgTable } from "@/db/schema/orgs";
-import { credentialTable, DbCredential } from "@/db/schema/credentials";
 import { AuthUser } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
-import { buildCredentialSchema } from "./form.model";
-
-const BASE_URL = process.env.BASE_URL!;
+import { credentialTable } from "@/db/schema/credentials";
+import { CredentialError } from "../errors/credential.error";
 
 export async function createCredentialRequest(
-  formVersionId: string,
-  data: object,
+  credentialId: string,
   authUser?: AuthUser
-): Promise<[DbCredentialRequest, DbCredential]> {
-  const formVersionQuery = await db
-    .select()
-    .from(formVersionTable)
-    .where(and(eq(formVersionTable.id, formVersionId)))
-    .innerJoin(orgTable, eq(orgTable.id, formVersionTable.orgId))
-    .leftJoin(
-      didTable,
-      and(
-        eq(didTable.orgId, formVersionTable.orgId),
-        authUser ? eq(didTable.userId, authUser.id) : isNull(didTable.userId)
-      )
-    );
+): Promise<DbCredentialRequest> {
+  const credential = await db.query.credentialTable.findFirst({
+    where: eq(credentialTable.id, credentialId),
+  });
 
-  if (!formVersionQuery[0]) {
-    throw new FormVersionError("notFound");
+  if (!credential) {
+    throw new CredentialError("notFound");
   }
-
-  const { formVersions, dids, orgs } = formVersionQuery[0];
-
-  if (formVersions.status !== "published") {
-    throw new FormVersionError("notPublished");
-  }
-
-  if (!dids) {
-    throw new DIDError("missingOrgDID");
-  }
-
-  //TODO: Add step to check if the claim matches the form
-  //const encryptionLabel = dids.document.assertionMethod[0];
-  const credentialSchema = buildCredentialSchema(formVersions);
-
-  const credential = {
-    "@context": credentialSchema.properties["@context"].const,
-    type: credentialSchema.properties.type.const,
-    id: `${BASE_URL}/credentials/${uuid.v7()}`,
-    title: credentialSchema.title,
-    description: credentialSchema.description,
-    issuer: {
-      name: orgs.name,
-      id: `${BASE_URL}/dids/${dids.document.controller}`,
-    },
-    credentialSubject: data,
-    credentialSchema: {
-      id: `${BASE_URL}/form/${formVersionId}`,
-      type: credentialSchema.properties.credentialSchema.properties?.type.const,
-    },
-  };
 
   return await db.transaction(async (tx) => {
-    const [insertedCredential] = await tx
-      .insert(credentialTable)
-      .values({
-        content: credential,
-        issuerId: dids.document.controller,
-        formVersionId,
-        orgId: orgs.id,
-      })
-      .returning();
     const [insertedCredentialRequest] = await tx
       .insert(credentialRequestTable)
       .values({
-        orgId: orgs.id,
-        credentialId: insertedCredential.id,
+        orgId: credential.orgId,
+        credentialId,
       })
       .returning();
 
     if (authUser) {
-      await tx.insert(auditLogTable).values([
-        {
-          entityId: insertedCredential.id,
-          entityType: "credential",
-          value: insertedCredential,
-          orgId: authUser.orgId,
-          userId: authUser.id,
-          action: "create",
-        },
-        {
-          entityId: insertedCredentialRequest.id,
-          entityType: "credentialRequest",
-          value: insertedCredentialRequest,
-          orgId: authUser.orgId,
-          userId: authUser.id,
-          action: "create",
-        },
-      ]);
+      await tx.insert(auditLogTable).values({
+        entityId: insertedCredentialRequest.id,
+        entityType: "credentialRequest",
+        value: insertedCredentialRequest,
+        orgId: authUser.orgId,
+        userId: authUser.id,
+        action: "create",
+      });
     }
 
-    return [insertedCredentialRequest, insertedCredential];
+    return insertedCredentialRequest;
   });
 }
 

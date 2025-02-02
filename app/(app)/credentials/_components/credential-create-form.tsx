@@ -10,9 +10,10 @@ import PageHeader from "@/components/app/page-header";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Clock, FileStack, FileText, TextSelect } from "lucide-react";
+import { Clock, FileStack, FileText, QrCode, TextSelect } from "lucide-react";
 import { DbCredential } from "@/db/schema/credentials";
 import CredentialValidityForm from "./credential-validity-form";
+import { DbCredentialRequest } from "@/db/schema/credential-requests";
 
 type Props = {
   formVersions: DbFormVersion[];
@@ -24,6 +25,9 @@ export default function CredentialCreateForm({ formVersions }: Props) {
   const [step, setStep] = useState<number>(0);
   const [formVersion, setFormVersion] = useState<DbFormVersion | null>(null);
   const [credential, setCredential] = useState<DbCredential | null>(null);
+  const [challengue, setChallengue] = useState<DbCredentialRequest | null>(
+    null
+  );
 
   const items = [
     {
@@ -37,6 +41,10 @@ export default function CredentialCreateForm({ formVersions }: Props) {
     {
       title: "validity",
       icon: Clock,
+    },
+    {
+      title: "challenge",
+      icon: QrCode,
     },
     {
       title: "presentations",
@@ -67,16 +75,22 @@ export default function CredentialCreateForm({ formVersions }: Props) {
               setCredential(credential);
               setStep(2);
             }}
+            onReset={() => setStep(0)}
           />
         )}
         {step === 2 && formVersion && credential && (
           <CredentialValidityForm
             credential={credential}
             formVersion={formVersion}
-            onSubmit={(credential: DbCredential) => {
+            onSubmit={([credential, challengue]: [
+              DbCredential,
+              DbCredentialRequest
+            ]) => {
               setCredential(credential);
+              setChallengue(challengue);
               setStep(3);
             }}
+            onReset={() => setStep(1)}
           />
         )}
       </section>

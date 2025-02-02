@@ -156,7 +156,8 @@
     "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)",
     "form": "Form",
     "validity": "Validity",
-    "presentations": "Documents"
+    "presentations": "Documents",
+    "challenge": "Challenge"
   },
   "CredentialRequest": {
     "scanTitle": "Challenge QR",
@@ -311,7 +312,8 @@
     "warningMessage": "This action is irreversible, please be sure",
     "verify": "Verify",
     "loading": "Loading...",
-    "goBack": "Go back"
+    "goBack": "Go back",
+    "back": "Back"
   },
   "Navigation": {
     "home": "Home",

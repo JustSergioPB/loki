@@ -19,21 +19,24 @@ import { Badge } from "@/components/ui/badge";
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { createCredentialRequestAction } from "@/lib/actions/credential-request.actions";
 import { DbCredential } from "@/db/schema/credentials";
+import { createCredentialAction } from "@/lib/actions/credential.actions";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   formVersion: DbFormVersion;
   className?: string;
   disabled?: boolean;
   onSubmit: (credential: DbCredential) => void;
+  onReset: () => void;
 };
 
 export default function CredentialContentForm({
   formVersion,
-  onSubmit,
   className,
   disabled,
+  onSubmit,
+  onReset,
 }: Props) {
   const tGeneric = useTranslations("Generic");
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +51,7 @@ export default function CredentialContentForm({
   async function handleSubmit(values: object) {
     setIsLoading(true);
 
-    const { success, error } = await createCredentialRequestAction(
+    const { success, error } = await createCredentialAction(
       formVersion.id,
       values
     );
@@ -105,7 +108,10 @@ export default function CredentialContentForm({
             )}
           />
         </section>
-        <section className="flex justify-end py-4 px-12">
+        <section className="flex justify-end py-4 px-12 gap-2">
+          <Button variant="outline" onClick={onReset}>
+            {tGeneric("back")}
+          </Button>
           <LoadingButton loading={isLoading} type="submit" disabled={disabled}>
             {tGeneric("submit")}
           </LoadingButton>

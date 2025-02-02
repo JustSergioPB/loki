@@ -8,25 +8,24 @@ import {
   renewCredentialRequest,
 } from "../models/credential-request.model";
 import { revalidatePath } from "next/cache";
-import { DbCredential } from "@/db/schema/credentials";
+import { DbCredentialRequest } from "@/db/schema/credential-requests";
 
 export async function createCredentialRequestAction(
-  formVersionId: string,
-  data: object
-): Promise<ActionResult<DbCredential>> {
+  credentialId: string
+): Promise<ActionResult<DbCredentialRequest>> {
   const t = await getTranslations("CredentialRequest");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, credential] = await createCredentialRequest(
-      formVersionId,
-      data,
+    const credentialRequest = await createCredentialRequest(
+      credentialId,
       authUser
     );
 
-    return { success: { data: credential, message: t("createSucceded") } };
+    return {
+      success: { data: credentialRequest, message: t("createSucceded") },
+    };
   } catch (error) {
     console.error(error);
     return { error: { message: t("createFailed") } };
