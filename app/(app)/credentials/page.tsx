@@ -7,11 +7,8 @@ import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
 import { searchCredentials } from "@/lib/models/credential.model";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { CirclePlus } from "lucide-react";
-import Link from "next/link";
 import { credentialColumns } from "./_components/credential-columns";
+import CredentialCreateDialog from "./_components/credential-create-dialog";
 
 export default async function Credentials({
   searchParams,
@@ -32,10 +29,7 @@ export default async function Credentials({
   return (
     <Page>
       <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6">
-        <Link href="/credentials/new" className={cn(buttonVariants())}>
-          <CirclePlus />
-          {t("credential")}
-        </Link>
+        <CredentialCreateDialog />
       </PageHeader>
       <DataTable
         columns={credentialColumns}

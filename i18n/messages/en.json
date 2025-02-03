@@ -211,6 +211,7 @@
     "formNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
     "dontEditBridge": "Don't edit this form manually, if you want to edit this form do it in the bridge section.",
     "statuses": {
+      "not-filled": "Not filled",
       "draft": "Draft",
       "published": "Published",
       "archived": "Archived"

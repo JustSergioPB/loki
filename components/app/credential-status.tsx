@@ -11,6 +11,10 @@ export default function CredentialStatus({ status, children }: Props) {
   let textColor = "text-amber-500";
 
   switch (status) {
+    case "not-filled":
+      bg = "bg-purple-100";
+      textColor = "text-purple-500";
+      break;
     case "signed":
       bg = "bg-emerald-100";
       textColor = "text-emerald-500";

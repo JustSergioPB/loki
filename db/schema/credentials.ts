@@ -17,8 +17,8 @@ export const credentialStatuses = pgEnum("credentialStatus", credentialStatus);
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  content: jsonb().notNull().$type<object>(),
-  status: credentialStatuses().notNull().default("pending"),
+  content: jsonb().$type<object>(),
+  status: credentialStatuses().notNull().default("not-filled"),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),

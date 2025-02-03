@@ -5,5 +5,5 @@ export type PlainCredential = Omit<DbCredential, "encryptedContent"> & {
   plainCredential: VerifiableCredential;
 };
 
-export const credentialStatus = ["pending", "signed"] as const;
+export const credentialStatus = ["not-filled", "pending", "signed"] as const;
 export type CredentialStatus = (typeof credentialStatus)[number];

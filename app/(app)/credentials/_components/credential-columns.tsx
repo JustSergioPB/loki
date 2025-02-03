@@ -42,8 +42,8 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
       const t = useTranslations("FormVersion");
       return t("version");
     },
-    cell: function CellComponent({}) {
-      return <Badge>V{0}</Badge>;
+    cell: function CellComponent({ row }) {
+      return <Badge>V{row.original.formVersion.version}</Badge>;
     },
   },
   {
