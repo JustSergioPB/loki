@@ -5,7 +5,7 @@ import UserStatus from "@/components/app/user-status";
 import { DbUser } from "@/db/schema/users";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import UserDialog from "./dialog";
+import UserDialog from "./user-dialog";
 
 export const userColumns: ColumnDef<DbUser>[] = [
   {
