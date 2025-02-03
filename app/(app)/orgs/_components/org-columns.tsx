@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import OrgDialog from "./dialog";
+import OrgDialog from "./org-dialog";
 import { DbOrg } from "@/db/schema/orgs";
 import OrgTier from "@/components/app/org-tier";
 import OrgStatus from "@/components/app/org-status";

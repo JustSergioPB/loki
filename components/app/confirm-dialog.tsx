@@ -63,6 +63,7 @@ export default function ConfirmDialog({
           variant={variant}
           label={tGeneric("warning")}
           message={tGeneric("warningMessage")}
+          className="w-full"
         />
         <FormField
           control={form.control}
