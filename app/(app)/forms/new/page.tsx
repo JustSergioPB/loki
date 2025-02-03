@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import PageHeader from "@/components/app/page-header";
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { Clock, FileJson } from "lucide-react";
@@ -33,34 +32,10 @@ export default function FormStepper() {
   ];
 
   return (
-    <section className="flex flex-1">
-      <section className="border-r basis-3/5 flex flex-col">
-        <div className="px-6 py-4 border-b">
+    <section className="flex flex-1 border-t">
+      <section className="basis-1/4 flex flex-col justify-between p-6 space-y-6">
+        <div className="space-y-6">
           <GoBackButton variant="ghost" size="sm" />
-        </div>
-        <div className="p-6">
-          {step === 0 && (
-            <FormContentForm
-              onSubmit={(formVersion: DbFormVersion) => {
-                setFormVersion(formVersion);
-                setStep(1);
-              }}
-            />
-          )}
-          {step === 1 && formVersion && (
-            <FormValidityForm
-              formVersion={formVersion}
-              onSubmit={() => redirect("/forms")}
-            />
-          )}
-        </div>
-      </section>
-      <section className="basis-2/5 p-6 flex flex-col">
-        <div className="space-y-6 flex-1">
-          <PageHeader
-            title={t("createTitle")}
-            subtitle={t("createDescription")}
-          />
           <div className="flex flex-col space-y-2">
             {items.map((item, index) => (
               <Button
@@ -81,12 +56,27 @@ export default function FormStepper() {
             ))}
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 w-full">
           <p className="text-muted-foreground text-sm">
             {tStepper("step")} {step + 1} {tStepper("of")} 2
           </p>
           <Progress value={step === 0 ? 50 : 100} />
         </div>
+      </section>
+      <section className="border-l basis-3/4 flex flex-col">
+        <FormContentForm
+          className={step === 0 ? "flex" : "hidden"}
+          onSubmit={(formVersion: DbFormVersion) => {
+            setFormVersion(formVersion);
+            setStep(1);
+          }}
+        />
+        <FormValidityForm
+          className={step === 1 ? "flex" : "hidden"}
+          formVersion={formVersion}
+          onReset={() => setStep(0)}
+          onSubmit={() => redirect("/forms")}
+        />
       </section>
     </section>
   );

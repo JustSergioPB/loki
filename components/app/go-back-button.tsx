@@ -20,7 +20,7 @@ const GoBackButton = React.forwardRef<
       onClick={() => (props.href ? router.push(props.href) : router.back())}
     >
       <ArrowLeft className="size-4" />
-      {t("goBack")}
+      {props.size !== "icon" && t("goBack")}
     </Button>
   );
 });

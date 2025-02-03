@@ -1,20 +1,12 @@
 import Banner from "@/components/app/banner";
-import { getUser } from "@/lib/helpers/dal";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 export default async function HallLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getUser();
-
-  if (!user) {
-    redirect("login");
-  }
-
   const t = await getTranslations("NeedHelp");
 
   return (

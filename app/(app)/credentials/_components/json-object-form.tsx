@@ -10,14 +10,23 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+import { ReactNode } from "react";
 
 type Props = {
   path: string;
   jsonSchema: JsonObjectType;
   className?: string;
+  children?: ReactNode;
+  headerVariant?: "main" | "secondary";
 };
 
-export default function JsonObjectForm({ path, jsonSchema, className }: Props) {
+export default function JsonObjectForm({
+  path,
+  jsonSchema,
+  className,
+  children,
+  headerVariant,
+}: Props) {
   const { control } = useFormContext();
 
   const { properties, required } = jsonSchema;
@@ -37,8 +46,9 @@ export default function JsonObjectForm({ path, jsonSchema, className }: Props) {
       name={path}
       render={() => (
         <FormItem>
-          <FormLabel>
-            <JsonSchemaHeader jsonSchema={jsonSchema} />
+          <FormLabel className="flex items-center justify-between">
+            <JsonSchemaHeader jsonSchema={jsonSchema} variant={headerVariant} />
+            {children}
           </FormLabel>
           <FormControl>
             <section className={cn("grid grid-cols-2 gap-4", className)}>

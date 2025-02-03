@@ -52,50 +52,11 @@ export default function CredentialCreateForm({ formVersions }: Props) {
     },
   ];
 
-  const percentages = [25, 50, 75, 100];
-
   return (
-    <section className="flex flex-1">
-      <section className="border-r basis-3/5 flex flex-col">
-        <div className="px-12 py-4 border-b">
-          <GoBackButton variant="ghost" size="sm" />
-        </div>
-        {step === 0 && (
-          <FormSelectForm
-            value={formVersion?.id ?? ""}
-            options={formVersions}
-            onSelect={(selected) => setFormVersion(selected)}
-            onSubmit={() => setStep(1)}
-          />
-        )}
-        {step === 1 && formVersion && (
-          <CredentialContentForm
-            formVersion={formVersion}
-            onSubmit={(credential: DbCredential) => {
-              setCredential(credential);
-              setStep(2);
-            }}
-            onReset={() => setStep(0)}
-          />
-        )}
-        {step === 2 && formVersion && credential && (
-          <CredentialValidityForm
-            credential={credential}
-            formVersion={formVersion}
-            onSubmit={([credential, challengue]: [
-              DbCredential,
-              DbCredentialRequest
-            ]) => {
-              setCredential(credential);
-              setChallengue(challengue);
-              setStep(3);
-            }}
-            onReset={() => setStep(1)}
-          />
-        )}
-      </section>
-      <section className="basis-2/5 p-6 flex flex-col">
+    <section className="flex flex-1 border-t">
+      <section className="basis-1/4 p-6 flex flex-col">
         <div className="space-y-6 flex-1">
+          <GoBackButton variant="ghost" size="sm" />
           <PageHeader
             title={t("createTitle")}
             subtitle={t("createDescription")}
@@ -124,8 +85,40 @@ export default function CredentialCreateForm({ formVersions }: Props) {
           <p className="text-muted-foreground text-sm">
             {tStepper("step")} {step + 1} {tStepper("of")} {items.length}
           </p>
-          <Progress value={percentages[step]} />
+          <Progress value={((step + 1) / items.length) * 100} />
         </div>
+      </section>
+      <section className="border-l basis-3/4 flex flex-col">
+        <FormSelectForm
+          className={step === 0 ? "flex" : "hidden"}
+          value={formVersion?.id ?? ""}
+          options={formVersions}
+          onSelect={(selected) => setFormVersion(selected)}
+          onSubmit={() => setStep(1)}
+        />
+        <CredentialContentForm
+          className={step === 1 ? "flex" : "hidden"}
+          formVersion={formVersion}
+          onSubmit={(credential: DbCredential) => {
+            setCredential(credential);
+            setStep(2);
+          }}
+          onReset={() => setStep(0)}
+        />
+        <CredentialValidityForm
+          className={step === 2 ? "flex" : "hidden"}
+          credential={credential}
+          formVersion={formVersion}
+          onSubmit={([credential, challengue]: [
+            DbCredential,
+            DbCredentialRequest
+          ]) => {
+            setCredential(credential);
+            setChallengue(challengue);
+            setStep(3);
+          }}
+          onReset={() => setStep(1)}
+        />
       </section>
     </section>
   );

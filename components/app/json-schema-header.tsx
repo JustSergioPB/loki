@@ -12,7 +12,7 @@ import { ReactNode } from "react";
 
 type Props = {
   jsonSchema: JsonSchemaType;
-  variant?: "title" | "subtitle";
+  variant?: "main" | "secondary";
 };
 
 export const ICON_MAP: Record<JsonType, ReactNode> = {
@@ -27,7 +27,7 @@ export const ICON_MAP: Record<JsonType, ReactNode> = {
 
 export default function JsonSchemaHeader({
   jsonSchema: { title, description },
-  variant = "title",
+  variant = "main",
 }: Props) {
   return (
     (title || description) && (
@@ -35,8 +35,10 @@ export default function JsonSchemaHeader({
         {title && (
           <p
             className={cn(
-              "font-semibold leading-none",
-              variant === "title" ? "text-xl" : "text-base"
+              "leading-none",
+              variant === "main"
+                ? "text-xl font-bold"
+                : "text-base font-semibold"
             )}
           >
             {title}

@@ -19,12 +19,15 @@ import JsonArrayForm from "./json-array-form";
 import JsonStringForm from "./json-string-form";
 import JsonNumberForm from "./json-number-form";
 import JsonBooleanForm from "./json-boolean-form";
+import { ReactNode } from "react";
 
 type Props = {
   path: string;
   required: boolean;
   jsonSchema: JsonSchemaType;
   className?: string;
+  children?: ReactNode;
+  headerVariant?: "main" | "secondary";
 };
 
 export default function JsonSchemaForm({
@@ -32,6 +35,8 @@ export default function JsonSchemaForm({
   jsonSchema,
   className,
   required,
+  children,
+  headerVariant,
 }: Props) {
   const { control } = useFormContext();
 
@@ -73,7 +78,11 @@ export default function JsonSchemaForm({
   }
 
   if (type === "object")
-    return <JsonObjectForm {...{ path, jsonSchema, className }} />;
+    return (
+      <JsonObjectForm
+        {...{ path, jsonSchema, className, children, headerVariant }}
+      />
+    );
   if (type === "array")
     return <JsonArrayForm {...{ path, jsonSchema, className }} />;
   if (type === "string")

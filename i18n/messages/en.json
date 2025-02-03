@@ -191,7 +191,7 @@
     "form": "Form",
     "titleProp": "Title",
     "titlePlaceholder": "Organization user",
-    "createTitle": "Create form",
+    "createTitle": "New form",
     "createDescription": "A form allows the issuers from your organization to emit credentials using a template",
     "editTitle": "Edit form",
     "editDescription": "Edit the form bellow to update it's contents",

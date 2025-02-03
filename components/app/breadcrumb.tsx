@@ -36,6 +36,14 @@ export default function AppBreadcrumb() {
             </BreadcrumbItem>
           </>
         )}
+        {parts[2] && (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{parts[2]}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </>
+        )}
       </BreadcrumbList>
     </Breadcrumb>
   );

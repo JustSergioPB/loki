@@ -4,8 +4,15 @@ import { getFormVersionById } from "@/lib/models/form.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-import { Calendar, Clock, Pencil, History, BadgeCheck } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Calendar,
+  Pencil,
+  History,
+  BadgeCheck,
+  AlarmClockOff,
+  AlarmClock,
+} from "lucide-react";
 import Link from "next/link";
 import PublishFormVersion from "../_components/form-publish-dialog";
 import ArchiveFormVersion from "../_components/form-archive-dialog";
@@ -15,13 +22,10 @@ import Field from "@/components/app/field";
 import { Badge } from "@/components/ui/badge";
 import StatusTag, { StatusTagVariant } from "@/components/app/status-tag";
 import { FormVersionStatus } from "@/lib/types/form-version";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import Tabs from "../_components/form-tabs";
+import JsonSchemaField from "../_components/json-schema-field";
+import { SearchParams } from "@/lib/generics/search-params";
+import FormTabs from "../_components/form-tabs";
+import PageHeader from "@/components/app/page-header";
 
 const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
   draft: "warning",
@@ -31,10 +35,13 @@ const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
 
 export default async function Form({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: SearchParams;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const user = await getUser();
   const t = await getTranslations("FormVersion");
   const tGeneric = await getTranslations("Generic");
@@ -53,79 +60,144 @@ export default async function Form({
     forbidden();
   }
 
-  const { title, description, types } = formVersion;
+  const {
+    title,
+    description,
+    types,
+    credentialSubject,
+    validFrom,
+    validUntil,
+  } = formVersion;
+  const activeTab = typeof tab !== "string" ? "content" : tab;
 
   return (
-    <section className="flex flex-1">
-      <section className="border-r basis-3/5 flex flex-col">
-        <div className="px-6 py-4 border-b flex items-center justify-between">
-          <GoBackButton variant="ghost" size="sm" href="/forms" />
-          <section className="flex items-center gap-2">
-            {formVersion.status === "draft" && (
-              <Link
-                href={`/forms/${formVersion.id}/edit`}
-                className={cn(buttonVariants({ size: "sm" }))}
-              >
-                <Pencil className="size-3" />
-                {tGeneric("edit")}
-              </Link>
-            )}
-            {formVersion.status === "draft" && (
-              <PublishFormVersion formVersion={formVersion} />
-            )}
-            {formVersion.status === "published" && (
-              <ArchiveFormVersion formVersion={formVersion} />
-            )}
-            <DeleteFormVersion formVersion={formVersion} />
-          </section>
-        </div>
-        <section className="flex p-6 gap-6">
-          <section className="space-y-4 basis-1/2">
-            <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
+    <section className="flex flex-col flex-1">
+      <header className="px-6 py-4 flex justify-between border-b">
+        <GoBackButton variant="ghost" href="/forms" />
+        <section className="flex items-center gap-2">
+          {formVersion.status === "draft" && (
+            <Link
+              href={`/forms/${formVersion.id}/edit`}
+              className={cn(buttonVariants({ size: "sm" }))}
+            >
+              <Pencil className="size-3" />
+              {tGeneric("edit")}
+            </Link>
+          )}
+          {formVersion.status === "draft" && (
+            <PublishFormVersion formVersion={formVersion} />
+          )}
+          {formVersion.status === "published" && (
+            <ArchiveFormVersion formVersion={formVersion} />
+          )}
+          <DeleteFormVersion formVersion={formVersion} />
+        </section>
+      </header>
+      <div className="flex flex-1">
+        <aside className="basis-1/4 p-6 space-y-6 border-r flex flex-col justify-between">
+          <FormTabs />
+          <section className="space-y-4">
+            <Field
+              icon={<BadgeCheck className="size-4" />}
+              label={t("status")}
+              className="basis-1/4"
+            >
               <StatusTag variant={FORM_STATUS_VARIANTS[formVersion.status]}>
                 {t(`statuses.${formVersion.status}`)}
               </StatusTag>
             </Field>
             <Field
-              icon={<Clock className="size-4" />}
-              label={tGeneric("createdAt")}
+              icon={<History className="size-4" />}
+              label={t("version")}
+              className="basis-1/4"
             >
-              <DateDisplay date={formVersion.createdAt} />
-            </Field>
-          </section>
-          <section className="space-y-4 basis-1/2">
-            <Field icon={<History className="size-4" />} label={t("version")}>
               <Badge>V{formVersion.version}</Badge>
             </Field>
             <Field
               icon={<Calendar className="size-4" />}
+              label={tGeneric("createdAt")}
+              className="basis-1/4"
+            >
+              <DateDisplay date={formVersion.createdAt} />
+            </Field>
+            <Field
+              icon={<Calendar className="size-4" />}
               label={tGeneric("updatedAt")}
+              className="basis-1/4"
             >
               <DateDisplay date={formVersion.updatedAt} />
             </Field>
           </section>
+        </aside>
+        <section
+          className={cn(
+            "basis-3/4 flex-col space-y-12 p-12 overflow-y-auto",
+            activeTab === "content" ? "flex" : "hidden"
+          )}
+        >
+          <section>
+            <h1 className="text-2xl font-semibold">{title}</h1>
+            <p className="text-muted-foreground mb-2">{description}</p>
+            <div className="flex items-center gap-1">
+              {types.map((type, idx) => (
+                <Badge variant="secondary" key={`${type}-${idx}`}>
+                  {type}
+                </Badge>
+              ))}
+            </div>
+          </section>
+          {Object.entries(credentialSubject.properties ?? {})
+            .filter(([key]) => key !== "id")
+            .map(([key, schema]) => (
+              <JsonSchemaField key={key} path={key} jsonSchema={schema} />
+            ))}
         </section>
-        <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
-          <Card className="p-12 rounded-md">
-            <CardHeader>
-              <CardTitle className="text-2xl">{title}</CardTitle>
-              <CardDescription>{description}</CardDescription>
-              <div className="flex items-center gap-1">
-                {types.map((type, idx) => (
-                  <Badge variant="secondary" key={`${type}-${idx}`}>
-                    {type}
-                  </Badge>
-                ))}
+        <section
+          className={cn(
+            "basis-3/4 flex-col space-y-12 p-12 overflow-y-auto",
+            activeTab === "validity" ? "flex" : "hidden"
+          )}
+        >
+          <PageHeader
+            title={t("validityTitle")}
+            subtitle={t("validitySubtitle")}
+          />
+          {validFrom || validUntil ? (
+            <div className="space-y-2">
+              <Field
+                icon={<AlarmClock className="size-4" />}
+                label={t("validFrom")}
+                className="basis-1/4"
+              >
+                <DateDisplay date={formVersion.validFrom} />
+              </Field>
+              <Field
+                icon={<AlarmClock className="size-4" />}
+                label={t("validUntil")}
+                className="basis-1/4"
+              >
+                <DateDisplay date={formVersion.validUntil} />
+              </Field>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+              <div className="flex flex-col items-center space-y-1">
+                <AlarmClockOff className="size-6" />
+                <p className="text-lg font-semibold">No validity configured</p>
               </div>
-            </CardHeader>
-          </Card>
-        </div>
-      </section>
-      <section className="basis-2/5 flex flex-col">
-        <section className="p-6 space-y-6">
-          <Tabs />
+              <Button disabled={formVersion.status !== "draft"}>
+                <Link
+                  href={`forms/${formVersion.id}/edit?tab=validity`}
+                  className="flex items-center gap-2"
+                >
+                  <Pencil />
+                  Configure
+                </Link>
+              </Button>
+            </div>
+          )}
         </section>
-      </section>
+      </div>
     </section>
   );
 }

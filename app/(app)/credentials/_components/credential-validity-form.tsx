@@ -22,8 +22,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 type Props = {
-  credential: DbCredential;
-  formVersion: DbFormVersion;
+  credential: DbCredential | null;
+  formVersion: DbFormVersion | null;
   className?: string;
   onSubmit: (credential: [DbCredential, DbCredentialRequest]) => void;
   onReset: () => void;
@@ -43,12 +43,15 @@ export default function CredentialValidityForm({
   const form = useForm<ValiditySchema>({
     resolver: zodResolver(validitySchema),
     defaultValues: {
-      validUntil: formVersion.validFrom ? formVersion.validFrom : undefined,
-      validFrom: formVersion.validUntil ? formVersion.validUntil : undefined,
+      validUntil: formVersion?.validFrom ? formVersion.validFrom : undefined,
+      validFrom: formVersion?.validUntil ? formVersion.validUntil : undefined,
     },
   });
 
   async function handleSubmit(values: ValiditySchema) {
+    if (!credential) {
+      return toast.error(t("missingCredential"));
+    }
     setIsLoading(true);
 
     const { success, error } = await updateCredentialValidityAction(
@@ -127,7 +130,7 @@ export default function CredentialValidityForm({
         </section>
         <section className="flex justify-end gap-2">
           <Button variant="outline" onClick={onReset}>
-            {tGeneric("reset")}
+            {tGeneric("back")}
           </Button>
           <LoadingButton loading={isLoading} type="submit">
             {tGeneric("submit")}

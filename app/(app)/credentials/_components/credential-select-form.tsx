@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 type Props = {
   value: string;
   options: DbFormVersion[];
+  className?: string;
   onSelect: (formVersion: DbFormVersion) => void;
   onSubmit: () => void;
 };
@@ -31,6 +32,7 @@ type Props = {
 export default function CredentialSelectForm({
   value,
   options,
+  className,
   onSelect,
   onSubmit,
 }: Props) {
@@ -40,7 +42,7 @@ export default function CredentialSelectForm({
   const tGeneric = useTranslations("Generic");
 
   return (
-    <section className="flex-1 flex flex-col">
+    <section className={cn("flex-1 flex-col", className)}>
       <div className="flex-1 border-b p-12">
         <Label>{tFormVersion("form")}</Label>
         <Popover open={open} onOpenChange={setOpen}>

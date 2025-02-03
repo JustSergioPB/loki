@@ -37,7 +37,7 @@ export default function JsonArrayForm({ path, jsonSchema, className }: Props) {
       control={control}
       name={path}
       render={() => (
-        <FormItem>
+        <FormItem className="space-y-6">
           <FormLabel className="flex items-center justify-between">
             <JsonSchemaHeader jsonSchema={jsonSchema} />
             <Button
@@ -52,10 +52,16 @@ export default function JsonArrayForm({ path, jsonSchema, className }: Props) {
             </Button>
           </FormLabel>
           <FormControl>
-            <section className={cn("space-y-4", className)}>
+            <ul className={cn("space-y-6", className)}>
               {fields.map((_: unknown, index: number) => (
-                <div key={index} className="w-full">
-                  <div className="flex items-center justify-end">
+                <li key={index} className="w-full">
+                  <JsonSchemaForm
+                    path={`${path}.${index}`}
+                    jsonSchema={jsonSchema.items!}
+                    className="flex-1"
+                    required={true}
+                    headerVariant="secondary"
+                  >
                     <Button
                       type="button"
                       variant="outline"
@@ -64,16 +70,10 @@ export default function JsonArrayForm({ path, jsonSchema, className }: Props) {
                     >
                       <Trash className="size-4" />
                     </Button>
-                  </div>
-                  <JsonSchemaForm
-                    path={`${path}.${index}`}
-                    jsonSchema={jsonSchema.items!}
-                    className="flex-1"
-                    required={true}
-                  />
-                </div>
+                  </JsonSchemaForm>
+                </li>
               ))}
-            </section>
+            </ul>
           </FormControl>
           <FormMessage />
         </FormItem>

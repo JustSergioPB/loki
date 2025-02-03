@@ -24,7 +24,7 @@ import { createCredentialAction } from "@/lib/actions/credential.actions";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  formVersion: DbFormVersion;
+  formVersion: DbFormVersion | null;
   className?: string;
   disabled?: boolean;
   onSubmit: (credential: DbCredential) => void;
@@ -39,16 +39,24 @@ export default function CredentialContentForm({
   onReset,
 }: Props) {
   const tGeneric = useTranslations("Generic");
+  const t = useTranslations("Credential");
   const [isLoading, setIsLoading] = useState(false);
-
-  const { credentialSubject, title, description, types } = formVersion;
-
   const form = useForm<object>({
-    resolver: zodResolver(credentialSubjectToZod(credentialSubject)),
-    defaultValues: getDefaultCredentialSubject(credentialSubject),
+    resolver: zodResolver(
+      credentialSubjectToZod(
+        formVersion?.credentialSubject ?? { title: "", type: "object" }
+      )
+    ),
+    defaultValues: getDefaultCredentialSubject(
+      formVersion?.credentialSubject ?? { title: "", type: "object" }
+    ),
   });
 
   async function handleSubmit(values: object) {
+    if (!formVersion) {
+      return toast.error(t("missingForm"));
+    }
+
     setIsLoading(true);
 
     const { success, error } = await createCredentialAction(
@@ -70,14 +78,14 @@ export default function CredentialContentForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className={cn("flex-1 flex flex-col", className)}
+        className={cn("flex-1 flex-col", className)}
       >
         <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
           <section className="space-y-2">
-            <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-muted-foreground">{description}</p>
+            <h1 className="text-2xl font-bold">{formVersion?.title}</h1>
+            <p className="text-muted-foreground">{formVersion?.description}</p>
             <div className="flex items-center gap-1">
-              {types.map((type, idx) => (
+              {formVersion?.types.map((type, idx) => (
                 <Badge variant="secondary" key={`${type}-${idx}`}>
                   {type}
                 </Badge>
@@ -89,8 +97,10 @@ export default function CredentialContentForm({
             render={() => (
               <FormItem>
                 <FormControl>
-                  <div className="space-y-6">
-                    {Object.entries(credentialSubject.properties ?? {})
+                  <div className="space-y-12">
+                    {Object.entries(
+                      formVersion?.credentialSubject.properties ?? {}
+                    )
                       .filter(([key]) => key !== "id")
                       .map(([key, schema]) => (
                         <JsonSchemaForm

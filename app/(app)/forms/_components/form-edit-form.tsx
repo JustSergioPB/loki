@@ -21,29 +21,12 @@ export default function FormEditForm({ formVersion }: Props) {
   const disabled = formVersion.status !== "draft";
 
   return (
-    <section className="flex flex-1">
-      <section className="border-r basis-3/5 flex flex-col">
-        <div className="px-6 py-4 border-b">
+    <section className="flex flex-1 border-t">
+      <section className="basis-1/4 p-6 flex flex-col justify-between">
+        <div className="space-y-6">
           <GoBackButton variant="ghost" size="sm" href="/forms" />
+          <FormTabs />
         </div>
-        <div className="p-6">
-          {activeTab === "content" && (
-            <FormContentForm
-              formVersion={formVersion}
-              disabled={disabled}
-              onSubmit={() => {}}
-            />
-          )}
-          {activeTab === "validity" && (
-            <FormValidityForm
-              formVersion={formVersion}
-              disabled={disabled}
-              onSubmit={() => {}}
-            />
-          )}
-        </div>
-      </section>
-      <section className="basis-2/5 p-6">
         {formVersion.types.includes("Bridge") && (
           <InfoPanel
             variant="danger"
@@ -52,7 +35,21 @@ export default function FormEditForm({ formVersion }: Props) {
             message={t("dontEditBridge")}
           />
         )}
-        <FormTabs />
+      </section>
+      <section className="border-l basis-3/4 flex flex-col">
+        <FormContentForm
+          className={activeTab === "content" ? "flex" : "hidden"}
+          formVersion={formVersion}
+          disabled={disabled}
+          onSubmit={() => {}}
+        />
+        <FormValidityForm
+          className={activeTab === "validity" ? "flex" : "hidden"}
+          formVersion={formVersion}
+          disabled={disabled}
+          onSubmit={() => {}}
+          onReset={() => {}}
+        />
       </section>
     </section>
   );
