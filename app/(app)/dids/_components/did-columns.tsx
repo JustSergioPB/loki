@@ -2,10 +2,10 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import DIDDialog from "./dialog";
+import DIDDialog from "./did-dialog";
 import { DIDWithOwner } from "@/db/schema/dids";
 
-export const orgColumns: ColumnDef<DIDWithOwner>[] = [
+export const didColumns: ColumnDef<DIDWithOwner>[] = [
   {
     accessorKey: "did",
     header: function CellHeader() {

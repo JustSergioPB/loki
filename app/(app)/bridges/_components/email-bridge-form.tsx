@@ -1,12 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import { DbFormVersion } from "@/db/schema/form-versions";
 import {
   createEmailBridgeAction,
@@ -100,48 +95,37 @@ export default function EmailBridgeForm({ formVersion, onSubmit }: Props) {
   }
 
   return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{t("bridges.email.editTitle")}</DialogTitle>
-        <DialogDescription>
-          {t("bridges.email.editDescription")}
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...form}>
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-6"
+        id={formVersion ? `form-version-${formVersion.id}` : "new"}
+      >
         <InfoPanel
           variant="warning"
           type="vertical"
           label={tGeneric("warning")}
           message={t("bridges.email.emailBridgeWillBePublished")}
         />
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6"
-          id={formVersion ? `form-version-${formVersion.id}` : "new"}
-        >
-          <FormField
-            control={form.control}
-            name="domains"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("bridges.email.domains")}</FormLabel>
-                <FormControl>
-                  <TagsInput
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <DialogFooter>
-            <LoadingButton loading={isLoading} type="submit">
-              {tGeneric("submit")}
-            </LoadingButton>
-          </DialogFooter>
-        </form>
-      </Form>
-    </>
+        <FormField
+          control={form.control}
+          name="domains"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("bridges.email.domains")}</FormLabel>
+              <FormControl>
+                <TagsInput value={field.value} onValueChange={field.onChange} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <DialogFooter>
+          <LoadingButton loading={isLoading} type="submit">
+            {tGeneric("submit")}
+          </LoadingButton>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 }

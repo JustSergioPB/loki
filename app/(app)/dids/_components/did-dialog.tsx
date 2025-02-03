@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MoreHorizontal, Trash } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,32 +15,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
-import DIDDetails from "./details";
+import DIDDetails from "./did-details";
 import { DIDWithOwner } from "@/db/schema/dids";
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { useState } from "react";
 import { deleteDIDAction } from "@/lib/actions/did.actions";
 import { toast } from "sonner";
 
+type Action = "see" | "delete";
+
+const ACTION_MAP: Record<Action, { title: string; description: string }> = {
+  see: {
+    title: "seeTitle",
+    description: "seeDescription",
+  },
+  delete: {
+    title: "deleteTitle",
+    description: "deleteDescription",
+  },
+};
+
 export default function DIDDialog({ did }: { did: DIDWithOwner }) {
-  const t = useTranslations("Did");
+  const t = useTranslations("Org");
   const tGeneric = useTranslations("Generic");
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const action = searchParams.get("action");
-  const id = searchParams.get("id");
+
   const [isLoading, setIsLoading] = useState(false);
-
-  const deleteParams = new URLSearchParams(searchParams);
-  deleteParams.set("action", "delete");
-
-  function onActionTrigger(action: "see" | "delete") {
-    const params = new URLSearchParams(searchParams);
-    params.set("id", did.did.toString());
-    params.set("action", action);
-    router.push(`${pathname}?${params.toString()}`);
-  }
+  const [action, setAction] = useState<Action>("see");
+  const [open, setOpen] = useState(false);
 
   async function onDelete() {
     setIsLoading(true);
@@ -44,7 +50,7 @@ export default function DIDDialog({ did }: { did: DIDWithOwner }) {
 
     if (success) {
       toast.success(success.message);
-      onClose();
+      setOpen(false);
     } else {
       toast.error(error.message);
     }
@@ -52,15 +58,8 @@ export default function DIDDialog({ did }: { did: DIDWithOwner }) {
     setIsLoading(false);
   }
 
-  function onClose() {
-    const params = new URLSearchParams(searchParams);
-    params.delete("action");
-    params.delete("id");
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
   return (
-    <Dialog open={!!action && id === did.did} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -70,13 +69,21 @@ export default function DIDDialog({ did }: { did: DIDWithOwner }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => onActionTrigger("see")}>
+          <DropdownMenuItem
+            onClick={() => {
+              setAction("see");
+              setOpen(true);
+            }}
+          >
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-500"
-            onClick={() => onActionTrigger("delete")}
+            onClick={() => {
+              setAction("delete");
+              setOpen(true);
+            }}
           >
             <Trash />
             {tGeneric("delete")}
@@ -84,24 +91,25 @@ export default function DIDDialog({ did }: { did: DIDWithOwner }) {
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent className="max-h-[95vh] overflow-y-auto">
-        {action === "see" && (
-          <DIDDetails
-            did={did}
-            deleteHref={`${pathname}?${deleteParams.toString()}`}
-          />
-        )}
-        {action === "delete" && (
-          <ConfirmDialog
-            keyword={did.did}
-            title={t("deleteTitle")}
-            description={t("deleteDescription")}
-            label={t("deleteLabel")}
-            onSubmit={onDelete}
-            loading={isLoading}
-            id={did.did}
-            variant="danger"
-          />
-        )}
+        <DialogHeader>
+          <DialogTitle>{t(ACTION_MAP[action].title)}</DialogTitle>
+          <DialogDescription>
+            {t(ACTION_MAP[action].description)}
+          </DialogDescription>
+        </DialogHeader>
+        <DIDDetails
+          did={did}
+          className={action === "see" ? "block" : "hidden"}
+        />
+        <ConfirmDialog
+          keyword={did.did}
+          className={action === "delete" ? "block" : "hidden"}
+          label={t("deleteLabel")}
+          onSubmit={onDelete}
+          loading={isLoading}
+          id={did.did}
+          variant="danger"
+        />
       </DialogContent>
     </Dialog>
   );
