@@ -1,6 +1,5 @@
 export const credentialRequestErrorMessages = [
   "notFound",
-  "invalidChallenge",
   "isBurnt",
   "isExpired",
 ] as const;

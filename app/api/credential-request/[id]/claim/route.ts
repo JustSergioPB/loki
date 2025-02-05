@@ -2,12 +2,11 @@ import { CredentialRequestError } from "@/lib/errors/credential-request.error";
 import { CredentialError } from "@/lib/errors/credential.error";
 import { KeyError } from "@/lib/errors/key.error";
 import { SignatureError } from "@/lib/errors/signature.error";
-import { presentCredentialRequest } from "@/lib/models/credential-request.model";
 import { credentialChallengeSchema } from "@/lib/schemas/credential-challenge.schema";
-import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { ApiErrorResult } from "@/lib/generics/api-error";
+import { claimCredentialRequest } from "@/lib/models/credential-request.model";
 
 export async function PATCH(
   request: NextRequest,
@@ -18,20 +17,19 @@ export async function PATCH(
 
   try {
     const parsed = await credentialChallengeSchema.parseAsync(body);
-    const [, credential] = await presentCredentialRequest(id, parsed);
-    revalidatePath(`/credentials/${credential.id}/fill`);
+    const credential = await claimCredentialRequest(id, parsed);
 
-    return NextResponse.json({ valid: true }, { status: 200 });
+    return NextResponse.json({ data: credential }, { status: 200 });
   } catch (error) {
     console.error(error);
-    let response: ApiErrorResult<boolean> = {
+    let response: ApiErrorResult<null> = {
       code: "somethingWentWrong",
       message: "somethingWentWrong",
       status: 500,
     };
 
     if (error instanceof SignatureError) {
-      response = { data: false, status: 200 };
+      response = { data: null, status: 200 };
     }
 
     if (

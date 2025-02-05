@@ -17,7 +17,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         : undefined,
     });
 
-    return NextResponse.json(querResult, { status: 200 });
+    return NextResponse.json({ data: querResult }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

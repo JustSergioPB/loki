@@ -13,7 +13,7 @@ import { CredentialChallengeSchema } from "../schemas/credential-challenge.schem
 import { isBurned, isExpired } from "../helpers/credential-challenge.helper";
 import { validateSignature } from "../helpers/key.helper";
 import { presentationTable } from "@/db/schema/presentations";
-import { isUnsigned } from "../helpers/credential.helper";
+import { isSigned, isUnsigned } from "../helpers/credential.helper";
 
 export async function createCredentialRequest(
   credentialId: string,
@@ -141,6 +141,7 @@ export async function presentCredentialRequest(
       holder,
       signature.label,
       signature.value,
+      //TODO: Patch this
       credentialRequests.code!.toString()
     )
   );
@@ -176,4 +177,56 @@ export async function presentCredentialRequest(
 
     return [updatedCredentialRequest, updatedCredential];
   });
+}
+
+export async function claimCredentialRequest(
+  id: string,
+  challenge: CredentialChallengeSchema
+): Promise<DbCredential> {
+  const query = await db
+    .select()
+    .from(credentialRequestTable)
+    .where(eq(credentialRequestTable.id, id))
+    .innerJoin(
+      credentialTable,
+      eq(credentialRequestTable.credentialId, credentialTable.id)
+    );
+
+  if (!query[0]) {
+    throw new CredentialRequestError("notFound");
+  }
+
+  const { credentialRequests, credentials } = query[0];
+
+  if (isBurned(credentialRequests)) {
+    throw new CredentialRequestError("isBurnt");
+  }
+
+  if (isExpired(credentialRequests)) {
+    throw new CredentialRequestError("isExpired");
+  }
+
+  if (!isSigned(credentials)) {
+    throw new CredentialError("notSigned");
+  }
+
+  const { holder, signature } = challenge;
+
+  validateSignature(
+    holder,
+    signature.label,
+    signature.value,
+    //TODO: Patch this
+    credentialRequests.code!.toString()
+  );
+
+  await db
+    .update(credentialRequestTable)
+    .set({
+      code: null,
+    })
+    .where(eq(credentialRequestTable.id, id))
+    .returning();
+
+  return credentials;
 }

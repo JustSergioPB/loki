@@ -27,5 +27,7 @@ export async function fetchFormVersionsApi(
     throw new FormVersionError("searchFailed");
   }
 
-  return response.json();
+  const value: { data: QueryResult<DbFormVersion> } = await response.json();
+
+  return value.data;
 }
