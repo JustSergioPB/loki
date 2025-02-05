@@ -14,7 +14,7 @@ import {
   createFormVersion,
   publishFormVersion,
   updateFormVersionContent,
-} from "./form.model";
+} from "./form-version.model";
 import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
 import { FormSchema } from "../schemas/form.schema";
 import { FormVersionError } from "../errors/form-version.error";

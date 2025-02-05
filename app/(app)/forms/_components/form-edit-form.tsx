@@ -8,6 +8,7 @@ import { DbFormVersion } from "@/db/schema/form-versions";
 import { useSearchParams } from "next/navigation";
 import FormContentForm from "./form-content-form";
 import FormValidityForm from "./form-validity-form";
+import { getFormVersionStatus } from "@/lib/helpers/form-version.helper";
 
 type Props = {
   formVersion: DbFormVersion;
@@ -18,7 +19,7 @@ export default function FormEditForm({ formVersion }: Props) {
   const tGeneric = useTranslations("Generic");
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") ?? "content";
-  const disabled = formVersion.status !== "draft";
+  const disabled = getFormVersionStatus(formVersion) !== "draft";
 
   return (
     <section className="flex flex-1 border-t">

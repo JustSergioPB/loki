@@ -7,6 +7,6 @@ export const CREDENTIAL_STATUS_VARIANTS: Record<
 > = {
   empty: "inactive",
   pending: "warning",
-  signed: "secondary",
-  claimed: "success",
+  signed: "success",
+  identified: "secondary",
 };

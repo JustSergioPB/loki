@@ -10,6 +10,7 @@ import * as dids from "./schema/dids";
 import * as privateKeys from "./schema/private-keys";
 import * as credentialRequest from "./schema/credential-requests";
 import * as credential from "./schema/credentials";
+import * as presentation from "./schema/presentations";
 
 const connectionString = process.env.DATABASE_URL!;
 export const client = postgres(connectionString, { prepare: false });
@@ -26,5 +27,6 @@ export const db = drizzle({
     ...privateKeys,
     ...credentialRequest,
     ...credential,
+    ...presentation,
   },
 });

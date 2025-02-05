@@ -32,6 +32,7 @@ import {
 } from "@/lib/actions/form-version.actions";
 import { toast } from "sonner";
 import { DbFormVersion } from "@/db/schema/form-versions";
+import { getFormVersionStatus } from "@/lib/helpers/form-version.helper";
 
 type Action = "delete" | "publish" | "archive";
 
@@ -44,6 +45,7 @@ export default function FormDialog({
   const tGeneric = useTranslations("Generic");
 
   const router = useRouter();
+  const status = getFormVersionStatus(formVersion);
   const [isLoading, setIsLoading] = useState(false);
   const [action, setAction] = useState<Action>("publish");
   const [open, setOpen] = useState(false);
@@ -104,7 +106,7 @@ export default function FormDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          {formVersion.status === "draft" && (
+          {status === "draft" && (
             <DropdownMenuItem
               onClick={() => router.push(`/forms/${formVersion.id}/edit`)}
             >
@@ -118,7 +120,7 @@ export default function FormDialog({
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
-          {formVersion.status === "draft" && (
+          {status === "draft" && (
             <DropdownMenuItem
               onClick={() => {
                 setAction("publish");
@@ -129,7 +131,7 @@ export default function FormDialog({
               {t("publish")}
             </DropdownMenuItem>
           )}
-          {formVersion.status === "published" && (
+          {status === "published" && (
             <DropdownMenuItem
               onClick={() => {
                 setAction("archive");

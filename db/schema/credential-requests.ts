@@ -2,6 +2,7 @@ import { integer, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { credentialTable } from "./credentials";
+import { presentationTable } from "./presentations";
 
 export const credentialRequestTable = pgTable("credentialRequests", {
   id: uuid().primaryKey().notNull().defaultRandom(),
@@ -25,7 +26,7 @@ export const credentialRequestTable = pgTable("credentialRequests", {
 
 export const credentialRequestTableRelations = relations(
   credentialRequestTable,
-  ({ one }) => ({
+  ({ one, many }) => ({
     org: one(orgTable, {
       fields: [credentialRequestTable.orgId],
       references: [orgTable.id],
@@ -34,6 +35,7 @@ export const credentialRequestTableRelations = relations(
       fields: [credentialRequestTable.credentialId],
       references: [credentialTable.id],
     }),
+    presentations: many(presentationTable),
   })
 );
 

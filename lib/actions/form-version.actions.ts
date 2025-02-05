@@ -11,7 +11,7 @@ import {
   publishFormVersion,
   updateFormVersionContent,
   updateFormVersionValidity,
-} from "../models/form.model";
+} from "../models/form-version.model";
 import { UserRole } from "../types/user";
 import { ValiditySchema } from "../schemas/validity.schema";
 import { DbFormVersion } from "@/db/schema/form-versions";

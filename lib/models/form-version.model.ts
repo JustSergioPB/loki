@@ -6,13 +6,14 @@ import {
 } from "../types/credential-schema";
 import { AuthUser } from "@/db/schema/users";
 import { db } from "@/db";
-import { eq, asc, and, count } from "drizzle-orm";
+import { eq, asc, and, count, isNull, not } from "drizzle-orm";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { FormVersionStatus } from "../types/form-version";
 import { FormVersionError } from "../errors/form-version.error";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
 import { ValiditySchema } from "../schemas/validity.schema";
+import { getFormVersionStatus } from "../helpers/form-version.helper";
 
 export async function createFormVersion(
   authUser: AuthUser,
@@ -54,7 +55,7 @@ export async function updateFormVersionContent(
     where: eq(formVersionTable.id, id),
   });
 
-  if (latestVersion && latestVersion.status !== "draft") {
+  if (latestVersion && getFormVersionStatus(latestVersion) !== "draft") {
     return await createFormVersion(authUser, data, latestVersion.version + 1);
   }
 
@@ -123,20 +124,24 @@ export async function getFormVersionById(
 }
 
 export async function searchFormVersions(
-  query: Query<DbFormVersion>
+  query: Query<DbFormVersion & { status: FormVersionStatus }>
 ): Promise<QueryResult<DbFormVersion>> {
   const { title, status, orgId } = query;
+
+  const conditions = and(
+    title ? eq(formVersionTable.title, title) : undefined,
+    orgId ? eq(formVersionTable.orgId, orgId) : undefined,
+    status === "draft" ? isNull(formVersionTable.credentialSchema) : undefined,
+    status === "published"
+      ? not(isNull(formVersionTable.credentialSchema))
+      : undefined,
+    status === "archived" ? eq(formVersionTable.isArchived, true) : undefined
+  );
 
   const formQuery = await db
     .select()
     .from(formVersionTable)
-    .where(
-      and(
-        title ? eq(formVersionTable.title, title) : undefined,
-        orgId ? eq(formVersionTable.orgId, orgId) : undefined,
-        status ? eq(formVersionTable.status, status) : undefined
-      )
-    )
+    .where(conditions)
     .limit(query.pageSize)
     .offset(query.page * query.pageSize)
     .orderBy(asc(formVersionTable.createdAt));
@@ -144,13 +149,7 @@ export async function searchFormVersions(
   const [{ count: countResult }] = await db
     .select({ count: count() })
     .from(formVersionTable)
-    .where(
-      and(
-        title ? eq(formVersionTable.title, title) : undefined,
-        orgId ? eq(formVersionTable.orgId, orgId) : undefined,
-        status ? eq(formVersionTable.status, status) : undefined
-      )
-    );
+    .where(conditions);
 
   return {
     items: formQuery,
@@ -158,18 +157,42 @@ export async function searchFormVersions(
   };
 }
 
-export async function publishFormVersion(
-  authUser: AuthUser,
-  id: string
-): Promise<DbFormVersion> {
-  return await changeFormStatus(authUser, id, "published");
-}
-
 export async function archiveFormVersion(
   authUser: AuthUser,
   id: string
 ): Promise<DbFormVersion> {
-  return await changeFormStatus(authUser, id, "archived");
+  const latestVersionQuery = await db.query.formVersionTable.findFirst({
+    where: eq(formVersionTable.id, id),
+  });
+
+  if (!latestVersionQuery) {
+    throw new FormVersionError("latestVersionNotFound");
+  }
+
+  if (getFormVersionStatus(latestVersionQuery) !== "published") {
+    throw new FormVersionError("cantBeArchived");
+  }
+
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(formVersionTable)
+      .set({
+        isArchived: true,
+      })
+      .where(eq(formVersionTable.id, latestVersionQuery.id))
+      .returning();
+
+    await tx.insert(auditLogTable).values({
+      entityId: id,
+      entityType: "formVersion",
+      action: "update",
+      userId: authUser.id,
+      orgId: authUser.orgId,
+      value: updated,
+    });
+
+    return updated;
+  });
 }
 
 export async function deleteFormVersion(
@@ -193,9 +216,47 @@ export async function deleteFormVersion(
   });
 }
 
-export function buildCredentialSchema(
-  formVersion: DbFormVersion
-): CredentialSchema {
+export async function publishFormVersion(
+  authUser: AuthUser,
+  id: string
+): Promise<DbFormVersion> {
+  const latestVersionQuery = await db.query.formVersionTable.findFirst({
+    where: eq(formVersionTable.id, id),
+  });
+
+  if (!latestVersionQuery) {
+    throw new FormVersionError("latestVersionNotFound");
+  }
+
+  if (getFormVersionStatus(latestVersionQuery) !== "draft") {
+    throw new FormVersionError("cantBePublished");
+  }
+
+  const credentialSchema = buildCredentialSchema(latestVersionQuery);
+
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(formVersionTable)
+      .set({
+        credentialSchema,
+      })
+      .where(eq(formVersionTable.id, latestVersionQuery.id))
+      .returning();
+
+    await tx.insert(auditLogTable).values({
+      entityId: id,
+      entityType: "formVersion",
+      action: "update",
+      userId: authUser.id,
+      orgId: authUser.orgId,
+      value: updated,
+    });
+
+    return updated;
+  });
+}
+
+function buildCredentialSchema(formVersion: DbFormVersion): CredentialSchema {
   const required = [
     "@context",
     "title",
@@ -335,43 +396,4 @@ export function buildCredentialSchema(
     required,
     type: "object",
   };
-}
-
-async function changeFormStatus(
-  authUser: AuthUser,
-  id: string,
-  status: FormVersionStatus
-): Promise<DbFormVersion> {
-  const latestVersionQuery = await db.query.formVersionTable.findFirst({
-    where: eq(formVersionTable.id, id),
-  });
-
-  if (!latestVersionQuery) {
-    throw new FormVersionError("latestVersionNotFound");
-  }
-
-  if (latestVersionQuery.status !== "draft" && status === "published") {
-    throw new FormVersionError("cantBePublished");
-  }
-
-  return await db.transaction(async (tx) => {
-    const [updated] = await tx
-      .update(formVersionTable)
-      .set({
-        status,
-      })
-      .where(eq(formVersionTable.id, latestVersionQuery.id))
-      .returning();
-
-    await tx.insert(auditLogTable).values({
-      entityId: id,
-      entityType: "formVersion",
-      action: "update",
-      userId: authUser.id,
-      orgId: authUser.orgId,
-      value: updated,
-    });
-
-    return updated;
-  });
 }

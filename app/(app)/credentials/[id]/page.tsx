@@ -10,15 +10,15 @@ import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { notFound, redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
-import DeleteCredential from "../_components/credential-delete-dialog";
+import CredentialActionDialog from "../_components/credential-action-dialog";
 import { getCredentialByIdWithChallenge } from "@/lib/models/credential.model";
 import DateDisplay from "@/components/app/date";
 import { GoBackButton } from "@/components/app/go-back-button";
 import RenewChallengeButton from "../_components/challenge-renew-button";
 import * as QrCode from "qrcode";
 import Image from "next/image";
-import { getCredentialChallengeStatus } from "@/lib/helpers/credential-challenge";
-import getCredentialStatus from "@/lib/helpers/credential";
+import { getCredentialChallengeStatus } from "@/lib/helpers/credential-challenge.helper";
+import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import StatusTag from "@/components/app/status-tag";
 import { CHALLENGE_STATUS_VARIANTS } from "@/lib/constants/credential-challenge.const";
@@ -77,7 +77,7 @@ export default async function Credential({
       <section className="basis-2/5 flex flex-col">
         <section className="border-b p-6 space-y-6">
           <PageHeader title={t("seeTitle")} />
-          <DeleteCredential credential={credential} />
+          <CredentialActionDialog credential={credential} action="delete" />
           <section className="space-y-4">
             <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
               <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[credentialStatus]}>

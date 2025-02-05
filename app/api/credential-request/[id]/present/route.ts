@@ -1,6 +1,7 @@
-import { validateCredentialRequest } from "@/lib/models/credential-request.model";
-import { signCredential } from "@/lib/models/credential.model";
+import { CredentialRequestError } from "@/lib/errors/credential-request.error";
+import { presentCredentialRequest } from "@/lib/models/credential-request.model";
 import { credentialChallengeSchema } from "@/lib/schemas/credential-challenge.schema";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
@@ -13,15 +14,15 @@ export async function PATCH(
 
   try {
     const parsed = await credentialChallengeSchema.parseAsync(body);
-    const credentialRequest = await validateCredentialRequest(id, parsed);
-    const [verifiableCredential] = await signCredential(
-      credentialRequest.credentialId,
-      parsed.holder
-    );
+    const [, credential] = await presentCredentialRequest(id, parsed);
+    revalidatePath(`/credentials/${credential.id}/fill`);
 
-    return NextResponse.json(verifiableCredential, { status: 200 });
+    return NextResponse.json({}, { status: 200 });
   } catch (error) {
     console.error(error);
+    if (error instanceof CredentialRequestError) {
+      return NextResponse.json({ valid: false }, { status: 200 });
+    }
     if (error instanceof ZodError) {
       return NextResponse.json(
         {

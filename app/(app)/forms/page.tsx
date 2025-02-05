@@ -10,7 +10,7 @@ import Page from "@/components/app/page";
 import Link from "next/link";
 import { CirclePlus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { searchFormVersions } from "@/lib/models/form.model";
+import { searchFormVersions } from "@/lib/models/form-version.model";
 
 export default async function Forms({
   searchParams,

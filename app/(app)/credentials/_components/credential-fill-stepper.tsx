@@ -23,7 +23,7 @@ import CredentialContentForm from "./credential-content-form";
 import Field from "@/components/app/field";
 import StatusTag from "@/components/app/status-tag";
 import DateDisplay from "@/components/app/date";
-import getCredentialStatus from "@/lib/helpers/credential";
+import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 
 type Props = {

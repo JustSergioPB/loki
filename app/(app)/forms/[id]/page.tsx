@@ -1,6 +1,6 @@
 import { getUser } from "@/lib/helpers/dal";
 import { forbidden, notFound, redirect } from "next/navigation";
-import { getFormVersionById } from "@/lib/models/form.model";
+import { getFormVersionById } from "@/lib/models/form-version.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ import { SearchParams } from "@/lib/generics/search-params";
 import FormTabs from "../_components/form-tabs";
 import PageHeader from "@/components/app/page-header";
 import FormActionDialog from "../_components/form-action-dialog";
+import { getFormVersionStatus } from "@/lib/helpers/form-version.helper";
 
 const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
   draft: "warning",
@@ -66,14 +67,16 @@ export default async function Form({
     validFrom,
     validUntil,
   } = formVersion;
+
   const activeTab = typeof tab !== "string" ? "content" : tab;
+  const status = getFormVersionStatus(formVersion);
 
   return (
     <section className="flex flex-col flex-1">
       <header className="px-6 py-4 flex justify-between border-b">
         <GoBackButton variant="ghost" href="/forms" />
         <section className="flex items-center gap-2">
-          {formVersion.status === "draft" && (
+          {status === "draft" && (
             <Link
               href={`/forms/${formVersion.id}/edit`}
               className={cn(buttonVariants({ size: "sm" }))}
@@ -82,10 +85,10 @@ export default async function Form({
               {tGeneric("edit")}
             </Link>
           )}
-          {formVersion.status === "draft" && (
+          {status === "draft" && (
             <FormActionDialog formVersion={formVersion} action="publish" />
           )}
-          {formVersion.status === "published" && (
+          {status === "published" && (
             <FormActionDialog formVersion={formVersion} action="archive" />
           )}
           <FormActionDialog formVersion={formVersion} action="delete" />
@@ -100,8 +103,8 @@ export default async function Form({
               label={t("status")}
               className="basis-1/4"
             >
-              <StatusTag variant={FORM_STATUS_VARIANTS[formVersion.status]}>
-                {t(`statuses.${formVersion.status}`)}
+              <StatusTag variant={FORM_STATUS_VARIANTS[status]}>
+                {t(`statuses.${status}`)}
               </StatusTag>
             </Field>
             <Field
@@ -183,7 +186,7 @@ export default async function Form({
                 <AlarmClockOff className="size-6" />
                 <p className="text-lg font-semibold">No validity configured</p>
               </div>
-              <Button disabled={formVersion.status !== "draft"}>
+              <Button disabled={status !== "draft"}>
                 <Link
                   href={`forms/${formVersion.id}/edit?tab=validity`}
                   className="flex items-center gap-2"

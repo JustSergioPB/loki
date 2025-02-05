@@ -12,24 +12,21 @@ import {
 } from "@/components/ui/dialog";
 import { DbCredential } from "@/db/schema/credentials";
 import { deleteCredentialAction } from "@/lib/actions/credential.actions";
-import { PlainCredential } from "@/lib/types/credential";
 import { Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function CredentialDeleteDialog({
-  credential,
-}: {
-  credential: DbCredential | PlainCredential;
-}) {
+type Props = {
+  credential: DbCredential;
+  action: "delete";
+};
+
+export default function CredentialActionDialog({ credential, action }: Props) {
   const t = useTranslations("Credential");
   const tGeneric = useTranslations("Generic");
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const action = searchParams.get("action");
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function onArchive() {
     setIsLoading(true);
@@ -38,7 +35,7 @@ export default function CredentialDeleteDialog({
 
     if (success) {
       toast.success(success.message);
-      onClose();
+      setOpen(false);
     } else {
       toast.error(error.message);
     }
@@ -46,19 +43,8 @@ export default function CredentialDeleteDialog({
     setIsLoading(false);
   }
 
-  async function onClose() {
-    router.push(`/credentials/${credential.id}?action=see`);
-  }
-
-  async function onOpen() {
-    router.push(`/credentials/${credential.id}?action=delete`);
-  }
-
   return (
-    <Dialog
-      open={action === "delete"}
-      onOpenChange={(open) => (!open ? onClose() : onOpen())}
-    >
+    <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-red-500">
           <Trash className="size-3" />
@@ -67,12 +53,12 @@ export default function CredentialDeleteDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("deleteTitle")}</DialogTitle>
-          <DialogDescription>{t("deleteDescription")}</DialogDescription>
+          <DialogTitle>{t(`${action}Title`)}</DialogTitle>
+          <DialogDescription>{t(`${action}Description`)}</DialogDescription>
         </DialogHeader>
         <ConfirmDialog
           keyword={credential.id}
-          label={t("deleteLabel")}
+          label={t(`${action}Label`)}
           onSubmit={onArchive}
           loading={isLoading}
           id={credential.id}

@@ -4,10 +4,17 @@ import { relations } from "drizzle-orm";
 import { DbUser } from "./users";
 import { DbFormVersion, formVersionTable } from "./form-versions";
 import { didTable } from "./dids";
+import {
+  IdentifiedCredential,
+  UnsignedCredential,
+  VerifiableCredential,
+} from "@/lib/types/verifiable-credential";
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  content: jsonb().$type<object>(),
+  content: jsonb().$type<
+    UnsignedCredential | IdentifiedCredential | VerifiableCredential
+  >(),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),

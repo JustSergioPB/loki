@@ -14,23 +14,22 @@ import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
 import * as canonicalize from "json-canonicalize";
 import {
-  SigningVerifiableCredential,
-  VerifiableCredential,
-} from "../types/verifiable-crendential";
-import { DIDDocument } from "../types/did";
+  SigningCredential,
+  UnsignedCredential,
+} from "../types/verifiable-credential";
 import { DbOrg, orgTable } from "@/db/schema/orgs";
 import { CredentialError } from "../errors/credential.error";
 import {
   credentialRequestTable,
   DbCredentialRequest,
 } from "@/db/schema/credential-requests";
-import { buildCredentialSchema } from "./form.model";
 import { FormVersionError } from "../errors/form-version.error";
 import * as uuid from "uuid";
 import { ValiditySchema } from "../schemas/validity.schema";
-import { CredentialSchema } from "../types/credential-schema";
 import { getSignature } from "./key.model";
-import getCredentialStatus from "../helpers/credential";
+import { isIdentified, isUnsigned } from "../helpers/credential.helper";
+import { getFormVersionStatus } from "../helpers/form-version.helper";
+import { getSigningMethod } from "../helpers/did.helper";
 
 const BASE_URL = process.env.BASE_URL!;
 
@@ -61,7 +60,7 @@ export async function createCredential(
 
   const { formVersions, dids, orgs } = formVersionQuery[0];
 
-  if (formVersions.status !== "published") {
+  if (getFormVersionStatus(formVersions) !== "published") {
     throw new FormVersionError("notPublished");
   }
 
@@ -69,17 +68,10 @@ export async function createCredential(
     throw new DIDError("missingUserDID");
   }
 
-  let credential: object | undefined;
+  let credential: UnsignedCredential | undefined;
 
   if (data) {
-    const credentialSchema = buildCredentialSchema(formVersions);
-    credential = buildCredential(
-      orgs,
-      formVersions,
-      dids,
-      data,
-      credentialSchema
-    );
+    credential = buildCredential(orgs, formVersions, dids, data);
   }
 
   return await db.transaction(async (tx) => {
@@ -131,24 +123,22 @@ export async function updateCredentialContent(
 
   const { credentials, formVersions, dids, orgs } = credentialQuery[0];
 
-  if (getCredentialStatus(credentials) === "signed") {
-    throw new CredentialError("alreadySigned");
+  if (!isUnsigned(credentials)) {
+    throw new CredentialError("notUnsigned");
   }
-
-  const credentialSchema = buildCredentialSchema(formVersions);
-  const credential = buildCredential(
-    orgs,
-    formVersions,
-    dids,
-    data,
-    credentialSchema
-  );
 
   return await db.transaction(async (tx) => {
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
-        content: credential,
+        content: buildCredential(
+          orgs,
+          formVersions,
+          dids,
+          data,
+          credentials.content.validFrom,
+          credentials.content.validUntil
+        ),
       })
       .where(eq(credentialTable.id, id))
       .returning();
@@ -171,33 +161,37 @@ export async function updateCredentialValidity(
   data: ValiditySchema,
   authUser: AuthUser
 ): Promise<DbCredential> {
-  const credentialQuery = await db.query.credentialTable.findFirst({
+  const query = await db.query.credentialTable.findFirst({
     where: eq(credentialTable.id, id),
   });
 
-  if (!credentialQuery) {
+  if (!query) {
     throw new CredentialError("notFound");
   }
 
-  if (getCredentialStatus(credentialQuery) === "signed") {
-    throw new CredentialError("alreadySigned");
+  if (!isUnsigned(query)) {
+    throw new CredentialError("notUnsigned");
   }
 
-  let content = credentialQuery.content;
-
   if (data.validFrom) {
-    content = { ...content, validFrom: data.validFrom.toISOString() };
+    query.content = {
+      ...query.content,
+      validFrom: data.validFrom.toISOString(),
+    };
   }
 
   if (data.validUntil) {
-    content = { ...content, validUntil: data.validUntil.toISOString() };
+    query.content = {
+      ...query.content,
+      validUntil: data.validUntil.toISOString(),
+    };
   }
 
   return await db.transaction(async (tx) => {
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
-        content,
+        content: query.content,
       })
       .where(eq(credentialTable.id, id))
       .returning();
@@ -215,41 +209,27 @@ export async function updateCredentialValidity(
   });
 }
 
-export async function signCredential(
-  id: string,
-  holder: DIDDocument
-): Promise<[VerifiableCredential, DbCredential]> {
+export async function signCredential(id: string): Promise<DbCredential> {
   const credentialQuery = await db
     .select()
     .from(credentialTable)
     .where(eq(credentialTable.id, id))
-    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
-    .innerJoin(orgTable, eq(orgTable.id, didTable.orgId));
+    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId));
 
   if (!credentialQuery[0]) {
     throw new CredentialError("notFound");
   }
 
-  const issuer = credentialQuery[0].dids;
+  const { credentials, dids } = credentialQuery[0];
 
-  const verificationMethod = issuer.document.verificationMethod.find(
-    (verificationMethod) =>
-      verificationMethod.id === issuer.document.assertionMethod[0]
-  );
+  const verificationMethod = getSigningMethod(dids);
 
-  if (!verificationMethod) {
-    throw new DIDError("missingAssertionMethod");
+  if (!isIdentified(credentials)) {
+    throw new CredentialError("notIdentified");
   }
 
-  const { credentialSubject, ...rest } = credentialQuery[0].credentials
-    .content as VerifiableCredential;
-
-  const credential: SigningVerifiableCredential = {
-    ...rest,
-    credentialSubject: {
-      ...credentialSubject,
-      id: holder.controller,
-    },
+  const credential: SigningCredential = {
+    ...credentials.content,
     proof: {
       type: "DataIntegrityProof",
       created: new Date().toISOString(),
@@ -260,7 +240,7 @@ export async function signCredential(
   };
 
   credential.proof.proofValue = await getSignature(
-    issuer.document.assertionMethod[0],
+    verificationMethod.id,
     canonicalize.canonicalize(credential)
   );
 
@@ -272,12 +252,12 @@ export async function signCredential(
     .where(eq(credentialTable.id, id))
     .returning();
 
-  return [credential as VerifiableCredential, insertedCredential];
+  return insertedCredential;
 }
 
 export async function getCredentialById(
-  authUser: AuthUser,
-  id: string
+  id: string,
+  authUser: AuthUser
 ): Promise<DbCredential | null> {
   const credential = await db.query.credentialTable.findFirst({
     where: and(
@@ -399,14 +379,17 @@ function buildCredential(
   formVersion: DbFormVersion,
   issuer: DbDID,
   data: object,
-  credentialSchema: CredentialSchema
-) {
+  validFrom?: string,
+  validUntil?: string
+): UnsignedCredential {
   return {
-    "@context": credentialSchema.properties["@context"].const,
-    type: credentialSchema.properties.type.const,
+    "@context": formVersion.credentialContext,
+    type: formVersion.credentialTypes,
     id: `${BASE_URL}/credentials/${uuid.v7()}`,
-    title: credentialSchema.title,
-    description: credentialSchema.description,
+    title: formVersion.title,
+    description: formVersion.description ?? undefined,
+    validFrom,
+    validUntil,
     issuer: {
       name: org.name,
       id: `${BASE_URL}/dids/${issuer.document.controller}`,
@@ -414,7 +397,7 @@ function buildCredential(
     credentialSubject: data,
     credentialSchema: {
       id: `${BASE_URL}/form/${formVersion.id}`,
-      type: credentialSchema.properties.credentialSchema.properties?.type.const,
+      type: formVersion.types[0],
     },
   };
 }

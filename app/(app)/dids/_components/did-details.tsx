@@ -18,7 +18,7 @@ import { buttonVariants } from "@/components/ui/button";
 import Date from "@/components/app/date";
 import DIDStatus from "@/components/app/did-status";
 import KeyStatus from "@/components/app/key-status";
-import { didIsActive } from "@/lib/helpers/did";
+import { didIsActive } from "@/lib/helpers/did.helper";
 
 type Props = {
   did: DIDWithOwner;

@@ -6,6 +6,7 @@ import FormDialog from "./form-dialog";
 import { Badge } from "@/components/ui/badge";
 import FormVersionStatus from "@/components/app/form-version-status";
 import { DbFormVersion } from "@/db/schema/form-versions";
+import { getFormVersionStatus } from "@/lib/helpers/form-version.helper";
 
 export const formColumns: ColumnDef<DbFormVersion>[] = [
   {
@@ -54,10 +55,11 @@ export const formColumns: ColumnDef<DbFormVersion>[] = [
     },
     cell: function CellComponent({ row }) {
       const t = useTranslations("FormVersion");
+      const status = getFormVersionStatus(row.original);
 
       return (
-        <FormVersionStatus status={row.original.status}>
-          {t(`statuses.${row.original.status}`)}
+        <FormVersionStatus status={status}>
+          {t(`statuses.${status}`)}
         </FormVersionStatus>
       );
     },

@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   integer,
   jsonb,
   pgEnum,
@@ -15,6 +16,7 @@ import { credentialTable } from "./credentials";
 import { credentialRequestTable } from "./credential-requests";
 import { formRequirementTable } from "./form-requirements";
 import { JsonObjectType } from "@/lib/types/json-schema";
+import { CredentialSchema } from "@/lib/types/credential-schema";
 
 export const formVersionStatus = pgEnum(
   "formVersionStatus",
@@ -26,13 +28,22 @@ export const formVersionTable = pgTable(
   {
     id: uuid().primaryKey().notNull().defaultRandom(),
     title: varchar({ length: 255 }).notNull(),
-    types: varchar().array().notNull(),
     description: varchar({ length: 255 }),
     version: integer().notNull().default(0),
     validFrom: timestamp(),
     validUntil: timestamp(),
+    types: varchar().array().notNull().default(["JsonSchema"]),
+    credentialContext: varchar()
+      .array()
+      .notNull()
+      .default(["VerifiableCredential"]),
+    credentialTypes: varchar()
+      .array()
+      .notNull()
+      .default(["VerifiableCredential"]),
     credentialSubject: jsonb().notNull().$type<JsonObjectType>(),
-    status: formVersionStatus().notNull().default("draft"),
+    isArchived: boolean().default(false),
+    credentialSchema: jsonb().$type<CredentialSchema>(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()

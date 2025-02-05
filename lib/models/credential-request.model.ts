@@ -4,13 +4,16 @@ import {
   DbCredentialRequest,
 } from "@/db/schema/credential-requests";
 import { and, eq } from "drizzle-orm";
-import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
 import { CredentialRequestError } from "../errors/credential-request.error";
-import { verifySignature } from "../helpers/key";
 import { AuthUser } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
-import { credentialTable } from "@/db/schema/credentials";
+import { credentialTable, DbCredential } from "@/db/schema/credentials";
 import { CredentialError } from "../errors/credential.error";
+import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
+import { isBurned, isExpired } from "../helpers/credential-challenge.helper";
+import { validateSignature } from "../helpers/key.helper";
+import { presentationTable } from "@/db/schema/presentations";
+import { isUnsigned } from "../helpers/credential.helper";
 
 export async function createCredentialRequest(
   credentialId: string,
@@ -48,73 +51,22 @@ export async function createCredentialRequest(
   });
 }
 
-export async function validateCredentialRequest(
-  id: string,
-  challenge: CredentialChallengeSchema
-): Promise<DbCredentialRequest> {
-  const credentialRequestQuery = await db
-    .select()
-    .from(credentialRequestTable)
-    .where(eq(credentialRequestTable.id, id));
-
-  if (!credentialRequestQuery[0]) {
-    throw new CredentialRequestError("notFound");
-  }
-
-  const { expiresAt, code } = credentialRequestQuery[0];
-  const { publicKeyMultibase, type } = challenge.holder.verificationMethod[0];
-
-  if (!code) {
-    throw new CredentialRequestError("isBurnt");
-  }
-
-  if (expiresAt < new Date()) {
-    throw new CredentialRequestError("isExpired");
-  }
-
-  const isVerified = verifySignature(
-    publicKeyMultibase,
-    type,
-    code.toString(),
-    challenge.signedChallenge
-  );
-
-  if (isVerified) {
-    throw new CredentialRequestError("invalidChallenge");
-  }
-
-  const [updatedCredentialRequest] = await db
-    .update(credentialRequestTable)
-    .set({
-      code: null,
-    })
-    .where(eq(credentialRequestTable.id, id))
-    .returning();
-
-  return updatedCredentialRequest;
-}
-
 export async function renewCredentialRequest(
   id: string,
   authUser?: AuthUser
 ): Promise<DbCredentialRequest> {
-  const credentialRequestQuery = await db
-    .select()
-    .from(credentialRequestTable)
-    .where(
-      and(
-        eq(credentialRequestTable.id, id),
-        authUser ? eq(credentialRequestTable.orgId, authUser.orgId) : undefined
-      )
-    );
+  const credentialRequest = await db.query.credentialRequestTable.findFirst({
+    where: and(
+      eq(credentialRequestTable.id, id),
+      authUser ? eq(credentialRequestTable.orgId, authUser.orgId) : undefined
+    ),
+  });
 
-  if (!credentialRequestQuery[0]) {
+  if (!credentialRequest) {
     throw new CredentialRequestError("notFound");
   }
 
-  const { code } = credentialRequestQuery[0];
-
-  if (!code) {
+  if (isBurned(credentialRequest)) {
     throw new CredentialRequestError("isBurnt");
   }
 
@@ -142,5 +94,86 @@ export async function renewCredentialRequest(
     }
 
     return updatedCredentialRequest;
+  });
+}
+
+export async function presentCredentialRequest(
+  id: string,
+  challenge: CredentialChallengeSchema
+): Promise<[DbCredentialRequest, DbCredential]> {
+  const query = await db
+    .select()
+    .from(credentialRequestTable)
+    .where(eq(credentialRequestTable.id, id))
+    .innerJoin(
+      credentialTable,
+      eq(credentialRequestTable.credentialId, credentialTable.id)
+    );
+
+  if (!query[0]) {
+    throw new CredentialRequestError("notFound");
+  }
+
+  const { credentialRequests, credentials } = query[0];
+
+  if (isBurned(credentialRequests)) {
+    throw new CredentialRequestError("isBurnt");
+  }
+
+  if (isExpired(credentialRequests)) {
+    throw new CredentialRequestError("isExpired");
+  }
+
+  if (!isUnsigned(credentials)) {
+    throw new CredentialError("notUnsigned");
+  }
+
+  const signatures = [
+    { holder: challenge.holder, signature: challenge.signature },
+    ...challenge.presentations.map((p) => ({
+      holder: p.holder,
+      signature: p.signature,
+    })),
+  ];
+
+  signatures.forEach(({ holder, signature }) =>
+    validateSignature(
+      holder,
+      signature.label,
+      signature.value,
+      credentialRequests.code!.toString()
+    )
+  );
+
+  return db.transaction(async (tx) => {
+    const [updatedCredentialRequest] = await tx
+      .update(credentialRequestTable)
+      .set({
+        code: null,
+      })
+      .where(eq(credentialRequestTable.id, id))
+      .returning();
+
+    const [updatedCredential] = await tx
+      .update(credentialTable)
+      .set({
+        content: {
+          ...credentials.content,
+          id: challenge.holder.controller,
+        },
+      })
+      .where(eq(credentialTable.id, updatedCredentialRequest.credentialId))
+      .returning();
+
+    if (challenge.presentations.length > 0) {
+      const presentations = challenge.presentations.map((p) => ({
+        content: p.verifiablePresentation,
+        challengeId: updatedCredentialRequest.id,
+      }));
+
+      await tx.insert(presentationTable).values(presentations);
+    }
+
+    return [updatedCredentialRequest, updatedCredential];
   });
 }

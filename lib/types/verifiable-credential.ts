@@ -32,18 +32,15 @@ export type VerifiableCredential = {
   proof: VerifiableCredentialProof;
 };
 
-export type SigningVerifiableCredential = Omit<
-  VerifiableCredential,
-  "proof"
-> & {
+export type SigningCredential = Omit<VerifiableCredential, "proof"> & {
   proof: Partial<VerifiableCredentialProof>;
 };
 
-export type UnsignedVerifiableCredential = Omit<
+export type UnsignedCredential = Omit<
   VerifiableCredential,
   "proof" | "credentialSubject"
 > & {
-  credentialSubject: {
-    [x: string]: unknown;
-  };
+  credentialSubject: object;
 };
+
+export type IdentifiedCredential = Omit<VerifiableCredential, "proof">;
