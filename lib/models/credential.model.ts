@@ -13,7 +13,6 @@ import { DIDError } from "../errors/did.error";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
 import * as canonicalize from "json-canonicalize";
-import { getSignature } from "../helpers/signature";
 import {
   SigningVerifiableCredential,
   VerifiableCredential,
@@ -30,6 +29,8 @@ import { FormVersionError } from "../errors/form-version.error";
 import * as uuid from "uuid";
 import { ValiditySchema } from "../schemas/validity.schema";
 import { CredentialSchema } from "../types/credential-schema";
+import { getSignature } from "./key.model";
+import getCredentialStatus from "../helpers/credential";
 
 const BASE_URL = process.env.BASE_URL!;
 
@@ -130,7 +131,7 @@ export async function updateCredentialContent(
 
   const { credentials, formVersions, dids, orgs } = credentialQuery[0];
 
-  if (credentials.status === "signed") {
+  if (getCredentialStatus(credentials) === "signed") {
     throw new CredentialError("alreadySigned");
   }
 
@@ -178,7 +179,7 @@ export async function updateCredentialValidity(
     throw new CredentialError("notFound");
   }
 
-  if (credentialQuery.status === "signed") {
+  if (getCredentialStatus(credentialQuery) === "signed") {
     throw new CredentialError("alreadySigned");
   }
 
@@ -267,7 +268,6 @@ export async function signCredential(
     .update(credentialTable)
     .set({
       content: credential,
-      status: "signed",
     })
     .where(eq(credentialTable.id, id))
     .returning();

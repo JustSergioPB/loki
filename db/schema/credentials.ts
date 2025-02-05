@@ -1,24 +1,13 @@
-import {
-  jsonb,
-  pgEnum,
-  pgTable,
-  timestamp,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { jsonb, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DbUser } from "./users";
 import { DbFormVersion, formVersionTable } from "./form-versions";
 import { didTable } from "./dids";
-import { credentialStatus } from "@/lib/types/credential";
-
-export const credentialStatuses = pgEnum("credentialStatus", credentialStatus);
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
   content: jsonb().$type<object>(),
-  status: credentialStatuses().notNull().default("not-filled"),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),

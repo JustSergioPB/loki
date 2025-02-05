@@ -6,7 +6,7 @@ export type PlainCredential = Omit<DbCredential, "encryptedContent"> & {
 };
 
 export const credentialStatus = [
-  "not-filled",
+  "empty",
   "pending",
   "signed",
   "claimed",

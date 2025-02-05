@@ -21,21 +21,34 @@ import PageHeader from "@/components/app/page-header";
 import CredentialValidityForm from "./credential-validity-form";
 import CredentialContentForm from "./credential-content-form";
 import Field from "@/components/app/field";
-import StatusTag, { StatusTagVariant } from "@/components/app/status-tag";
-import { CredentialStatus } from "@/lib/types/credential";
+import StatusTag from "@/components/app/status-tag";
 import DateDisplay from "@/components/app/date";
+import getCredentialStatus from "@/lib/helpers/credential";
+import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 
 type Props = {
   credential: DbCredential;
   formVersion: DbFormVersion;
 };
 
-const CREDENTIAL_STATUS_VARIANTS: Record<CredentialStatus, StatusTagVariant> = {
-  "not-filled": "inactive",
-  pending: "warning",
-  signed: "secondary",
-  claimed: "success",
-};
+const items = [
+  {
+    title: "credential",
+    icon: FileText,
+  },
+  {
+    title: "validity",
+    icon: Clock,
+  },
+  {
+    title: "challenge",
+    icon: QrCode,
+  },
+  {
+    title: "presentations",
+    icon: FileStack,
+  },
+];
 
 export default function CredentialFillStepper({
   credential: initCredential,
@@ -44,32 +57,14 @@ export default function CredentialFillStepper({
   const t = useTranslations("Credential");
   const tStepper = useTranslations("Stepper");
   const tGeneric = useTranslations("Generic");
-
   const [step, setStep] = useState<number>(0);
   const [credential, setCredential] = useState<DbCredential>(initCredential);
   const [challengue, setChallengue] = useState<DbCredentialRequest | null>(
     null
   );
+  const credentialStatus = getCredentialStatus(credential);
 
   console.log(challengue);
-  const items = [
-    {
-      title: "credential",
-      icon: FileText,
-    },
-    {
-      title: "validity",
-      icon: Clock,
-    },
-    {
-      title: "challenge",
-      icon: QrCode,
-    },
-    {
-      title: "presentations",
-      icon: FileStack,
-    },
-  ];
 
   return (
     <section className="flex flex-1 border-t">
@@ -107,10 +102,8 @@ export default function CredentialFillStepper({
               label={t("status")}
               className="basis-1/4"
             >
-              <StatusTag
-                variant={CREDENTIAL_STATUS_VARIANTS[credential.status]}
-              >
-                {t(`statuses.${credential.status}`)}
+              <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[credentialStatus]}>
+                {t(`statuses.${credentialStatus}`)}
               </StatusTag>
             </Field>
             <Field

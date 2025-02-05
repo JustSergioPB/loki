@@ -6,7 +6,7 @@ import {
 import { and, eq } from "drizzle-orm";
 import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
 import { CredentialRequestError } from "../errors/credential-request.error";
-import { verifySignature } from "../helpers/signature";
+import { verifySignature } from "../helpers/key";
 import { AuthUser } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { credentialTable } from "@/db/schema/credentials";

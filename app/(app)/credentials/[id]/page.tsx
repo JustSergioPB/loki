@@ -13,22 +13,15 @@ import PageHeader from "@/components/app/page-header";
 import DeleteCredential from "../_components/credential-delete-dialog";
 import { getCredentialByIdWithChallenge } from "@/lib/models/credential.model";
 import DateDisplay from "@/components/app/date";
-import CredentialStatus from "@/components/app/credential-status";
 import { GoBackButton } from "@/components/app/go-back-button";
 import RenewChallengeButton from "../_components/challenge-renew-button";
-import StatusTag, { StatusTagVariant } from "@/components/app/status-tag";
-import { CredentialChallengeStatus } from "@/lib/types/credential-challenge";
 import * as QrCode from "qrcode";
 import Image from "next/image";
-
-const CHALLENGE_STATUS_VARIANTS: Record<
-  CredentialChallengeStatus,
-  StatusTagVariant
-> = {
-  used: "success",
-  expired: "error",
-  pending: "warning",
-};
+import { getCredentialChallengeStatus } from "@/lib/helpers/credential-challenge";
+import getCredentialStatus from "@/lib/helpers/credential";
+import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
+import StatusTag from "@/components/app/status-tag";
+import { CHALLENGE_STATUS_VARIANTS } from "@/lib/constants/credential-challenge.const";
 
 export default async function Credential({
   params,
@@ -53,15 +46,6 @@ export default async function Credential({
   }
 
   const [credential, challenge] = result;
-  let challengeStatus: CredentialChallengeStatus = "pending";
-
-  if (challenge.expiresAt < new Date()) {
-    challengeStatus = "expired";
-  }
-
-  if (!challenge.code) {
-    challengeStatus = "used";
-  }
 
   const qrCode = await QrCode.toDataURL(
     JSON.stringify({
@@ -72,6 +56,9 @@ export default async function Credential({
       errorCorrectionLevel: "high",
     }
   );
+
+  const challengeStatus = getCredentialChallengeStatus(challenge);
+  const credentialStatus = getCredentialStatus(credential);
 
   return (
     <section className="flex flex-1">
@@ -93,9 +80,9 @@ export default async function Credential({
           <DeleteCredential credential={credential} />
           <section className="space-y-4">
             <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
-              <CredentialStatus status={credential.status}>
-                {t(`statuses.${credential.status}`)}
-              </CredentialStatus>
+              <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[credentialStatus]}>
+                {t(`statuses.${credentialStatus}`)}
+              </StatusTag>
             </Field>
             <Field
               icon={<Database className="size-4" />}

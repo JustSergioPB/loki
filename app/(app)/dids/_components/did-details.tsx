@@ -18,6 +18,7 @@ import { buttonVariants } from "@/components/ui/button";
 import Date from "@/components/app/date";
 import DIDStatus from "@/components/app/did-status";
 import KeyStatus from "@/components/app/key-status";
+import { didIsActive } from "@/lib/helpers/did";
 
 type Props = {
   did: DIDWithOwner;
@@ -29,6 +30,7 @@ export default function DIDDetails({ did, className }: Props) {
   const tGeneric = useTranslations("Generic");
   const tOrg = useTranslations("Org");
   const tUser = useTranslations("User");
+  const isActive = didIsActive(did);
 
   return (
     <section className={cn("space-y-4", className)}>
@@ -46,8 +48,8 @@ export default function DIDDetails({ did, className }: Props) {
         {did.user?.fullName}
       </Field>
       <Field icon={<FileCheck className="size-4" />} label={t("status")}>
-        <DIDStatus status={did.isActive}>
-          {t(`statuses.${did.isActive ? "active" : "inactive"}`)}
+        <DIDStatus status={isActive}>
+          {t(`statuses.${isActive ? "active" : "inactive"}`)}
         </DIDStatus>
       </Field>
       <Field

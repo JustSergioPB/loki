@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import CredentialDialog from "./credential-dialog";
 import { CredentialWithIssuer } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
-import CredentialStatus from "@/components/app/credential-status";
+import getCredentialStatus from "@/lib/helpers/credential";
+import StatusTag from "@/components/app/status-tag";
+import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 
 export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
   {
@@ -64,12 +66,12 @@ export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
     },
     cell: function CellComponent({ row }) {
       const t = useTranslations("Credential");
-      const status = row.original.status;
+      const status = getCredentialStatus(row.original);
 
       return (
-        <CredentialStatus status={status}>
+        <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[status]}>
           {t(`statuses.${status}`)}
-        </CredentialStatus>
+        </StatusTag>
       );
     },
   },

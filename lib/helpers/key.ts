@@ -2,32 +2,6 @@ import * as crypto from "crypto";
 import { ALGORITHM_MAP, SupportedType } from "../types/algorithms";
 import { PREFFIX_MAP, SupportedPreffix } from "../types/encoding";
 import { baseDecode } from "./encoder";
-import { privateKeyTable } from "@/db/schema/private-keys";
-import { db } from "@/db";
-import { eq } from "drizzle-orm";
-
-export async function getSignature(
-  label: string,
-  message: string
-): Promise<string> {
-  const [privateKey] = await db
-    .select()
-    .from(privateKeyTable)
-    .where(eq(privateKeyTable.label, label));
-
-  if (!privateKey) {
-    throw new Error("privateKeyNotFound");
-  }
-
-  const key = crypto.createPrivateKey({
-    type: "pkcs8",
-    format: "pem",
-    key: privateKey.pem,
-    passphrase: process.env.PK_PASSPHRASE!,
-  });
-
-  return crypto.sign(null, Buffer.from(message), key).toString("base64");
-}
 
 export function verifySignature(
   publicKeyMultibase: string,
