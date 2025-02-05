@@ -22,8 +22,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 type Props = {
-  credential: DbCredential | null;
-  formVersion: DbFormVersion | null;
+  credential: DbCredential;
+  formVersion: DbFormVersion;
   className?: string;
   onSubmit: (credential: [DbCredential, DbCredentialRequest]) => void;
   onReset: () => void;
@@ -43,15 +43,12 @@ export default function CredentialValidityForm({
   const form = useForm<ValiditySchema>({
     resolver: zodResolver(validitySchema),
     defaultValues: {
-      validUntil: formVersion?.validFrom ? formVersion.validFrom : undefined,
-      validFrom: formVersion?.validUntil ? formVersion.validUntil : undefined,
+      validUntil: formVersion.validFrom ? formVersion.validFrom : undefined,
+      validFrom: formVersion.validUntil ? formVersion.validUntil : undefined,
     },
   });
 
   async function handleSubmit(values: ValiditySchema) {
-    if (!credential) {
-      return toast.error(t("missingCredential"));
-    }
     setIsLoading(true);
 
     const { success, error } = await updateCredentialValidityAction(

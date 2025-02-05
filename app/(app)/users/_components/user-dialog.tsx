@@ -25,21 +25,6 @@ import { toast } from "sonner";
 
 type Action = "edit" | "see" | "delete";
 
-const ACTION_MAP: Record<Action, { title: string; description: string }> = {
-  edit: {
-    title: "editTitle",
-    description: "editDescription",
-  },
-  see: {
-    title: "seeTitle",
-    description: "seeDescription",
-  },
-  delete: {
-    title: "deleteTitle",
-    description: "deleteDescription",
-  },
-};
-
 export default function UserDialog({ user }: { user: DbUser }) {
   const t = useTranslations("User");
   const tGeneric = useTranslations("Generic");
@@ -106,29 +91,23 @@ export default function UserDialog({ user }: { user: DbUser }) {
       </DropdownMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t(ACTION_MAP[action].title)}</DialogTitle>
-          <DialogDescription>
-            {t(ACTION_MAP[action].description)}
-          </DialogDescription>
+          <DialogTitle>{t(`${action}Title`)}</DialogTitle>
+          <DialogDescription>{t(`${action}Description`)}</DialogDescription>
         </DialogHeader>
-        <UserDetails
-          user={user}
-          className={action === "see" ? "block" : "hidden"}
-        />
-        <UserForm
-          user={user}
-          onSubmit={() => setOpen(false)}
-          className={action === "edit" ? "block" : "hidden"}
-        />
-        <ConfirmDialog
-          keyword={user.fullName}
-          label={t("deleteLabel")}
-          onSubmit={onDelete}
-          loading={isLoading}
-          id={user.id}
-          variant="danger"
-          className={action === "delete" ? "block" : "hidden"}
-        />
+        {action === "see" && <UserDetails user={user} />}
+        {action === "edit" && (
+          <UserForm user={user} onSubmit={() => setOpen(false)} />
+        )}
+        {action === "delete" && (
+          <ConfirmDialog
+            keyword={user.fullName}
+            label={t("deleteLabel")}
+            onSubmit={onDelete}
+            loading={isLoading}
+            id={user.id}
+            variant="danger"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

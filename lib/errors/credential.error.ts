@@ -1,4 +1,8 @@
-export const credentialErrorMessages = ["encrypted", "notFound"] as const;
+export const credentialErrorMessages = [
+  "encrypted",
+  "notFound",
+  "alreadySigned",
+] as const;
 export type CredentialErrorMessage = (typeof credentialErrorMessages)[number];
 
 export class CredentialError extends Error {

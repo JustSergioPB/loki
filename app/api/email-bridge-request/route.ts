@@ -8,7 +8,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const parsed = await emailBridgeRequestSchema.parseAsync(body);
-    const [credentialRequest] = await createEmailCredentialRequest(parsed);
+    const credentialRequest = await createEmailCredentialRequest(parsed);
 
     return NextResponse.json({ id: credentialRequest.id }, { status: 200 });
   } catch (error) {

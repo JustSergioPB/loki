@@ -20,11 +20,11 @@ import { DbFormVersion } from "@/db/schema/form-versions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DbCredential } from "@/db/schema/credentials";
-import { createCredentialAction } from "@/lib/actions/credential.actions";
+import { updateCredentialContentAction } from "@/lib/actions/credential.actions";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  formVersion: DbFormVersion | null;
+  formVersion: DbFormVersion;
   className?: string;
   disabled?: boolean;
   onSubmit: (credential: DbCredential) => void;
@@ -39,27 +39,18 @@ export default function CredentialContentForm({
   onReset,
 }: Props) {
   const tGeneric = useTranslations("Generic");
-  const t = useTranslations("Credential");
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<object>({
     resolver: zodResolver(
-      credentialSubjectToZod(
-        formVersion?.credentialSubject ?? { title: "", type: "object" }
-      )
+      credentialSubjectToZod(formVersion.credentialSubject)
     ),
-    defaultValues: getDefaultCredentialSubject(
-      formVersion?.credentialSubject ?? { title: "", type: "object" }
-    ),
+    defaultValues: getDefaultCredentialSubject(formVersion.credentialSubject),
   });
 
   async function handleSubmit(values: object) {
-    if (!formVersion) {
-      return toast.error(t("missingForm"));
-    }
-
     setIsLoading(true);
 
-    const { success, error } = await createCredentialAction(
+    const { success, error } = await updateCredentialContentAction(
       formVersion.id,
       values
     );
@@ -82,10 +73,10 @@ export default function CredentialContentForm({
       >
         <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
           <section className="space-y-2">
-            <h1 className="text-2xl font-bold">{formVersion?.title}</h1>
-            <p className="text-muted-foreground">{formVersion?.description}</p>
+            <h1 className="text-2xl font-bold">{formVersion.title}</h1>
+            <p className="text-muted-foreground">{formVersion.description}</p>
             <div className="flex items-center gap-1">
-              {formVersion?.types.map((type, idx) => (
+              {formVersion.types.map((type, idx) => (
                 <Badge variant="secondary" key={`${type}-${idx}`}>
                   {type}
                 </Badge>
@@ -99,7 +90,7 @@ export default function CredentialContentForm({
                 <FormControl>
                   <div className="space-y-12">
                     {Object.entries(
-                      formVersion?.credentialSubject.properties ?? {}
+                      formVersion.credentialSubject.properties ?? {}
                     )
                       .filter(([key]) => key !== "id")
                       .map(([key, schema]) => (

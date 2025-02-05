@@ -82,7 +82,7 @@ export default async function Credential({
         <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
           <pre className="w-full rounded-md border p-2 bg-card">
             <code className="text-xs">
-              {JSON.stringify(credential.plainCredential, null, 1)}
+              {JSON.stringify(credential.content, null, 1)}
             </code>
           </pre>
         </div>

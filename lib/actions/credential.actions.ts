@@ -6,6 +6,7 @@ import { authorize } from "../helpers/dal";
 import {
   createCredential,
   deleteCredential,
+  updateCredentialContent,
   updateCredentialValidity,
 } from "../models/credential.model";
 import { DbCredential } from "@/db/schema/credentials";
@@ -14,15 +15,14 @@ import { createCredentialRequest } from "../models/credential-request.model";
 import { DbCredentialRequest } from "@/db/schema/credential-requests";
 
 export async function createCredentialAction(
-  formVersionId: string,
-  data: object
+  formVersionId: string
 ): Promise<ActionResult<DbCredential>> {
   const t = await getTranslations("Credential");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
 
-    const credential = await createCredential(formVersionId, data, authUser);
+    const credential = await createCredential(formVersionId, authUser);
 
     return { success: { data: credential, message: t("createSucceded") } };
   } catch (error) {
@@ -31,8 +31,30 @@ export async function createCredentialAction(
   }
 }
 
+export async function updateCredentialContentAction(
+  id: string,
+  data: object
+): Promise<ActionResult<DbCredential>> {
+  const t = await getTranslations("Credential");
+
+  try {
+    const authUser = await authorize(["admin", "org-admin"]);
+    const credential = await updateCredentialContent(id, data, authUser);
+
+    return {
+      success: {
+        data: credential,
+        message: t("updateValiditySucceded"),
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("updateValidityFailed") } };
+  }
+}
+
 export async function updateCredentialValidityAction(
-  credentialId: string,
+  id: string,
   data: ValiditySchema
 ): Promise<ActionResult<[DbCredential, DbCredentialRequest]>> {
   const t = await getTranslations("Credential");
@@ -40,11 +62,7 @@ export async function updateCredentialValidityAction(
   try {
     const authUser = await authorize(["admin", "org-admin"]);
 
-    const credential = await updateCredentialValidity(
-      credentialId,
-      data,
-      authUser
-    );
+    const credential = await updateCredentialValidity(id, data, authUser);
     const challenge = await createCredentialRequest(credential.id, authUser);
 
     return {

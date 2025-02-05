@@ -7,8 +7,14 @@ import {
   Rss,
   Trash,
 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +33,8 @@ import {
 import { toast } from "sonner";
 import { DbFormVersion } from "@/db/schema/form-versions";
 
+type Action = "delete" | "publish" | "archive";
+
 export default function FormDialog({
   formVersion,
 }: {
@@ -34,35 +42,11 @@ export default function FormDialog({
 }) {
   const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
-  const tVersion = useTranslations("FormVersion");
-  const searchParams = useSearchParams();
+
   const router = useRouter();
-  const pathname = usePathname();
-  const action = searchParams.get("action");
-  const id = searchParams.get("id");
   const [isLoading, setIsLoading] = useState(false);
-
-  const deleteParams = new URLSearchParams(searchParams);
-  deleteParams.set("action", "delete");
-
-  const publishParams = new URLSearchParams(searchParams);
-  publishParams.set("action", "publish");
-
-  const archiveParams = new URLSearchParams(searchParams);
-  archiveParams.set("action", "archive");
-
-  function onActionTrigger(action: "delete" | "publish" | "archive") {
-    const params = new URLSearchParams(searchParams);
-    params.set("id", formVersion.id.toString());
-    params.set("action", action);
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
-  async function onActionNavigate(action: "see" | "edit") {
-    let route = `${pathname}/${formVersion.id}`;
-    if (action === "edit") route = `${route}/edit`;
-    router.push(route);
-  }
+  const [action, setAction] = useState<Action>("publish");
+  const [open, setOpen] = useState(false);
 
   async function onDelete() {
     setIsLoading(true);
@@ -71,7 +55,7 @@ export default function FormDialog({
 
     if (success) {
       toast.success(success.message);
-      onClose();
+      setOpen(false);
     } else {
       toast.error(error.message);
     }
@@ -86,7 +70,7 @@ export default function FormDialog({
 
     if (success) {
       toast.success(success.message);
-      onClose();
+      setOpen(false);
     } else {
       toast.error(error.message);
     }
@@ -101,7 +85,7 @@ export default function FormDialog({
 
     if (success) {
       toast.success(success.message);
-      onClose();
+      setOpen(false);
     } else {
       toast.error(error.message);
     }
@@ -109,15 +93,8 @@ export default function FormDialog({
     setIsLoading(false);
   }
 
-  function onClose() {
-    const params = new URLSearchParams(searchParams);
-    params.delete("action");
-    params.delete("id");
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
   return (
-    <Dialog open={!!action && id === formVersion.id} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -128,30 +105,47 @@ export default function FormDialog({
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
           {formVersion.status === "draft" && (
-            <DropdownMenuItem onClick={() => onActionNavigate("edit")}>
+            <DropdownMenuItem
+              onClick={() => router.push(`/forms/${formVersion.id}/edit`)}
+            >
               <Pencil />
               {tGeneric("edit")}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => onActionNavigate("see")}>
+          <DropdownMenuItem
+            onClick={() => router.push(`/forms/${formVersion.id}`)}
+          >
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
           {formVersion.status === "draft" && (
-            <DropdownMenuItem onClick={() => onActionTrigger("publish")}>
+            <DropdownMenuItem
+              onClick={() => {
+                setAction("publish");
+                setOpen(true);
+              }}
+            >
               <Rss />
-              {tVersion("publish")}
+              {t("publish")}
             </DropdownMenuItem>
           )}
           {formVersion.status === "published" && (
-            <DropdownMenuItem onClick={() => onActionTrigger("archive")}>
+            <DropdownMenuItem
+              onClick={() => {
+                setAction("archive");
+                setOpen(true);
+              }}
+            >
               <Archive />
-              {tVersion("archive")}
+              {t("archive")}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
             className="text-red-500"
-            onClick={() => onActionTrigger("delete")}
+            onClick={() => {
+              setAction("delete");
+              setOpen(true);
+            }}
           >
             <Trash />
             {tGeneric("delete")}
@@ -159,42 +153,22 @@ export default function FormDialog({
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent className="max-h-[95vh] overflow-y-auto">
-        {action === "publish" && (
-          <ConfirmDialog
-            keyword={formVersion.title}
-            title={tVersion("publishTitle")}
-            description={tVersion("publishDescription")}
-            label={tVersion("publishLabel")}
-            onSubmit={onPublish}
-            loading={isLoading}
-            id={formVersion.id}
-            variant="warning"
-          />
-        )}
-        {action === "archive" && (
-          <ConfirmDialog
-            keyword={formVersion.title}
-            title={tVersion("archiveTitle")}
-            description={tVersion("archiveDescription")}
-            label={tVersion("archiveLabel")}
-            onSubmit={onArchive}
-            loading={isLoading}
-            id={formVersion.id}
-            variant="warning"
-          />
-        )}
-        {action === "delete" && (
-          <ConfirmDialog
-            keyword={formVersion.title}
-            title={t("deleteTitle")}
-            description={t("deleteDescription")}
-            label={t("deleteLabel")}
-            onSubmit={onDelete}
-            loading={isLoading}
-            id={formVersion.id}
-            variant="danger"
-          />
-        )}
+        <DialogHeader>
+          <DialogTitle>{t(`${action}Title`)}</DialogTitle>
+          <DialogDescription>{t(`${action}Description`)}</DialogDescription>
+        </DialogHeader>
+        <ConfirmDialog
+          keyword={formVersion.title}
+          label={t(`${action}Label`)}
+          onSubmit={() => {
+            if (action === "delete") return onDelete();
+            if (action === "publish") return onPublish();
+            return onArchive();
+          }}
+          loading={isLoading}
+          id={formVersion.id}
+          variant={action === "delete" ? "danger" : "warning"}
+        />
       </DialogContent>
     </Dialog>
   );

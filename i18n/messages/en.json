@@ -314,7 +314,10 @@
     "verify": "Verify",
     "loading": "Loading...",
     "goBack": "Go back",
-    "back": "Back"
+    "back": "Back",
+    "errors": {
+      "retryLater": "Please try in 5 minutes. If the error persits please contact us."
+    }
   },
   "Navigation": {
     "home": "Home",

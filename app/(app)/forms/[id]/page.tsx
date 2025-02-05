@@ -14,9 +14,6 @@ import {
   AlarmClock,
 } from "lucide-react";
 import Link from "next/link";
-import PublishFormVersion from "../_components/form-publish-dialog";
-import ArchiveFormVersion from "../_components/form-archive-dialog";
-import DeleteFormVersion from "../_components/form-delete-dialog";
 import DateDisplay from "@/components/app/date";
 import Field from "@/components/app/field";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +23,7 @@ import JsonSchemaField from "../_components/json-schema-field";
 import { SearchParams } from "@/lib/generics/search-params";
 import FormTabs from "../_components/form-tabs";
 import PageHeader from "@/components/app/page-header";
+import FormActionDialog from "../_components/form-action-dialog";
 
 const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
   draft: "warning",
@@ -85,12 +83,12 @@ export default async function Form({
             </Link>
           )}
           {formVersion.status === "draft" && (
-            <PublishFormVersion formVersion={formVersion} />
+            <FormActionDialog formVersion={formVersion} action="publish" />
           )}
           {formVersion.status === "published" && (
-            <ArchiveFormVersion formVersion={formVersion} />
+            <FormActionDialog formVersion={formVersion} action="archive" />
           )}
-          <DeleteFormVersion formVersion={formVersion} />
+          <FormActionDialog formVersion={formVersion} action="delete" />
         </section>
       </header>
       <div className="flex flex-1">

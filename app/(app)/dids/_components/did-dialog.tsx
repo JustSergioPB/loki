@@ -24,17 +24,6 @@ import { toast } from "sonner";
 
 type Action = "see" | "delete";
 
-const ACTION_MAP: Record<Action, { title: string; description: string }> = {
-  see: {
-    title: "seeTitle",
-    description: "seeDescription",
-  },
-  delete: {
-    title: "deleteTitle",
-    description: "deleteDescription",
-  },
-};
-
 export default function DIDDialog({ did }: { did: DIDWithOwner }) {
   const t = useTranslations("Org");
   const tGeneric = useTranslations("Generic");
@@ -92,24 +81,20 @@ export default function DIDDialog({ did }: { did: DIDWithOwner }) {
       </DropdownMenu>
       <DialogContent className="max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t(ACTION_MAP[action].title)}</DialogTitle>
-          <DialogDescription>
-            {t(ACTION_MAP[action].description)}
-          </DialogDescription>
+          <DialogTitle>{t(`${action}Title`)}</DialogTitle>
+          <DialogDescription>{t(`${action}Description`)}</DialogDescription>
         </DialogHeader>
-        <DIDDetails
-          did={did}
-          className={action === "see" ? "block" : "hidden"}
-        />
-        <ConfirmDialog
-          keyword={did.did}
-          className={action === "delete" ? "block" : "hidden"}
-          label={t("deleteLabel")}
-          onSubmit={onDelete}
-          loading={isLoading}
-          id={did.did}
-          variant="danger"
-        />
+        {action === "see" && <DIDDetails did={did} />}
+        {action === "delete" && (
+          <ConfirmDialog
+            keyword={did.did}
+            label={t("deleteLabel")}
+            onSubmit={onDelete}
+            loading={isLoading}
+            id={did.did}
+            variant="danger"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -4,6 +4,7 @@ export const formVersionErrorMessages = [
   "notFound",
   "notPublished",
   "latestVersionNotFound",
+  "searchFailed",
 ] as const;
 export type FormVersionErrorMessage = (typeof formVersionErrorMessages)[number];
 

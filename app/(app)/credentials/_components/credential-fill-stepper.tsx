@@ -3,37 +3,56 @@
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import FormSelectForm from "./credential-select-form";
-import CredentialContentForm from "./credential-content-form";
 import { GoBackButton } from "@/components/app/go-back-button";
-import PageHeader from "@/components/app/page-header";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Clock, FileStack, FileText, QrCode, TextSelect } from "lucide-react";
+import {
+  BadgeCheck,
+  Calendar,
+  Clock,
+  FileStack,
+  FileText,
+  QrCode,
+} from "lucide-react";
 import { DbCredential } from "@/db/schema/credentials";
-import CredentialValidityForm from "./credential-validity-form";
 import { DbCredentialRequest } from "@/db/schema/credential-requests";
+import PageHeader from "@/components/app/page-header";
+import CredentialValidityForm from "./credential-validity-form";
+import CredentialContentForm from "./credential-content-form";
+import Field from "@/components/app/field";
+import StatusTag, { StatusTagVariant } from "@/components/app/status-tag";
+import { CredentialStatus } from "@/lib/types/credential";
+import DateDisplay from "@/components/app/date";
 
 type Props = {
-  formVersions: DbFormVersion[];
+  credential: DbCredential;
+  formVersion: DbFormVersion;
 };
 
-export default function CredentialCreateForm({ formVersions }: Props) {
+const CREDENTIAL_STATUS_VARIANTS: Record<CredentialStatus, StatusTagVariant> = {
+  "not-filled": "inactive",
+  pending: "warning",
+  signed: "secondary",
+  claimed: "success",
+};
+
+export default function CredentialFillStepper({
+  credential: initCredential,
+  formVersion,
+}: Props) {
   const t = useTranslations("Credential");
   const tStepper = useTranslations("Stepper");
+  const tGeneric = useTranslations("Generic");
+
   const [step, setStep] = useState<number>(0);
-  const [formVersion, setFormVersion] = useState<DbFormVersion | null>(null);
-  const [credential, setCredential] = useState<DbCredential | null>(null);
+  const [credential, setCredential] = useState<DbCredential>(initCredential);
   const [challengue, setChallengue] = useState<DbCredentialRequest | null>(
     null
   );
 
+  console.log(challengue);
   const items = [
-    {
-      title: "form",
-      icon: TextSelect,
-    },
     {
       title: "credential",
       icon: FileText,
@@ -81,21 +100,43 @@ export default function CredentialCreateForm({ formVersions }: Props) {
             ))}
           </div>
         </div>
-        <div className="space-y-2">
-          <p className="text-muted-foreground text-sm">
-            {tStepper("step")} {step + 1} {tStepper("of")} {items.length}
-          </p>
-          <Progress value={((step + 1) / items.length) * 100} />
+        <div>
+          <section className="space-y-4">
+            <Field
+              icon={<BadgeCheck className="size-4" />}
+              label={t("status")}
+              className="basis-1/4"
+            >
+              <StatusTag
+                variant={CREDENTIAL_STATUS_VARIANTS[credential.status]}
+              >
+                {t(`statuses.${credential.status}`)}
+              </StatusTag>
+            </Field>
+            <Field
+              icon={<Calendar className="size-4" />}
+              label={tGeneric("createdAt")}
+              className="basis-1/4"
+            >
+              <DateDisplay date={formVersion.createdAt} />
+            </Field>
+            <Field
+              icon={<Calendar className="size-4" />}
+              label={tGeneric("updatedAt")}
+              className="basis-1/4"
+            >
+              <DateDisplay date={formVersion.updatedAt} />
+            </Field>
+          </section>
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm">
+              {tStepper("step")} {step + 1} {tStepper("of")} {items.length}
+            </p>
+            <Progress value={((step + 1) / items.length) * 100} />
+          </div>
         </div>
       </section>
       <section className="border-l basis-3/4 flex flex-col">
-        <FormSelectForm
-          className={step === 0 ? "flex" : "hidden"}
-          value={formVersion?.id ?? ""}
-          options={formVersions}
-          onSelect={(selected) => setFormVersion(selected)}
-          onSubmit={() => setStep(1)}
-        />
         <CredentialContentForm
           className={step === 1 ? "flex" : "hidden"}
           formVersion={formVersion}

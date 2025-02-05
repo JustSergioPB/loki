@@ -2,7 +2,14 @@
 
 import ConfirmDialog from "@/components/app/confirm-dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { DbCredential } from "@/db/schema/credentials";
 import { deleteCredentialAction } from "@/lib/actions/credential.actions";
 import { PlainCredential } from "@/lib/types/credential";
@@ -59,10 +66,12 @@ export default function CredentialDeleteDialog({
         </Button>
       </DialogTrigger>
       <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("deleteTitle")}</DialogTitle>
+          <DialogDescription>{t("deleteDescription")}</DialogDescription>
+        </DialogHeader>
         <ConfirmDialog
           keyword={credential.id}
-          title={t("deleteTitle")}
-          description={t("deleteDescription")}
           label={t("deleteLabel")}
           onSubmit={onArchive}
           loading={isLoading}

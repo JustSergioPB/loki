@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MoreHorizontal, Trash } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +22,8 @@ import { toast } from "sonner";
 import { deleteCredentialAction } from "@/lib/actions/credential.actions";
 import { DbCredential } from "@/db/schema/credentials";
 
+type Action = "see" | "delete";
+
 export default function CredentialDialog({
   credential,
 }: {
@@ -23,26 +31,11 @@ export default function CredentialDialog({
 }) {
   const t = useTranslations("Credential");
   const tGeneric = useTranslations("Generic");
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const action = searchParams.get("action");
-  const id = searchParams.get("id");
+
   const [isLoading, setIsLoading] = useState(false);
-
-  const deleteParams = new URLSearchParams(searchParams);
-  deleteParams.set("action", "delete");
-
-  function onActionTrigger(action: "delete") {
-    const params = new URLSearchParams(searchParams);
-    params.set("id", credential.id.toString());
-    params.set("action", action);
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
-  async function onActionNavigate(action: "see") {
-    router.push(`${pathname}/${credential.id}?action=${action}`);
-  }
+  const [action, setAction] = useState<Action>("see");
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   async function onDelete() {
     setIsLoading(true);
@@ -51,7 +44,7 @@ export default function CredentialDialog({
 
     if (success) {
       toast.success(success.message);
-      onClose();
+      setOpen(false);
     } else {
       toast.error(error.message);
     }
@@ -59,15 +52,8 @@ export default function CredentialDialog({
     setIsLoading(false);
   }
 
-  function onClose() {
-    const params = new URLSearchParams(searchParams);
-    params.delete("action");
-    params.delete("id");
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
   return (
-    <Dialog open={!!action && id === credential.id} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -77,13 +63,18 @@ export default function CredentialDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => onActionNavigate("see")}>
+          <DropdownMenuItem
+            onClick={() => router.push(`/credentials/${credential.id}`)}
+          >
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-500"
-            onClick={() => onActionTrigger("delete")}
+            onClick={() => {
+              setAction("delete");
+              setOpen(true);
+            }}
           >
             <Trash />
             {tGeneric("delete")}
@@ -91,18 +82,19 @@ export default function CredentialDialog({
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent>
-        {action === "delete" && (
-          <ConfirmDialog
-            keyword={credential.id}
-            title={t("deleteTitle")}
-            description={t("deleteDescription")}
-            label={t("deleteLabel")}
-            onSubmit={onDelete}
-            loading={isLoading}
-            id={credential.id}
-            variant="danger"
-          />
-        )}
+        <DialogHeader>
+          <DialogTitle>{t(`${action}Title`)}</DialogTitle>
+          <DialogDescription>{t(`${action}Description`)}</DialogDescription>
+        </DialogHeader>
+        <ConfirmDialog
+          keyword={credential.id}
+          label={t("deleteLabel")}
+          className={action === "delete" ? "block" : "hidden"}
+          onSubmit={onDelete}
+          loading={isLoading}
+          id={credential.id}
+          variant="danger"
+        />
       </DialogContent>
     </Dialog>
   );

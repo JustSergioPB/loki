@@ -24,21 +24,6 @@ import { toast } from "sonner";
 
 type Action = "see" | "delete" | "verify";
 
-const ACTION_MAP: Record<Action, { title: string; description: string }> = {
-  see: {
-    title: "seeTitle",
-    description: "seeDescription",
-  },
-  delete: {
-    title: "deleteTitle",
-    description: "deleteDescription",
-  },
-  verify: {
-    title: "verifyTitle",
-    description: "verifyDescription",
-  },
-};
-
 export default function OrgDialog({ org }: { org: DbOrg }) {
   const t = useTranslations("Org");
   const tGeneric = useTranslations("Generic");
@@ -122,33 +107,23 @@ export default function OrgDialog({ org }: { org: DbOrg }) {
       </DropdownMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t(ACTION_MAP[action].title)}</DialogTitle>
-          <DialogDescription>
-            {t(ACTION_MAP[action].description)}
-          </DialogDescription>
+          <DialogTitle>{t(`${action}Title`)}</DialogTitle>
+          <DialogDescription>{t(`${action}Description`)}</DialogDescription>
         </DialogHeader>
-        <OrgDetails
-          org={org}
-          className={action === "see" ? "block" : "hidden"}
-        />
-        <ConfirmDialog
-          keyword={org.name}
-          className={action === "delete" ? "block" : "hidden"}
-          label={t("deleteLabel")}
-          onSubmit={onDelete}
-          loading={isLoading}
-          id={org.id}
-          variant="danger"
-        />
-        <ConfirmDialog
-          keyword={org.name}
-          className={action === "verify" ? "block" : "hidden"}
-          label={t("verifyLabel")}
-          onSubmit={onVerify}
-          loading={isLoading}
-          id={org.id}
-          variant="warning"
-        />
+        {action === "see" && <OrgDetails org={org} />}
+        {["verify", "delete"].includes(action) && (
+          <ConfirmDialog
+            keyword={org.name}
+            label={t(`${action}Label`)}
+            onSubmit={() => {
+              if (action === "delete") return onDelete();
+              return onVerify();
+            }}
+            loading={isLoading}
+            id={org.id}
+            variant={action === "delete" ? "danger" : "warning"}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -29,7 +29,7 @@ export default async function Credentials({
   return (
     <Page>
       <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6">
-        <CredentialCreateDialog />
+        <CredentialCreateDialog orgId={user.orgId} />
       </PageHeader>
       <DataTable
         columns={credentialColumns}
