@@ -2,7 +2,7 @@
 
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,17 @@ import CredentialContentForm from "./credential-content-form";
 import Field from "@/components/app/field";
 import StatusTag from "@/components/app/status-tag";
 import DateDisplay from "@/components/app/date";
-import { getCredentialStatus } from "@/lib/helpers/credential.helper";
+import {
+  getCredentialStatus,
+  isUnsigned,
+} from "@/lib/helpers/credential.helper";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
+import { CredentialStatus } from "@/lib/types/credential";
+import CredentialChallengeDetails from "./credential-challenge-details";
 
 type Props = {
   credential: DbCredential;
+  challenge: DbCredentialRequest | null;
   formVersion: DbFormVersion;
 };
 
@@ -51,20 +57,32 @@ const items = [
 ];
 
 export default function CredentialFillStepper({
-  credential: initCredential,
+  credential: credentialState,
+  challenge: challengeState,
   formVersion,
 }: Props) {
   const t = useTranslations("Credential");
   const tStepper = useTranslations("Stepper");
   const tGeneric = useTranslations("Generic");
   const [step, setStep] = useState<number>(0);
-  const [credential, setCredential] = useState<DbCredential>(initCredential);
-  const [challengue, setChallengue] = useState<DbCredentialRequest | null>(
-    null
+  const [credential, setCredential] = useState(credentialState);
+  const [status, setStatus] = useState<CredentialStatus>("empty");
+  const [challenge, setChallenge] = useState<DbCredentialRequest | null>(
+    challengeState
   );
-  const credentialStatus = getCredentialStatus(credential);
 
-  console.log(challengue);
+  useEffect(() => {
+    const newStatus = getCredentialStatus(credential);
+    let step = 0;
+    if (isUnsigned(credential)) {
+      step = 1;
+    }
+    if (challenge) {
+      step = 2;
+    }
+    setStep(step);
+    setStatus(newStatus);
+  }, [credential, challenge]);
 
   return (
     <section className="flex flex-1 border-t">
@@ -95,15 +113,15 @@ export default function CredentialFillStepper({
             ))}
           </div>
         </div>
-        <div>
+        <div className="space-y-6">
           <section className="space-y-4">
             <Field
               icon={<BadgeCheck className="size-4" />}
               label={t("status")}
               className="basis-1/4"
             >
-              <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[credentialStatus]}>
-                {t(`statuses.${credentialStatus}`)}
+              <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[status]}>
+                {t(`statuses.${status}`)}
               </StatusTag>
             </Field>
             <Field
@@ -130,29 +148,31 @@ export default function CredentialFillStepper({
         </div>
       </section>
       <section className="border-l basis-3/4 flex flex-col">
-        <CredentialContentForm
-          className={step === 1 ? "flex" : "hidden"}
-          formVersion={formVersion}
-          onSubmit={(credential: DbCredential) => {
-            setCredential(credential);
-            setStep(2);
-          }}
-          onReset={() => setStep(0)}
-        />
-        <CredentialValidityForm
-          className={step === 2 ? "flex" : "hidden"}
-          credential={credential}
-          formVersion={formVersion}
-          onSubmit={([credential, challengue]: [
-            DbCredential,
-            DbCredentialRequest
-          ]) => {
-            setCredential(credential);
-            setChallengue(challengue);
-            setStep(3);
-          }}
-          onReset={() => setStep(1)}
-        />
+        {step === 0 && (
+          <CredentialContentForm
+            credential={credential}
+            formVersion={formVersion}
+            onSubmit={(credential: DbCredential) => {
+              setCredential(credential);
+            }}
+          />
+        )}
+        {step === 1 && (
+          <CredentialValidityForm
+            credential={credential}
+            formVersion={formVersion}
+            onSubmit={([credential, challenge]: [
+              DbCredential,
+              DbCredentialRequest
+            ]) => {
+              setCredential(credential);
+              setChallenge(challenge);
+            }}
+          />
+        )}
+        {step === 2 && challenge && (
+          <CredentialChallengeDetails challenge={challenge} />
+        )}
       </section>
     </section>
   );

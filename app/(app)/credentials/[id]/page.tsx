@@ -1,10 +1,4 @@
-import {
-  Calendar,
-  Clock,
-  Database,
-  BadgeCheck,
-  QrCodeIcon,
-} from "lucide-react";
+import { Calendar, Clock, Database, BadgeCheck } from "lucide-react";
 import Field from "@/components/app/field";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
@@ -14,14 +8,10 @@ import CredentialActionDialog from "../_components/credential-action-dialog";
 import { getCredentialByIdWithChallenge } from "@/lib/models/credential.model";
 import DateDisplay from "@/components/app/date";
 import { GoBackButton } from "@/components/app/go-back-button";
-import RenewChallengeButton from "../_components/challenge-renew-button";
-import * as QrCode from "qrcode";
-import Image from "next/image";
-import { getCredentialChallengeStatus } from "@/lib/helpers/credential-challenge.helper";
 import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import StatusTag from "@/components/app/status-tag";
-import { CHALLENGE_STATUS_VARIANTS } from "@/lib/constants/credential-challenge.const";
+import ChallengeDetails from "../_components/credential-challenge-details";
 
 export default async function Credential({
   params,
@@ -30,7 +20,6 @@ export default async function Credential({
 }) {
   const { id } = await params;
   const t = await getTranslations("Credential");
-  const tChallenge = await getTranslations("CredentialRequest");
   const tGeneric = await getTranslations("Generic");
 
   const user = await getUser();
@@ -46,18 +35,6 @@ export default async function Credential({
   }
 
   const [credential, challenge] = result;
-
-  const qrCode = await QrCode.toDataURL(
-    JSON.stringify({
-      credentialRequestId: challenge.id,
-      challenge: challenge.code,
-    }),
-    {
-      errorCorrectionLevel: "high",
-    }
-  );
-
-  const challengeStatus = getCredentialChallengeStatus(challenge);
   const credentialStatus = getCredentialStatus(credential);
 
   return (
@@ -104,54 +81,7 @@ export default async function Credential({
             </Field>
           </section>
         </section>
-        <section className="p-6 space-y-6 flex-1">
-          <PageHeader
-            title={tChallenge("scanTitle")}
-            subtitle={tChallenge("scanSubtitle")}
-          />
-          <RenewChallengeButton
-            id={challenge.id}
-            credentialId={credential.id}
-            disabled={challengeStatus !== "pending"}
-          />
-          <section className="space-y-4">
-            <Field
-              icon={<QrCodeIcon className="size-4" />}
-              label={tChallenge("qrCode")}
-              type="vertical"
-            >
-              <Image
-                src={qrCode}
-                alt={tChallenge("qrCode")}
-                width={200}
-                height={200}
-              />
-            </Field>
-            <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
-              <StatusTag variant={CHALLENGE_STATUS_VARIANTS[challengeStatus]}>
-                {tChallenge(`statuses.${challengeStatus}`)}
-              </StatusTag>
-            </Field>
-            <Field
-              icon={<Database className="size-4" />}
-              label={tGeneric("id")}
-            >
-              {challenge.id}
-            </Field>
-            <Field
-              icon={<Calendar className="size-4" />}
-              label={tGeneric("createdAt")}
-            >
-              <DateDisplay date={challenge.createdAt} />
-            </Field>
-            <Field
-              icon={<Clock className="size-4" />}
-              label={tGeneric("updatedAt")}
-            >
-              <DateDisplay date={challenge.updatedAt} />
-            </Field>
-          </section>
-        </section>
+        <ChallengeDetails challenge={challenge} />
       </section>
     </section>
   );

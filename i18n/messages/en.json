@@ -141,6 +141,8 @@
     "holder": "Holder",
     "status": "Status",
     "statuses": {
+      "empty": "Not filled",
+      "identified": "Identified",
       "pending": "Pending",
       "signed": "Signed"
     },
@@ -160,8 +162,8 @@
     "challenge": "Challenge"
   },
   "CredentialRequest": {
-    "scanTitle": "Challenge QR",
-    "scanSubtitle": "By scanning this QR the holder will be able to claim the credential",
+    "scanTitle": "Documents QR",
+    "scanSubtitle": "By scanning this QR the holder will be able to share verified documents and prove his/her identity",
     "renew": "Renew",
     "status": "Status",
     "statuses": {
@@ -211,7 +213,7 @@
     "formNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
     "dontEditBridge": "Don't edit this form manually, if you want to edit this form do it in the bridge section.",
     "statuses": {
-      "not-filled": "Not filled",
+      "empty": "Not filled",
       "draft": "Draft",
       "published": "Published",
       "archived": "Archived"
@@ -315,6 +317,7 @@
     "loading": "Loading...",
     "goBack": "Go back",
     "back": "Back",
+    "fill": "Fill",
     "errors": {
       "retryLater": "Please try in 5 minutes. If the error persits please contact us."
     }

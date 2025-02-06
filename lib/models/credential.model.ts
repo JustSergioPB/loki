@@ -5,7 +5,7 @@ import {
 } from "@/db/schema/credentials";
 import { db } from "@/db";
 import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
-import { eq, and, isNull, asc, count } from "drizzle-orm";
+import { eq, and, isNull, asc, count, not } from "drizzle-orm";
 import { DbDID, didTable } from "@/db/schema/dids";
 import { AuthUser, userTable } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
@@ -27,7 +27,11 @@ import { FormVersionError } from "../errors/form-version.error";
 import * as uuid from "uuid";
 import { ValiditySchema } from "../schemas/validity.schema";
 import { getSignature } from "./key.model";
-import { isIdentified, isUnsigned } from "../helpers/credential.helper";
+import {
+  isEmpty,
+  isIdentified,
+  isUnsigned,
+} from "../helpers/credential.helper";
 import { getFormVersionStatus } from "../helpers/form-version.helper";
 import { getSigningMethod } from "../helpers/did.helper";
 
@@ -106,7 +110,7 @@ export async function updateCredentialContent(
   data: object,
   authUser: AuthUser
 ) {
-  const credentialQuery = await db
+  const query = await db
     .select()
     .from(credentialTable)
     .where(and(eq(credentialTable.id, id)))
@@ -117,13 +121,13 @@ export async function updateCredentialContent(
     )
     .innerJoin(didTable, eq(credentialTable.issuerId, didTable.did));
 
-  if (!credentialQuery[0]) {
+  if (!query[0]) {
     throw new CredentialError("notFound");
   }
 
-  const { credentials, formVersions, dids, orgs } = credentialQuery[0];
+  const { credentials, formVersions, dids, orgs } = query[0];
 
-  if (!isUnsigned(credentials)) {
+  if (!isEmpty(credentials)) {
     throw new CredentialError("notUnsigned");
   }
 
@@ -131,14 +135,7 @@ export async function updateCredentialContent(
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
-        content: buildCredential(
-          orgs,
-          formVersions,
-          dids,
-          data,
-          credentials.content.validFrom,
-          credentials.content.validUntil
-        ),
+        content: buildCredential(orgs, formVersions, dids, data),
       })
       .where(eq(credentialTable.id, id))
       .returning();
@@ -299,10 +296,10 @@ export async function getCredentialByIdWithChallenge(
   return [queryResult[0].credentials, queryResult[0].credentialRequests];
 }
 
-export async function getCredentialByIdWithFormVersion(
+export async function getFullCredential(
   authUser: AuthUser,
   id: string
-): Promise<[DbCredential, DbFormVersion] | null> {
+): Promise<[DbCredential, DbFormVersion, DbCredentialRequest | null] | null> {
   const queryResult = await db
     .select()
     .from(credentialTable)
@@ -312,13 +309,18 @@ export async function getCredentialByIdWithFormVersion(
     .innerJoin(
       formVersionTable,
       eq(credentialTable.formVersionId, formVersionTable.id)
-    );
+    )
+    .leftJoin(credentialRequestTable, not(isNull(credentialRequestTable.code)));
 
   if (!queryResult[0]) {
     return null;
   }
 
-  return [queryResult[0].credentials, queryResult[0].formVersions];
+  return [
+    queryResult[0].credentials,
+    queryResult[0].formVersions,
+    queryResult[0].credentialRequests,
+  ];
 }
 
 export async function searchCredentials(

@@ -4,7 +4,8 @@ export const credentialErrorMessages = [
   "notUnsigned",
   "notIdentified",
   "notSigned",
-  "empty",
+  "notEmpty",
+  "holderMismatch"
 ] as const;
 export type CredentialErrorMessage = (typeof credentialErrorMessages)[number];
 

@@ -8,6 +8,10 @@ export const credentialChallengeStatus = [
 export type CredentialChallengeStatus =
   (typeof credentialChallengeStatus)[number];
 
+export const credentialChallengeContext = ["present", "claim"] as const;
+export type CredentialChallengeContext =
+  (typeof credentialChallengeContext)[number];
+
 export type ChallengeSnapshot = Omit<DbCredentialRequest, "code"> & {
   code: number;
 };

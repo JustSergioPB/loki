@@ -44,12 +44,12 @@ export async function updateCredentialContentAction(
     return {
       success: {
         data: credential,
-        message: t("updateValiditySucceded"),
+        message: t("updateContentSucceded"),
       },
     };
   } catch (error) {
     console.error(error);
-    return { error: { message: t("updateValidityFailed") } };
+    return { error: { message: t("updateContentFailed") } };
   }
 }
 

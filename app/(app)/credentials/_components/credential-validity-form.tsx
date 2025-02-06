@@ -1,5 +1,4 @@
 import { LoadingButton } from "@/components/app/loading-button";
-import { Button } from "@/components/ui/button";
 import { DatetimePicker } from "@/components/ui/datetime-picker";
 import {
   Form,
@@ -26,7 +25,6 @@ type Props = {
   formVersion: DbFormVersion;
   className?: string;
   onSubmit: (credential: [DbCredential, DbCredentialRequest]) => void;
-  onReset: () => void;
 };
 
 export default function CredentialValidityForm({
@@ -34,7 +32,6 @@ export default function CredentialValidityForm({
   formVersion,
   className,
   onSubmit,
-  onReset,
 }: Props) {
   const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
@@ -70,9 +67,9 @@ export default function CredentialValidityForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className={cn(className)}
+        className={cn("flex-1 flex flex-col", className)}
       >
-        <section className="space-y-4">
+        <section className="space-y-4 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
           <p className="font-semibold text-xl leading-none">
             {t("validityTitle")}
           </p>
@@ -125,10 +122,7 @@ export default function CredentialValidityForm({
             />
           </div>
         </section>
-        <section className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onReset}>
-            {tGeneric("back")}
-          </Button>
+        <section className="flex justify-end py-4 px-12 gap-2">
           <LoadingButton loading={isLoading} type="submit">
             {tGeneric("submit")}
           </LoadingButton>

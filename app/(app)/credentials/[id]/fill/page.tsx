@@ -1,4 +1,4 @@
-import { getCredentialByIdWithFormVersion } from "@/lib/models/credential.model";
+import { getFullCredential } from "@/lib/models/credential.model";
 import CredentialFillStepper from "../../_components/credential-fill-stepper";
 import { getUser } from "@/lib/helpers/dal";
 import { notFound, redirect } from "next/navigation";
@@ -16,15 +16,19 @@ export default async function CredentialFill({
     redirect("/login");
   }
 
-  const queryResult = await getCredentialByIdWithFormVersion(user, id);
+  const queryResult = await getFullCredential(user, id);
 
   if (!queryResult) {
     notFound();
   }
 
-  const [credential, formVersion] = queryResult;
+  const [credential, formVersion, challenge] = queryResult;
 
   return (
-    <CredentialFillStepper credential={credential} formVersion={formVersion} />
+    <CredentialFillStepper
+      credential={credential}
+      formVersion={formVersion}
+      challenge={challenge}
+    />
   );
 }

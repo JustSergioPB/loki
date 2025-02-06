@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MoreHorizontal, Trash } from "lucide-react";
+import { ArrowRight, MoreHorizontal, NotebookPen, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -21,8 +21,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { deleteCredentialAction } from "@/lib/actions/credential.actions";
 import { DbCredential } from "@/db/schema/credentials";
+import { isSigned } from "@/lib/helpers/credential.helper";
 
-type Action = "see" | "delete";
+type Action = "see" | "fill" | "delete";
 
 export default function CredentialDialog({
   credential,
@@ -63,12 +64,22 @@ export default function CredentialDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={() => router.push(`/credentials/${credential.id}`)}
-          >
-            <ArrowRight />
-            {tGeneric("see")}
-          </DropdownMenuItem>
+          {isSigned(credential) ? (
+            <DropdownMenuItem
+              onClick={() => router.push(`/credentials/${credential.id}`)}
+            >
+              <ArrowRight />
+              {tGeneric("see")}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onClick={() => router.push(`/credentials/${credential.id}/fill`)}
+            >
+              <NotebookPen />
+              {tGeneric("fill")}
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuItem
             className="text-red-500"
             onClick={() => {

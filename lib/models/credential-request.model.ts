@@ -212,6 +212,10 @@ export async function claimCredentialRequest(
 
   const { holder, signature } = challenge;
 
+  if (holder.controller !== credentials.content.credentialSubject.id) {
+    throw new CredentialError("holderMismatch");
+  }
+
   validateSignature(
     holder,
     signature.label,

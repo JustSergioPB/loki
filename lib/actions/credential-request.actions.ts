@@ -7,7 +7,6 @@ import {
   createCredentialRequest,
   renewCredentialRequest,
 } from "../models/credential-request.model";
-import { revalidatePath } from "next/cache";
 import { DbCredentialRequest } from "@/db/schema/credential-requests";
 
 export async function createCredentialRequestAction(
@@ -33,19 +32,16 @@ export async function createCredentialRequestAction(
 }
 
 export async function renewCredentialRequestAction(
-  credentialId: string,
-  credentialRequestId: string
-): Promise<ActionResult<void>> {
+  id: string
+): Promise<ActionResult<DbCredentialRequest>> {
   const t = await getTranslations("CredentialRequest");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
 
-    await renewCredentialRequest(credentialRequestId, authUser);
+    const data = await renewCredentialRequest(id, authUser);
 
-    revalidatePath(`credentials/${credentialId}`);
-
-    return { success: { data: undefined, message: t("renewSucceded") } };
+    return { success: { data, message: t("renewSucceded") } };
   } catch (error) {
     console.error(error);
     return { error: { message: t("renewFailed") } };

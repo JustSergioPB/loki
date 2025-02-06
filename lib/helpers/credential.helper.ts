@@ -10,10 +10,17 @@ import {
 export function getCredentialStatus(value: DbCredential): CredentialStatus {
   let status: CredentialStatus = "empty";
 
-  status =
-    value.content && Object.hasOwn(value.content, "proof")
-      ? "signed"
-      : "pending";
+  if (isUnsigned(value)) {
+    status = "pending";
+  }
+
+  if (isIdentified(value)) {
+    status = "identified";
+  }
+
+  if (isSigned(value)) {
+    status = "signed";
+  }
 
   return status;
 }
@@ -27,8 +34,8 @@ export function isUnsigned(
 ): value is PendingCredentialSnapshot {
   return (
     value.content !== null &&
-    !Object.hasOwn(value, "id") &&
-    !Object.hasOwn(value, "proof")
+    !Object.hasOwn(value.content.credentialSubject, "id") &&
+    !Object.hasOwn(value.content, "proof")
   );
 }
 
@@ -37,13 +44,13 @@ export function isIdentified(
 ): value is IdentifiedCredentialSnapshot {
   return (
     value.content !== null &&
-    Object.hasOwn(value, "id") &&
-    !Object.hasOwn(value, "proof")
+    Object.hasOwn(value.content.credentialSubject, "id") &&
+    !Object.hasOwn(value.content, "proof")
   );
 }
 
 export function isSigned(
   value: DbCredential
 ): value is SignedCredentialSnapshot {
-  return value.content !== null && Object.hasOwn(value, "proof");
+  return value.content !== null && Object.hasOwn(value.content, "proof");
 }

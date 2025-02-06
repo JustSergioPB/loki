@@ -21,22 +21,21 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { DbCredential } from "@/db/schema/credentials";
 import { updateCredentialContentAction } from "@/lib/actions/credential.actions";
-import { Button } from "@/components/ui/button";
 
 type Props = {
+  credential: DbCredential;
   formVersion: DbFormVersion;
   className?: string;
   disabled?: boolean;
   onSubmit: (credential: DbCredential) => void;
-  onReset: () => void;
 };
 
 export default function CredentialContentForm({
+  credential,
   formVersion,
   className,
   disabled,
   onSubmit,
-  onReset,
 }: Props) {
   const tGeneric = useTranslations("Generic");
   const [isLoading, setIsLoading] = useState(false);
@@ -44,14 +43,17 @@ export default function CredentialContentForm({
     resolver: zodResolver(
       credentialSubjectToZod(formVersion.credentialSubject)
     ),
-    defaultValues: getDefaultCredentialSubject(formVersion.credentialSubject),
+    defaultValues:
+      credential.content !== null
+        ? credential.content.credentialSubject
+        : getDefaultCredentialSubject(formVersion.credentialSubject),
   });
 
   async function handleSubmit(values: object) {
     setIsLoading(true);
 
     const { success, error } = await updateCredentialContentAction(
-      formVersion.id,
+      credential.id,
       values
     );
 
@@ -69,7 +71,7 @@ export default function CredentialContentForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className={cn("flex-1 flex-col", className)}
+        className={cn("flex-1 flex flex-col", className)}
       >
         <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
           <section className="space-y-2">
@@ -110,9 +112,6 @@ export default function CredentialContentForm({
           />
         </section>
         <section className="flex justify-end py-4 px-12 gap-2">
-          <Button variant="outline" onClick={onReset}>
-            {tGeneric("back")}
-          </Button>
           <LoadingButton loading={isLoading} type="submit" disabled={disabled}>
             {tGeneric("submit")}
           </LoadingButton>
