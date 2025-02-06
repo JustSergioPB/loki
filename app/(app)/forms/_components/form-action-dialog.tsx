@@ -79,7 +79,10 @@ export default function FormActionDialog({ formVersion, action }: Props) {
   return (
     <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-red-500">
+        <Button
+          variant={action === "delete" ? "destructive" : "outline"}
+          size="sm"
+        >
           {action === "delete" && <Trash className="size-3" />}
           {action === "archive" && <Archive className="size-3" />}
           {action === "publish" && <Rss className="size-3" />}

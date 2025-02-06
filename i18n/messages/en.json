@@ -231,7 +231,8 @@
     "validFrom": "Valid from",
     "validUntil": "Valid until",
     "validityTitle": "Validity",
-    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered."
+    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered.",
+    "delete": "Delete"
   },
   "ConfirmAccount": {
     "title": "Confirm your account",

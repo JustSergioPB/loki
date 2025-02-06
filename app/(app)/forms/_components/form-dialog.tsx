@@ -97,7 +97,7 @@ export default function FormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">{tGeneric("openMenu")}</span>
