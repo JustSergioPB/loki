@@ -2,26 +2,22 @@ import { CredentialRequestError } from "@/lib/errors/credential-request.error";
 import { CredentialError } from "@/lib/errors/credential.error";
 import { KeyError } from "@/lib/errors/key.error";
 import { SignatureError } from "@/lib/errors/signature.error";
-import { presentCredentialRequest } from "@/lib/models/credential-request.model";
 import { credentialChallengeSchema } from "@/lib/schemas/credential-challenge.schema";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { ApiErrorResult } from "@/lib/generics/api-error";
+import { createPresentation } from "@/lib/models/presentation.model";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
-  const { id } = await params;
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
 
   try {
     const parsed = await credentialChallengeSchema.parseAsync(body);
-    const [, credential] = await presentCredentialRequest(id, parsed);
-    revalidatePath(`/credentials/${credential.id}/fill`);
+    const [, credentialId] = await createPresentation(parsed);
+    revalidatePath(`/credentials/${credentialId}/fill`);
 
-    return NextResponse.json({ valid: true }, { status: 200 });
+    return NextResponse.json({ data: true }, { status: 200 });
   } catch (error) {
     console.error(error);
     let response: ApiErrorResult<boolean> = {

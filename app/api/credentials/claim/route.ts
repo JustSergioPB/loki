@@ -6,18 +6,14 @@ import { credentialChallengeSchema } from "@/lib/schemas/credential-challenge.sc
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { ApiErrorResult } from "@/lib/generics/api-error";
-import { claimCredentialRequest } from "@/lib/models/credential-request.model";
+import { claimCredential } from "@/lib/models/credential.model";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
-  const { id } = await params;
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json();
 
   try {
     const parsed = await credentialChallengeSchema.parseAsync(body);
-    const credential = await claimCredentialRequest(id, parsed);
+    const credential = await claimCredential(parsed);
 
     return NextResponse.json({ data: credential }, { status: 200 });
   } catch (error) {

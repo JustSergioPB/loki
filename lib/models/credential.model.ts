@@ -30,10 +30,15 @@ import { getSignature } from "./key.model";
 import {
   isEmpty,
   isIdentified,
+  isSigned,
   isUnsigned,
 } from "../helpers/credential.helper";
 import { getFormVersionStatus } from "../helpers/form-version.helper";
 import { getSigningMethod } from "../helpers/did.helper";
+import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
+import { CredentialRequestError } from "../errors/credential-request.error";
+import { isBurned, isExpired } from "../helpers/credential-challenge.helper";
+import { validateSignature } from "../helpers/key.helper";
 
 const BASE_URL = process.env.BASE_URL!;
 
@@ -241,7 +246,7 @@ export async function signCredential(id: string): Promise<DbCredential> {
     canonicalize.canonicalize(credential)
   );
 
-  const [insertedCredential] = await db
+  const [updatedCredential] = await db
     .update(credentialTable)
     .set({
       content: credential,
@@ -249,7 +254,62 @@ export async function signCredential(id: string): Promise<DbCredential> {
     .where(eq(credentialTable.id, id))
     .returning();
 
-  return insertedCredential;
+  return updatedCredential;
+}
+
+export async function claimCredential(
+  challenge: CredentialChallengeSchema
+): Promise<DbCredential> {
+  const query = await db
+    .select()
+    .from(credentialRequestTable)
+    .where(eq(credentialRequestTable.id, challenge.id))
+    .innerJoin(
+      credentialTable,
+      eq(credentialRequestTable.credentialId, credentialTable.id)
+    );
+
+  if (!query[0]) {
+    throw new CredentialRequestError("notFound");
+  }
+
+  const { credentialRequests, credentials } = query[0];
+
+  if (isBurned(credentialRequests)) {
+    throw new CredentialRequestError("isBurnt");
+  }
+
+  if (isExpired(credentialRequests)) {
+    throw new CredentialRequestError("isExpired");
+  }
+
+  if (!isSigned(credentials)) {
+    throw new CredentialError("notSigned");
+  }
+
+  const { holder, signature } = challenge;
+
+  if (holder.controller !== credentials.content.credentialSubject.id) {
+    throw new CredentialError("holderMismatch");
+  }
+
+  validateSignature(
+    holder,
+    signature.label,
+    signature.value,
+    //TODO: Patch this
+    credentialRequests.code!.toString()
+  );
+
+  await db
+    .update(credentialRequestTable)
+    .set({
+      code: null,
+    })
+    .where(eq(credentialRequestTable.id, credentials.id))
+    .returning();
+
+  return credentials;
 }
 
 export async function getCredentialById(

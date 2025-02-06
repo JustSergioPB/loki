@@ -4,6 +4,7 @@ import { signatureSchema } from "./signature.schema";
 import { DIDDocument } from "../types/did";
 
 export const credentialChallengeSchema = z.object({
+  id: z.string().uuid().min(1, { message: "requiredField" }),
   signature: signatureSchema,
   holder: z.custom<DIDDocument>(),
   presentations: z.array(
