@@ -13,6 +13,7 @@ import {
   Clock,
   FileStack,
   FileText,
+  PenTool,
   QrCode,
 } from "lucide-react";
 import { DbCredential } from "@/db/schema/credentials";
@@ -30,14 +31,23 @@ import {
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import { CredentialStatus } from "@/lib/types/credential";
 import CredentialChallengeDetails from "./credential-challenge-details";
+import { toast } from "sonner";
 
 type Props = {
   credential: DbCredential;
-  challenge: DbCredentialRequest | null;
+  presentationChallenge: DbCredentialRequest;
   formVersion: DbFormVersion;
 };
 
 const items = [
+  {
+    title: "presentationChallenge",
+    icon: QrCode,
+  },
+  {
+    title: "presentations",
+    icon: FileStack,
+  },
   {
     title: "credential",
     icon: FileText,
@@ -47,29 +57,29 @@ const items = [
     icon: Clock,
   },
   {
-    title: "challenge",
-    icon: QrCode,
+    title: "sign",
+    icon: PenTool,
   },
   {
-    title: "presentations",
-    icon: FileStack,
+    title: "claimChallenge",
+    icon: QrCode,
   },
 ];
 
 export default function CredentialFillStepper({
   credential: credentialState,
   challenge: challengeState,
+  presentations,
   formVersion,
 }: Props) {
   const t = useTranslations("Credential");
   const tStepper = useTranslations("Stepper");
   const tGeneric = useTranslations("Generic");
+  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<number>(0);
   const [credential, setCredential] = useState(credentialState);
   const [status, setStatus] = useState<CredentialStatus>("empty");
-  const [challenge, setChallenge] = useState<DbCredentialRequest | null>(
-    challengeState
-  );
+  const [challenge, setChallenge] = useState(challengeState);
 
   useEffect(() => {
     const newStatus = getCredentialStatus(credential);
@@ -83,6 +93,24 @@ export default function CredentialFillStepper({
     setStep(step);
     setStatus(newStatus);
   }, [credential, challenge]);
+
+  async function handleSubmit(values: object) {
+    setIsLoading(true);
+
+    const { success, error } = await updateCredentialContentAction(
+      credential.id,
+      values
+    );
+
+    if (success) {
+      onSubmit(success.data);
+      toast.success(success.message);
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  }
 
   return (
     <section className="flex flex-1 border-t">
@@ -148,30 +176,21 @@ export default function CredentialFillStepper({
         </div>
       </section>
       <section className="border-l basis-3/4 flex flex-col">
-        {step === 0 && (
+        {step === 0 && <CredentialChallengeDetails challenge={challenge} />}
+        {step === 1 && (
           <CredentialContentForm
             credential={credential}
             formVersion={formVersion}
-            onSubmit={(credential: DbCredential) => {
-              setCredential(credential);
-            }}
+            onSubmit={handleSubmit}
           />
         )}
-        {step === 1 && (
+        {step === 2 && (
           <CredentialValidityForm
             credential={credential}
             formVersion={formVersion}
-            onSubmit={([credential, challenge]: [
-              DbCredential,
-              DbCredentialRequest
-            ]) => {
-              setCredential(credential);
-              setChallenge(challenge);
-            }}
+            isLoading={isLoading}
+            onSubmit={handleSubmit}
           />
-        )}
-        {step === 2 && challenge && (
-          <CredentialChallengeDetails challenge={challenge} />
         )}
       </section>
     </section>

@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { LoadingButton } from "@/components/app/loading-button";
 import {
   credentialSubjectToZod,
   getDefaultCredentialSubject,
@@ -17,17 +16,15 @@ import JsonSchemaForm from "./json-schema-form";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DbFormVersion } from "@/db/schema/form-versions";
-import { useState } from "react";
-import { toast } from "sonner";
 import { DbCredential } from "@/db/schema/credentials";
-import { updateCredentialContentAction } from "@/lib/actions/credential.actions";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   credential: DbCredential;
   formVersion: DbFormVersion;
   className?: string;
   disabled?: boolean;
-  onSubmit: (credential: DbCredential) => void;
+  onSubmit: (content: object) => void;
 };
 
 export default function CredentialContentForm({
@@ -38,7 +35,6 @@ export default function CredentialContentForm({
   onSubmit,
 }: Props) {
   const tGeneric = useTranslations("Generic");
-  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<object>({
     resolver: zodResolver(
       credentialSubjectToZod(formVersion.credentialSubject)
@@ -49,28 +45,10 @@ export default function CredentialContentForm({
         : getDefaultCredentialSubject(formVersion.credentialSubject),
   });
 
-  async function handleSubmit(values: object) {
-    setIsLoading(true);
-
-    const { success, error } = await updateCredentialContentAction(
-      credential.id,
-      values
-    );
-
-    if (success) {
-      onSubmit(success.data);
-      toast.success(success.message);
-    } else {
-      toast.error(error.message);
-    }
-
-    setIsLoading(false);
-  }
-
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={form.handleSubmit(onSubmit)}
         className={cn("flex-1 flex flex-col", className)}
       >
         <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
@@ -112,9 +90,9 @@ export default function CredentialContentForm({
           />
         </section>
         <section className="flex justify-end py-4 px-12 gap-2">
-          <LoadingButton loading={isLoading} type="submit" disabled={disabled}>
+          <Button type="submit" disabled={disabled}>
             {tGeneric("submit")}
-          </LoadingButton>
+          </Button>
         </section>
       </form>
     </Form>

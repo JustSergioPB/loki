@@ -2,7 +2,7 @@ import { DbPresentation, presentationTable } from "@/db/schema/presentations";
 import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
 import { db } from "@/db";
 import { credentialRequestTable } from "@/db/schema/credential-requests";
-import { credentialTable } from "@/db/schema/credentials";
+import { credentialTable, DbCredential } from "@/db/schema/credentials";
 import { eq } from "drizzle-orm";
 import { CredentialRequestError } from "../errors/credential-request.error";
 import { CredentialError } from "../errors/credential.error";
@@ -12,7 +12,7 @@ import { validateSignature } from "../helpers/key.helper";
 
 export async function createPresentation(
   challenge: CredentialChallengeSchema
-): Promise<[DbPresentation[], string]> {
+): Promise<[DbPresentation[], DbCredential]> {
   const query = await db
     .select()
     .from(credentialRequestTable)
@@ -67,7 +67,7 @@ export async function createPresentation(
       .where(eq(credentialRequestTable.id, challenge.id))
       .returning();
 
-    await tx
+    const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
         content: {
@@ -75,7 +75,8 @@ export async function createPresentation(
           id: challenge.holder.controller,
         },
       })
-      .where(eq(credentialTable.id, updatedCredentialRequest.credentialId));
+      .where(eq(credentialTable.id, updatedCredentialRequest.credentialId))
+      .returning();
 
     let insertedPresentations: DbPresentation[] = [];
 
@@ -89,6 +90,6 @@ export async function createPresentation(
         .values(presentations);
     }
 
-    return [insertedPresentations, credentialRequests.credentialId];
+    return [insertedPresentations, updatedCredential];
   });
 }

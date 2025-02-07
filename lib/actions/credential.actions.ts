@@ -7,12 +7,10 @@ import {
   createCredential,
   deleteCredential,
   updateCredentialContent,
-  updateCredentialValidity,
 } from "../models/credential.model";
 import { DbCredential } from "@/db/schema/credentials";
+import { revalidatePath } from "next/cache";
 import { ValiditySchema } from "../schemas/validity.schema";
-import { createCredentialRequest } from "../models/credential-request.model";
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
 
 export async function createCredentialAction(
   formVersionId: string
@@ -33,13 +31,19 @@ export async function createCredentialAction(
 
 export async function updateCredentialContentAction(
   id: string,
-  data: object
+  credentialSubject: object,
+  validity?: ValiditySchema
 ): Promise<ActionResult<DbCredential>> {
   const t = await getTranslations("Credential");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
-    const credential = await updateCredentialContent(id, data, authUser);
+    const credential = await updateCredentialContent(
+      id,
+      credentialSubject,
+      authUser,
+      validity
+    );
 
     return {
       success: {
@@ -53,30 +57,6 @@ export async function updateCredentialContentAction(
   }
 }
 
-export async function updateCredentialValidityAction(
-  id: string,
-  data: ValiditySchema
-): Promise<ActionResult<[DbCredential, DbCredentialRequest]>> {
-  const t = await getTranslations("Credential");
-
-  try {
-    const authUser = await authorize(["admin", "org-admin"]);
-
-    const credential = await updateCredentialValidity(id, data, authUser);
-    const challenge = await createCredentialRequest(credential.id, authUser);
-
-    return {
-      success: {
-        data: [credential, challenge],
-        message: t("updateValiditySucceded"),
-      },
-    };
-  } catch (error) {
-    console.error(error);
-    return { error: { message: t("updateValidityFailed") } };
-  }
-}
-
 export async function deleteCredentialAction(
   id: string
 ): Promise<ActionResult<void>> {
@@ -85,6 +65,8 @@ export async function deleteCredentialAction(
     const authUser = await authorize(["admin", "org-admin"]);
 
     await deleteCredential(authUser, id);
+
+    revalidatePath("/credentials");
 
     return { success: { data: undefined, message: t("deleteSucceded") } };
   } catch (error) {

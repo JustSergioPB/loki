@@ -1,11 +1,12 @@
 import {
   credentialTable,
-  CredentialWithIssuer,
+  DbCredentialWithIssuer,
   DbCredential,
+  DbFullCredential,
 } from "@/db/schema/credentials";
 import { db } from "@/db";
 import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
-import { eq, and, isNull, asc, count, not } from "drizzle-orm";
+import { eq, and, isNull, asc, count } from "drizzle-orm";
 import { DbDID, didTable } from "@/db/schema/dids";
 import { AuthUser, userTable } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
@@ -19,26 +20,19 @@ import {
 } from "../types/verifiable-credential";
 import { DbOrg, orgTable } from "@/db/schema/orgs";
 import { CredentialError } from "../errors/credential.error";
-import {
-  credentialRequestTable,
-  DbCredentialRequest,
-} from "@/db/schema/credential-requests";
+import { credentialRequestTable } from "@/db/schema/credential-requests";
 import { FormVersionError } from "../errors/form-version.error";
 import * as uuid from "uuid";
 import { ValiditySchema } from "../schemas/validity.schema";
 import { getSignature } from "./key.model";
-import {
-  isEmpty,
-  isIdentified,
-  isSigned,
-  isUnsigned,
-} from "../helpers/credential.helper";
+import { isEmpty, isIdentified, isSigned } from "../helpers/credential.helper";
 import { getFormVersionStatus } from "../helpers/form-version.helper";
 import { getSigningMethod } from "../helpers/did.helper";
 import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
 import { CredentialRequestError } from "../errors/credential-request.error";
 import { isBurned, isExpired } from "../helpers/credential-challenge.helper";
 import { validateSignature } from "../helpers/key.helper";
+import { presentationTable } from "@/db/schema/presentations";
 
 const BASE_URL = process.env.BASE_URL!;
 
@@ -94,11 +88,27 @@ export async function createCredential(
       })
       .returning();
 
+    const [insertedChallenge] = await tx
+      .insert(credentialRequestTable)
+      .values({
+        orgId: formVersions.orgId,
+        credentialId: insertedCredential.id,
+      })
+      .returning();
+
     if (authUser) {
       await tx.insert(auditLogTable).values({
         entityId: insertedCredential.id,
         entityType: "credential",
         value: insertedCredential,
+        orgId: authUser.orgId,
+        userId: authUser.id,
+        action: "create",
+      });
+      await tx.insert(auditLogTable).values({
+        entityId: insertedChallenge.id,
+        entityType: "credentialRequest",
+        value: insertedChallenge,
         orgId: authUser.orgId,
         userId: authUser.id,
         action: "create",
@@ -112,8 +122,9 @@ export async function createCredential(
 //TODO: Reevaluate if a credential can be created by an issuer and then signed by another using that user's keys
 export async function updateCredentialContent(
   id: string,
-  data: object,
-  authUser: AuthUser
+  credentialSubject: object,
+  authUser: AuthUser,
+  validity?: ValiditySchema
 ) {
   const query = await db
     .select()
@@ -140,7 +151,14 @@ export async function updateCredentialContent(
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
-        content: buildCredential(orgs, formVersions, dids, data),
+        content: buildCredential(
+          orgs,
+          formVersions,
+          dids,
+          credentialSubject,
+          validity?.validFrom,
+          validity?.validUntil
+        ),
       })
       .where(eq(credentialTable.id, id))
       .returning();
@@ -151,60 +169,7 @@ export async function updateCredentialContent(
       value: updatedCredential,
       orgId: authUser.orgId,
       userId: authUser.id,
-      action: "create",
-    });
-
-    return updatedCredential;
-  });
-}
-
-export async function updateCredentialValidity(
-  id: string,
-  data: ValiditySchema,
-  authUser: AuthUser
-): Promise<DbCredential> {
-  const query = await db.query.credentialTable.findFirst({
-    where: eq(credentialTable.id, id),
-  });
-
-  if (!query) {
-    throw new CredentialError("notFound");
-  }
-
-  if (!isUnsigned(query)) {
-    throw new CredentialError("notUnsigned");
-  }
-
-  if (data.validFrom) {
-    query.content = {
-      ...query.content,
-      validFrom: data.validFrom.toISOString(),
-    };
-  }
-
-  if (data.validUntil) {
-    query.content = {
-      ...query.content,
-      validUntil: data.validUntil.toISOString(),
-    };
-  }
-
-  return await db.transaction(async (tx) => {
-    const [updatedCredential] = await tx
-      .update(credentialTable)
-      .set({
-        content: query.content,
-      })
-      .where(eq(credentialTable.id, id))
-      .returning();
-
-    await tx.insert(auditLogTable).values({
-      entityId: updatedCredential.id,
-      entityType: "credential",
-      value: updatedCredential,
-      orgId: authUser.orgId,
-      userId: authUser.id,
-      action: "create",
+      action: "update",
     });
 
     return updatedCredential;
@@ -330,37 +295,11 @@ export async function getCredentialById(
   return credential;
 }
 
-export async function getCredentialByIdWithChallenge(
-  authUser: AuthUser,
-  id: string
-): Promise<[DbCredential, DbCredentialRequest] | null> {
-  const queryResult = await db
-    .select()
-    .from(credentialTable)
-    .where(
-      and(eq(credentialTable.orgId, authUser.orgId), eq(credentialTable.id, id))
-    )
-    .innerJoin(
-      credentialRequestTable,
-      eq(credentialRequestTable.credentialId, credentialTable.id)
-    )
-    .innerJoin(
-      didTable,
-      and(eq(didTable.orgId, authUser.orgId), isNull(didTable.userId))
-    );
-
-  if (!queryResult[0]) {
-    return null;
-  }
-
-  return [queryResult[0].credentials, queryResult[0].credentialRequests];
-}
-
-export async function getFullCredential(
-  authUser: AuthUser,
-  id: string
-): Promise<[DbCredential, DbFormVersion, DbCredentialRequest | null] | null> {
-  const queryResult = await db
+export async function getFullCredentialbyId(
+  id: string,
+  authUser: AuthUser
+): Promise<DbFullCredential | null> {
+  const query = await db
     .select()
     .from(credentialTable)
     .where(
@@ -368,25 +307,26 @@ export async function getFullCredential(
     )
     .innerJoin(
       formVersionTable,
-      eq(credentialTable.formVersionId, formVersionTable.id)
+      eq(formVersionTable.id, credentialTable.formVersionId)
     )
-    .leftJoin(credentialRequestTable, not(isNull(credentialRequestTable.code)));
+    .innerJoin(
+      credentialRequestTable,
+      eq(credentialRequestTable.credentialId, id)
+    )
+    .leftJoin(
+      presentationTable,
+      eq(presentationTable.challengeId, credentialRequestTable.id)
+    );
 
-  if (!queryResult[0]) {
+  if (query.length === 0) {
     return null;
   }
-
-  return [
-    queryResult[0].credentials,
-    queryResult[0].formVersions,
-    queryResult[0].credentialRequests,
-  ];
 }
 
 export async function searchCredentials(
   authUser: AuthUser,
-  query: Query<CredentialWithIssuer>
-): Promise<QueryResult<CredentialWithIssuer>> {
+  query: Query<DbCredentialWithIssuer>
+): Promise<QueryResult<DbCredentialWithIssuer>> {
   const queryResult = await db
     .select()
     .from(credentialTable)
@@ -429,7 +369,7 @@ export async function deleteCredential(
       entityId: id,
       entityType: "credential",
       value: deleted,
-      orgId: authUser.id,
+      orgId: authUser.orgId,
       userId: authUser.id,
       action: "delete",
     });
@@ -441,8 +381,8 @@ function buildCredential(
   formVersion: DbFormVersion,
   issuer: DbDID,
   data: object,
-  validFrom?: string,
-  validUntil?: string
+  validFrom?: Date,
+  validUntil?: Date
 ): UnsignedCredential {
   return {
     "@context": formVersion.credentialContext,
@@ -450,8 +390,8 @@ function buildCredential(
     id: `${BASE_URL}/credentials/${uuid.v7()}`,
     title: formVersion.title,
     description: formVersion.description ?? undefined,
-    validFrom,
-    validUntil,
+    validFrom: validFrom ? validFrom.toISOString() : undefined,
+    validUntil: validUntil ? validUntil.toISOString() : undefined,
     issuer: {
       name: org.name,
       id: `${BASE_URL}/dids/${issuer.document.controller}`,

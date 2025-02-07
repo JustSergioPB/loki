@@ -8,65 +8,64 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
 import { DbCredential } from "@/db/schema/credentials";
 import { DbFormVersion } from "@/db/schema/form-versions";
-import { updateCredentialValidityAction } from "@/lib/actions/credential.actions";
 import { validitySchema, ValiditySchema } from "@/lib/schemas/validity.schema";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 type Props = {
   credential: DbCredential;
   formVersion: DbFormVersion;
+  isLoading: boolean;
   className?: string;
-  onSubmit: (credential: [DbCredential, DbCredentialRequest]) => void;
+  onSubmit: (validity: ValiditySchema) => void;
 };
 
 export default function CredentialValidityForm({
   credential,
   formVersion,
+  isLoading,
   className,
   onSubmit,
 }: Props) {
   const t = useTranslations("FormVersion");
   const tGeneric = useTranslations("Generic");
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ValiditySchema>({
     resolver: zodResolver(validitySchema),
     defaultValues: {
-      validUntil: formVersion.validFrom ? formVersion.validFrom : undefined,
-      validFrom: formVersion.validUntil ? formVersion.validUntil : undefined,
+      validUntil: getValidFrom(),
+      validFrom: getValidUntil(),
     },
   });
 
-  async function handleSubmit(values: ValiditySchema) {
-    setIsLoading(true);
+  function getValidFrom(): Date | undefined {
+    let validFrom = undefined;
 
-    const { success, error } = await updateCredentialValidityAction(
-      credential.id,
-      values
-    );
+    if (formVersion.validFrom) validFrom = formVersion.validFrom;
+    if (credential.content?.validFrom)
+      validFrom = new Date(credential.content.validFrom);
 
-    if (success) {
-      onSubmit(success.data);
-      toast.success(success.message);
-    } else {
-      toast.error(error.message);
-    }
+    return validFrom;
+  }
 
-    setIsLoading(false);
+  function getValidUntil(): Date | undefined {
+    let validUntil = undefined;
+
+    if (formVersion.validUntil) validUntil = formVersion.validUntil;
+    if (credential.content?.validUntil)
+      validUntil = new Date(credential.content.validUntil);
+
+    return validUntil;
   }
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={form.handleSubmit(onSubmit)}
         className={cn("flex-1 flex flex-col", className)}
       >
         <section className="space-y-4 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">

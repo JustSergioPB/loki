@@ -1,4 +1,11 @@
-import { jsonb, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DbUser } from "./users";
@@ -9,12 +16,18 @@ import {
   UnsignedCredential,
   VerifiableCredential,
 } from "@/lib/types/verifiable-credential";
+import { DbCredentialRequest } from "./credential-requests";
+import { DbPresentation } from "./presentations";
+
+type ContentType =
+  | UnsignedCredential
+  | IdentifiedCredential
+  | VerifiableCredential;
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  content: jsonb().$type<
-    UnsignedCredential | IdentifiedCredential | VerifiableCredential
-  >(),
+  content: jsonb().$type<ContentType>(),
+  isClaimed: boolean().default(false),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),
@@ -50,7 +63,14 @@ export const credentialTableRelations = relations(
 
 export type DbCredential = typeof credentialTable.$inferSelect;
 
-export type CredentialWithIssuer = DbCredential & {
+export type DbCredentialWithIssuer = DbCredential & {
   issuer?: DbUser;
   formVersion: DbFormVersion;
+};
+
+export type DbFullCredential = DbCredential & {
+  formVersion: DbFormVersion;
+  presentationChallenge: DbCredentialRequest;
+  presentations: DbPresentation[];
+  claimChallenge?: DbCredentialRequest;
 };

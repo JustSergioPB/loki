@@ -15,7 +15,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const parsed = await credentialChallengeSchema.parseAsync(body);
     const credential = await claimCredential(parsed);
 
-    return NextResponse.json({ data: credential }, { status: 200 });
+    return NextResponse.json({ data: credential.content }, { status: 200 });
   } catch (error) {
     console.error(error);
     let response: ApiErrorResult<null> = {

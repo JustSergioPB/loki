@@ -14,20 +14,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const parsed = await credentialChallengeSchema.parseAsync(body);
-    const [, credentialId] = await createPresentation(parsed);
-    revalidatePath(`/credentials/${credentialId}/fill`);
+    const [, credential] = await createPresentation(parsed);
+    revalidatePath(`/credentials/${credential.id}/fill`);
 
-    return NextResponse.json({ data: true }, { status: 200 });
+    return NextResponse.json({ data: credential.content }, { status: 200 });
   } catch (error) {
     console.error(error);
-    let response: ApiErrorResult<boolean> = {
+    let response: ApiErrorResult<null> = {
       code: "somethingWentWrong",
       message: "somethingWentWrong",
       status: 500,
     };
 
     if (error instanceof SignatureError) {
-      response = { data: false, status: 200 };
+      response = { data: null, status: 200 };
     }
 
     if (

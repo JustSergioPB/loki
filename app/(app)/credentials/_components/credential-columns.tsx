@@ -3,13 +3,13 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import CredentialDialog from "./credential-dialog";
-import { CredentialWithIssuer } from "@/db/schema/credentials";
+import { DbCredentialWithIssuer } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
 import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import StatusTag from "@/components/app/status-tag";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 
-export const credentialColumns: ColumnDef<CredentialWithIssuer>[] = [
+export const credentialColumns: ColumnDef<DbCredentialWithIssuer>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
