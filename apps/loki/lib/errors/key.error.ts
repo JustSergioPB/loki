@@ -1,8 +1,8 @@
 export const keyErrorMessages = [
-  "revoked",
-  "missingVerificationMethod",
-  "unsupportedType",
-  "unsupportedMultibase",
+  "REVOKED",
+  "MISSING_VERIFICATION_METHOD",
+  "UNSUPPORTED_TYPE",
+  "UNSUPPORTED_MULTIBASE",
 ] as const;
 export type KeyErrorMessage = (typeof keyErrorMessages)[number];
 

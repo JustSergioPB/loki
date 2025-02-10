@@ -17,9 +17,10 @@ export async function POST(
 
   try {
     const parsed = await challengeSchema.parseAsync(body);
+
     await createCredentialPresentation(id, parsed);
 
-    return NextResponse.json({ data: null }, { status: 200 });
+    return NextResponse.json({ data: true }, { status: 200 });
   } catch (error) {
     console.error(error);
     let response: ApiErrorResult<null> = {

@@ -5,9 +5,7 @@ import {
   ChallengeStatus,
 } from "../types/credential-challenge";
 
-export function getChallengeStatus(
-  value: DbChallenge
-): ChallengeStatus {
+export function getChallengeStatus(value: DbChallenge): ChallengeStatus {
   let status: ChallengeStatus = "pending";
 
   if (value.expiresAt < new Date()) {
@@ -21,14 +19,10 @@ export function getChallengeStatus(
   return status;
 }
 
-export function isBurned(
-  value: DbChallenge
-): value is BurnedChallengeSnapshot {
+export function isBurned(value: DbChallenge): value is BurnedChallengeSnapshot {
   return value.code === null;
 }
 
-export function isExpired(
-  value: DbChallenge
-): value is ChallengeSnapshot {
+export function isExpired(value: DbChallenge): value is ChallengeSnapshot {
   return value.expiresAt < new Date();
 }

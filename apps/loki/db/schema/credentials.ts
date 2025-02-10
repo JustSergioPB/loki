@@ -1,4 +1,4 @@
-import { jsonb, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, timestamp, uuid, varchar, boolean } from "drizzle-orm/pg-core";
 import { DbOrg, orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DbFormVersion, formVersionTable } from "./form-versions";
@@ -15,6 +15,7 @@ export const credentialTable = pgTable("credentials", {
   holder: varchar(),
   claims: jsonb().$type<object>(),
   credential: jsonb().$type<VerifiableCredential>(),
+  isFilled: boolean().default(false),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),

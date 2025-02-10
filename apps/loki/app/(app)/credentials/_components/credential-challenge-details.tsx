@@ -6,9 +6,8 @@ import { useTranslations } from "next-intl";
 import PageHeader from "@/components/app/page-header";
 import { DbChallenge } from "@/db/schema/challenges";
 import { LoadingButton } from "@/components/app/loading-button";
-import { BadgeCheck, Calendar, Clock, Database } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import Field from "@/components/app/field";
-import DateDisplay from "@/components/app/date";
 import StatusTag from "@/components/app/status-tag";
 import { useEffect, useState } from "react";
 import * as QrCode from "qrcode";
@@ -17,32 +16,34 @@ import { toast } from "sonner";
 import { ChallengeStatus } from "@/lib/types/credential-challenge";
 import { getChallengeStatus } from "@/lib/helpers/credential-challenge.helper";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DbCredential } from "@/db/schema/credentials";
 
 type Props = {
-  challenge: DbChallenge;
+  credential: Omit<DbCredential, "challenge"> & {
+    challenge: DbChallenge;
+  };
   className?: string;
 };
 
-export default function ChallengeDetails({
-  challenge: challengeState,
-  className,
-}: Props) {
+export default function ChallengeDetails({ credential, className }: Props) {
   const t = useTranslations("Challenge");
-  const tGeneric = useTranslations("Generic");
   const [loading, setLoading] = useState(false);
-  const [challenge, setChallenge] = useState(challengeState);
-  const [status, setStatus] = useState<ChallengeStatus>("pending");
-  const [qrCode, setQrCode] = useState<string>("");
+  const [challenge, setChallenge] = useState(credential.challenge);
+  const [status, setStatus] = useState<ChallengeStatus>(
+    getChallengeStatus(challenge)
+  );
+  const [qrCode, setQrCode] = useState<string | null>(null);
 
   useEffect(() => {
-    generateQR(challenge);
+    generateQR(challenge, credential.id);
     setStatus(getChallengeStatus(challenge));
-  }, [challenge]);
+  }, [challenge, credential]);
 
-  function generateQR(challenge: DbChallenge) {
+  function generateQR(challenge: DbChallenge, credentialId: string) {
     QrCode.toDataURL(
       JSON.stringify({
-        id: challenge.id,
+        id: credentialId,
         code: challenge.code,
       }),
       {
@@ -71,26 +72,15 @@ export default function ChallengeDetails({
       <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 w-1/2">
         <PageHeader title={t("scanTitle")} subtitle={t("scanSubtitle")} />
         <div className="space-y-4">
-          <Image src={qrCode} alt={t("qrCode")} width={250} height={250} />
+          {qrCode ? (
+            <Image src={qrCode} alt={t("qrCode")} width={250} height={250} />
+          ) : (
+            <Skeleton className="size-[250px] rounded-md" />
+          )}
           <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
             <StatusTag variant={CHALLENGE_STATUS_VARIANTS[status]}>
               {t(`statuses.${status}`)}
             </StatusTag>
-          </Field>
-          <Field icon={<Database className="size-4" />} label={tGeneric("id")}>
-            {challenge.id}
-          </Field>
-          <Field
-            icon={<Calendar className="size-4" />}
-            label={tGeneric("createdAt")}
-          >
-            <DateDisplay date={challenge.createdAt} />
-          </Field>
-          <Field
-            icon={<Clock className="size-4" />}
-            label={tGeneric("updatedAt")}
-          >
-            <DateDisplay date={challenge.updatedAt} />
           </Field>
         </div>
       </section>

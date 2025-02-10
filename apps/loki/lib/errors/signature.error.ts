@@ -1,4 +1,4 @@
-export const signatureErrorMessages = ["invalid"] as const;
+export const signatureErrorMessages = ["INVALID"] as const;
 export type SignatureErrorMessage = (typeof signatureErrorMessages)[number];
 
 export class SignatureError extends Error {

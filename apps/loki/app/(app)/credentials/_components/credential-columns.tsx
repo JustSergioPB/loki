@@ -55,6 +55,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("issuer");
     },
     cell: function CellCompodnent({ row }) {
+      console.log(row.original);
       return row.original.issuer?.user?.fullName;
     },
   },

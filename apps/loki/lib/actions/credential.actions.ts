@@ -40,10 +40,10 @@ export async function updateCredentialAction(
 
     const credential = await updateCredential(id, data, authUser);
 
-    return { success: { data: credential, message: t("createSucceded") } };
+    return { success: { data: credential, message: t("updateSucceded") } };
   } catch (error) {
     console.error(error);
-    return { error: { message: t("createFailed") } };
+    return { error: { message: t("updateFailed") } };
   }
 }
 
@@ -59,12 +59,12 @@ export async function signCredentialAction(
     return {
       success: {
         data: credential,
-        message: t("updateContentSucceded"),
+        message: t("signSucceded"),
       },
     };
   } catch (error) {
     console.error(error);
-    return { error: { message: t("updateContentFailed") } };
+    return { error: { message: t("signFailed") } };
   }
 }
 

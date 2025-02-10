@@ -4,20 +4,19 @@ import { PREFFIX_MAP, SupportedPreffix } from "../types/encoding";
 import { baseDecode } from "./encoder";
 import { DIDDocument } from "../types/did";
 import { KeyError } from "../errors/key.error";
-import { SignatureError } from "../errors/signature.error";
+import { SignatureSchema } from "../schemas/signature.schema";
 
 export function validateSignature(
   holder: DIDDocument,
-  label: string,
-  signature: string,
+  signature: SignatureSchema,
   message: string
-): void {
+): boolean {
   const verificationMethod = holder.verificationMethod.find(
-    (v) => v.id === label
+    (v) => v.id === signature.label
   );
 
   if (!verificationMethod) {
-    throw new KeyError("missingVerificationMethod");
+    throw new KeyError("MISSING_VERIFICATION_METHOD");
   }
 
   const { publicKeyMultibase, type, revoked } = verificationMethod;
@@ -25,33 +24,28 @@ export function validateSignature(
   const alg = type as SupportedType;
 
   if (revoked) {
-    throw new KeyError("revoked");
+    throw new KeyError("REVOKED");
   }
 
   if (!PREFFIX_MAP[preffix]) {
-    throw new KeyError("unsupportedMultibase");
+    throw new KeyError("UNSUPPORTED_MULTIBASE");
   }
 
   if (!ALGORITHM_MAP[alg]) {
-    throw new KeyError("unsupportedType");
+    throw new KeyError("UNSUPPORTED_TYPE");
   }
 
   const base = PREFFIX_MAP[preffix];
+  const key = baseDecode(publicKeyMultibase.slice(1), base.base, base.alphabet);
 
-  const isValid = crypto.verify(
+  return crypto.verify(
     ALGORITHM_MAP[alg],
     Buffer.from(message),
     crypto.createPublicKey({
       format: "der",
       type: "spki",
-      key: Buffer.from(
-        baseDecode(publicKeyMultibase.slice(1), base.base, base.alphabet)
-      ),
+      key: Buffer.from(key),
     }),
-    Buffer.from(signature)
+    Buffer.from(signature.value, "base64")
   );
-
-  if (!isValid) {
-    throw new SignatureError("invalid");
-  }
 }

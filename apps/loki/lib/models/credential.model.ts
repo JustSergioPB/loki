@@ -17,12 +17,13 @@ import { ChallengeSchema } from "../schemas/credential-challenge.schema";
 import { ChallengeError } from "../errors/credential-request.error";
 import { isBurned, isExpired } from "../helpers/credential-challenge.helper";
 import { validateSignature } from "../helpers/key.helper";
-import { DbPresentation, presentationTable } from "@/db/schema/presentations";
+import { presentationTable } from "@/db/schema/presentations";
 import { orgTable } from "@/db/schema/orgs";
 import { toVerifiableCredential } from "../helpers/credential.helper";
 import * as canonicalize from "json-canonicalize";
 import { VerifiableCredentialProof } from "../types/verifiable-credential";
 import { getSigningMethod } from "../helpers/did.helper";
+import { SignatureError } from "../errors/signature.error";
 
 //TODO: Add restrictions so a user can't emit a credential using another's org form version
 export async function createCredential(
@@ -108,23 +109,20 @@ export async function createCredentialPresentation(
     throw new ChallengeError("IS_EXPIRED");
   }
 
-  const signatures = [
-    { holder: challenge.holder, signature: challenge.signature },
-    ...challenge.presentations.map((p) => ({
-      holder: p.holder,
-      signature: p.signature,
-    })),
-  ];
-
-  signatures.forEach(({ holder, signature }) =>
-    validateSignature(
-      holder,
-      signature.label,
-      signature.value,
-      //TODO: Patch this
-      query.code!.toString()
+  const valid = challenge.presentations
+    .map(({ holder, signature }) =>
+      validateSignature(
+        holder,
+        signature,
+        //TODO: Patch this
+        query.code!.toString()
+      )
     )
-  );
+    .every((valid) => valid);
+
+  if (!valid) {
+    throw new SignatureError("INVALID");
+  }
 
   return db.transaction(async (tx) => {
     const [updatedChallenge] = await tx
@@ -138,22 +136,21 @@ export async function createCredentialPresentation(
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
-        holder: challenge.holder.controller,
+        holder: challenge.presentations[0].holder.controller,
       })
       .where(eq(credentialTable.id, updatedChallenge.credentialId))
       .returning();
 
-    let insertedPresentations: DbPresentation[] = [];
-
-    if (insertedPresentations) {
-      const presentations = challenge.presentations.map((p) => ({
+    const presentations = challenge.presentations
+      .filter((p) => p.verifiablePresentation)
+      .map((p) => ({
         content: p.verifiablePresentation,
         credentialId: id,
         orgId: updatedCredential.orgId,
       }));
-      insertedPresentations = await tx
-        .insert(presentationTable)
-        .values(presentations);
+
+    if (presentations.length > 0) {
+      await tx.insert(presentationTable).values(presentations);
     }
 
     return updatedCredential;
@@ -162,13 +159,22 @@ export async function createCredentialPresentation(
 
 export async function updateCredential(
   id: string,
-  data: Partial<Pick<DbCredential, "claims" | "validFrom" | "validUntil">>,
+  data: Partial<DbCredential>,
   authUser: AuthUser
 ): Promise<DbCredential> {
+  const update: Partial<DbCredential> = {
+    updatedAt: new Date(),
+  };
+
+  if (data.claims) update.claims = data.claims;
+  if (data.validFrom) update.validFrom = data.validFrom;
+  if (data.validUntil) update.validUntil = data.validUntil;
+  if (data.isFilled) update.isFilled = data.isFilled;
+
   return await db.transaction(async (tx) => {
     const [updatedCredential] = await tx
       .update(credentialTable)
-      .set(data)
+      .set(update)
       .where(eq(credentialTable.id, id))
       .returning();
 
@@ -262,7 +268,8 @@ export async function signCredential(
         code: Math.floor(Math.random() * 1000000),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       })
-      .where(eq(challengeTable.id, id));
+      .where(eq(challengeTable.credentialId, id))
+      .returning();
 
     await tx.insert(auditLogTable).values({
       entityId: updatedCredential.id,
@@ -305,13 +312,16 @@ export async function claimCredential(
     throw new CredentialError("NOT_SIGNED");
   }
 
-  validateSignature(
-    challenge.holder,
-    challenge.signature.label,
-    challenge.signature.value,
+  const isValid = validateSignature(
+    challenge.presentations[0].holder,
+    challenge.presentations[0].signature,
     //TODO: Patch this
     challenges.code!.toString()
   );
+
+  if (!isValid) {
+    throw new SignatureError("INVALID");
+  }
 
   await db
     .update(challengeTable)
@@ -367,6 +377,7 @@ export async function getCredentialById(
     ...credentials,
     formVersion: formVersions,
     challenge: challenges,
+    presentations: [],
   };
 }
 
@@ -396,9 +407,9 @@ export async function searchCredentials(
   return {
     items: queryResult.map(({ credentials, users, dids, formVersions }) => ({
       ...credentials,
-      did: {
+      issuer: {
         ...dids,
-        user: users,
+        user: users ?? undefined,
       },
       formVersion: formVersions,
     })),

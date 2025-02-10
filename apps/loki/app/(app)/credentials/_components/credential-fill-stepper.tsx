@@ -23,12 +23,14 @@ import CredentialClaimsForm from "./credential-claims-form";
 import { DbPresentation } from "@/db/schema/presentations";
 import { LoadingButton } from "@/components/app/loading-button";
 
+type CredentialView = Omit<DbCredential, "formVersion" | "challenge"> & {
+  formVersion: DbFormVersion;
+  challenge: DbChallenge;
+  presentations: DbPresentation[];
+};
+
 type Props = {
-  credential: Omit<DbCredential, "formVersion" | "challenge"> & {
-    formVersion: DbFormVersion;
-    challenge: DbChallenge;
-    presentations: DbPresentation[];
-  };
+  credential: CredentialView;
 };
 
 const items = [
@@ -37,11 +39,11 @@ const items = [
     icon: QrCode,
   },
   {
-    title: "credential",
+    title: "fill",
     icon: FileText,
   },
   {
-    title: "validity",
+    title: "setValidity",
     icon: Clock,
   },
   {
@@ -62,18 +64,25 @@ export default function CredentialFillStepper({
   const tGeneric = useTranslations("Generic");
   const [credential, setCredential] = useState(credentialState);
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<number>(0);
+  const [step, setStep] = useState<number>(getStep(credentialState));
 
   useEffect(() => {
-    let step = 3;
+    const newStep = getStep(credential);
+    setStep(newStep);
+  }, [credential]);
 
-    if (!credential.credential && credential.challenge.code) step = 0;
+  function getStep(credential: CredentialView): number {
+    let step = 0;
+
+    console.log(credential);
+
     if (!credential.challenge.code) step = 1;
     if (credential.claims) step = 2;
+    if (credential.isFilled) step = 3;
     if (credential.credential && credential.challenge.code) step = 4;
 
-    setStep(step);
-  }, [credential]);
+    return step;
+  }
 
   async function updateClaims(values: object) {
     setIsLoading(true);
@@ -82,14 +91,14 @@ export default function CredentialFillStepper({
       claims: values,
     });
 
+    setIsLoading(false);
+
     if (success) {
       setCredential({ ...credential, claims: success.data.claims });
       toast.success(success.message);
     } else {
       toast.error(error.message);
     }
-
-    setIsLoading(false);
   }
 
   async function updateValidity(values: ValiditySchema) {
@@ -98,7 +107,10 @@ export default function CredentialFillStepper({
     const { success, error } = await updateCredentialAction(credential.id, {
       validFrom: values.validFrom,
       validUntil: values.validUntil,
+      isFilled: true,
     });
+
+    setIsLoading(false);
 
     if (success) {
       setCredential({
@@ -110,14 +122,14 @@ export default function CredentialFillStepper({
     } else {
       toast.error(error.message);
     }
-
-    setIsLoading(false);
   }
 
   async function sign() {
     setIsLoading(true);
 
     const { success, error } = await signCredentialAction(credential.id);
+
+    setIsLoading(false);
 
     if (success) {
       if (!success.data.challenge) {
@@ -133,8 +145,6 @@ export default function CredentialFillStepper({
     } else {
       toast.error(error.message);
     }
-
-    setIsLoading(false);
   }
 
   return (
@@ -175,7 +185,7 @@ export default function CredentialFillStepper({
       </section>
       <section className="border-l basis-3/4 flex flex-col">
         {(step === 0 || step === 4) && (
-          <ChallengeDetails challenge={credential.challenge} />
+          <ChallengeDetails credential={credential} />
         )}
         {step === 1 && (
           <CredentialClaimsForm

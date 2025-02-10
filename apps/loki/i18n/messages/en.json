@@ -142,8 +142,7 @@
     "status": "Status",
     "statuses": {
       "empty": "Not filled",
-      "identified": "Identified",
-      "pending": "Pending",
+      "unsigned": "Filled",
       "signed": "Signed"
     },
     "credential": "Credential",
@@ -157,9 +156,11 @@
     "validityTitle": "Validity",
     "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)",
     "form": "Form",
-    "validity": "Validity",
-    "presentations": "Documents",
-    "challenge": "Challenge"
+    "setValidity": "Set validity",
+    "fill": "Fill claims",
+    "present": "Present documents",
+    "sign": "Sign",
+    "claim": "Share"
   },
   "Challenge": {
     "scanTitle": "Documents QR",
