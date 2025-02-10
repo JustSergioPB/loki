@@ -1,80 +1,52 @@
-import {
-  credentialTable,
-  DbCredentialWithIssuer,
-  DbCredential,
-  DbFullCredential,
-} from "@/db/schema/credentials";
+import { credentialTable, DbCredential } from "@/db/schema/credentials";
 import { db } from "@/db";
-import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
-import { eq, and, isNull, asc, count } from "drizzle-orm";
-import { DbDID, didTable } from "@/db/schema/dids";
+import { formVersionTable } from "@/db/schema/form-versions";
+import { eq, and, asc, count } from "drizzle-orm";
+import { didTable } from "@/db/schema/dids";
 import { AuthUser, userTable } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
-import { DIDError } from "../errors/did.error";
+import { DidError } from "../errors/did.error";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
-import * as canonicalize from "json-canonicalize";
-import {
-  SigningCredential,
-  UnsignedCredential,
-} from "../types/verifiable-credential";
-import { DbOrg, orgTable } from "@/db/schema/orgs";
 import { CredentialError } from "../errors/credential.error";
-import { credentialRequestTable } from "@/db/schema/credential-requests";
+import { challengeTable } from "@/db/schema/challenges";
 import { FormVersionError } from "../errors/form-version.error";
-import * as uuid from "uuid";
-import { ValiditySchema } from "../schemas/validity.schema";
 import { getSignature } from "./key.model";
-import { isEmpty, isIdentified, isSigned } from "../helpers/credential.helper";
-import { getFormVersionStatus } from "../helpers/form-version.helper";
-import { getSigningMethod } from "../helpers/did.helper";
-import { CredentialChallengeSchema } from "../schemas/credential-challenge.schema";
-import { CredentialRequestError } from "../errors/credential-request.error";
+import { isPublished } from "../helpers/form-version.helper";
+import { ChallengeSchema } from "../schemas/credential-challenge.schema";
+import { ChallengeError } from "../errors/credential-request.error";
 import { isBurned, isExpired } from "../helpers/credential-challenge.helper";
 import { validateSignature } from "../helpers/key.helper";
-import { presentationTable } from "@/db/schema/presentations";
-
-const BASE_URL = process.env.BASE_URL!;
+import { DbPresentation, presentationTable } from "@/db/schema/presentations";
+import { orgTable } from "@/db/schema/orgs";
+import { toVerifiableCredential } from "../helpers/credential.helper";
+import * as canonicalize from "json-canonicalize";
+import { VerifiableCredentialProof } from "../types/verifiable-credential";
+import { getSigningMethod } from "../helpers/did.helper";
 
 //TODO: Add restrictions so a user can't emit a credential using another's org form version
 export async function createCredential(
   formVersionId: string,
-  authUser?: AuthUser,
-  data?: object
+  authUser: AuthUser
 ): Promise<DbCredential> {
-  const formVersionQuery = await db
+  const query = await db
     .select()
     .from(formVersionTable)
     .where(and(eq(formVersionTable.id, formVersionId)))
-    .innerJoin(orgTable, eq(formVersionTable.orgId, orgTable.id))
-    .leftJoin(
-      didTable,
-      and(
-        eq(didTable.orgId, orgTable.id),
-        authUser
-          ? eq(didTable.userId, authUser.id)
-          : and(eq(didTable.orgId, orgTable.id), isNull(didTable.userId))
-      )
-    );
+    .leftJoin(didTable, and(eq(didTable.userId, authUser.id)));
 
-  if (!formVersionQuery[0]) {
-    throw new FormVersionError("notFound");
+  if (!query[0]) {
+    throw new FormVersionError("NOT_FOUND");
   }
 
-  const { formVersions, dids, orgs } = formVersionQuery[0];
+  const { formVersions, dids } = query[0];
 
-  if (getFormVersionStatus(formVersions) !== "published") {
-    throw new FormVersionError("notPublished");
+  if (!isPublished(formVersions)) {
+    throw new FormVersionError("NOT_PUBLISHED");
   }
 
   if (!dids) {
-    throw new DIDError("missingUserDID");
-  }
-
-  let credential: UnsignedCredential | undefined;
-
-  if (data) {
-    credential = buildCredential(orgs, formVersions, dids, data);
+    throw new DidError("USER_DID_NOT_FOUND");
   }
 
   return await db.transaction(async (tx) => {
@@ -82,84 +54,121 @@ export async function createCredential(
       .insert(credentialTable)
       .values({
         formVersionId,
-        content: credential,
         issuerId: dids.did,
         orgId: formVersions.orgId,
       })
       .returning();
 
     const [insertedChallenge] = await tx
-      .insert(credentialRequestTable)
+      .insert(challengeTable)
       .values({
         orgId: formVersions.orgId,
         credentialId: insertedCredential.id,
       })
       .returning();
 
-    if (authUser) {
-      await tx.insert(auditLogTable).values({
-        entityId: insertedCredential.id,
-        entityType: "credential",
-        value: insertedCredential,
-        orgId: authUser.orgId,
-        userId: authUser.id,
-        action: "create",
-      });
-      await tx.insert(auditLogTable).values({
-        entityId: insertedChallenge.id,
-        entityType: "credentialRequest",
-        value: insertedChallenge,
-        orgId: authUser.orgId,
-        userId: authUser.id,
-        action: "create",
-      });
-    }
+    await tx.insert(auditLogTable).values({
+      entityId: insertedCredential.id,
+      entityType: "credential",
+      value: insertedCredential,
+      orgId: authUser.orgId,
+      userId: authUser.id,
+      action: "create",
+    });
+    await tx.insert(auditLogTable).values({
+      entityId: insertedChallenge.id,
+      entityType: "challenge",
+      value: insertedChallenge,
+      orgId: authUser.orgId,
+      userId: authUser.id,
+      action: "create",
+    });
 
     return insertedCredential;
   });
 }
 
-//TODO: Reevaluate if a credential can be created by an issuer and then signed by another using that user's keys
-export async function updateCredentialContent(
+export async function createCredentialPresentation(
   id: string,
-  credentialSubject: object,
-  authUser: AuthUser,
-  validity?: ValiditySchema
-) {
-  const query = await db
-    .select()
-    .from(credentialTable)
-    .where(and(eq(credentialTable.id, id)))
-    .innerJoin(orgTable, eq(credentialTable.orgId, credentialTable.orgId))
-    .innerJoin(
-      formVersionTable,
-      eq(credentialTable.formVersionId, formVersionTable.id)
+  challenge: ChallengeSchema
+): Promise<DbCredential> {
+  const query = await db.query.challengeTable.findFirst({
+    where: eq(challengeTable.credentialId, id),
+  });
+
+  if (!query) {
+    throw new ChallengeError("NOT_FOUND");
+  }
+
+  if (isBurned(query)) {
+    throw new ChallengeError("IS_BURNT");
+  }
+
+  if (isExpired(query)) {
+    throw new ChallengeError("IS_EXPIRED");
+  }
+
+  const signatures = [
+    { holder: challenge.holder, signature: challenge.signature },
+    ...challenge.presentations.map((p) => ({
+      holder: p.holder,
+      signature: p.signature,
+    })),
+  ];
+
+  signatures.forEach(({ holder, signature }) =>
+    validateSignature(
+      holder,
+      signature.label,
+      signature.value,
+      //TODO: Patch this
+      query.code!.toString()
     )
-    .innerJoin(didTable, eq(credentialTable.issuerId, didTable.did));
+  );
 
-  if (!query[0]) {
-    throw new CredentialError("notFound");
-  }
+  return db.transaction(async (tx) => {
+    const [updatedChallenge] = await tx
+      .update(challengeTable)
+      .set({
+        code: null,
+      })
+      .where(eq(challengeTable.id, query.id))
+      .returning();
 
-  const { credentials, formVersions, dids, orgs } = query[0];
-
-  if (!isEmpty(credentials)) {
-    throw new CredentialError("notUnsigned");
-  }
-
-  return await db.transaction(async (tx) => {
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({
-        content: buildCredential(
-          orgs,
-          formVersions,
-          dids,
-          credentialSubject,
-          validity?.validFrom,
-          validity?.validUntil
-        ),
+        holder: challenge.holder.controller,
       })
+      .where(eq(credentialTable.id, updatedChallenge.credentialId))
+      .returning();
+
+    let insertedPresentations: DbPresentation[] = [];
+
+    if (insertedPresentations) {
+      const presentations = challenge.presentations.map((p) => ({
+        content: p.verifiablePresentation,
+        credentialId: id,
+        orgId: updatedCredential.orgId,
+      }));
+      insertedPresentations = await tx
+        .insert(presentationTable)
+        .values(presentations);
+    }
+
+    return updatedCredential;
+  });
+}
+
+export async function updateCredential(
+  id: string,
+  data: Partial<Pick<DbCredential, "claims" | "validFrom" | "validUntil">>,
+  authUser: AuthUser
+): Promise<DbCredential> {
+  return await db.transaction(async (tx) => {
+    const [updatedCredential] = await tx
+      .update(credentialTable)
+      .set(data)
       .where(eq(credentialTable.id, id))
       .returning();
 
@@ -176,184 +185,140 @@ export async function updateCredentialContent(
   });
 }
 
-export async function signCredential(id: string): Promise<DbCredential> {
-  const credentialQuery = await db
-    .select()
-    .from(credentialTable)
-    .where(eq(credentialTable.id, id))
-    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId));
-
-  if (!credentialQuery[0]) {
-    throw new CredentialError("notFound");
-  }
-
-  const { credentials, dids } = credentialQuery[0];
-
-  const verificationMethod = getSigningMethod(dids);
-
-  if (!isIdentified(credentials)) {
-    throw new CredentialError("notIdentified");
-  }
-
-  const credential: SigningCredential = {
-    ...credentials.content,
-    proof: {
-      type: "DataIntegrityProof",
-      created: new Date().toISOString(),
-      cryptosuite: verificationMethod.type,
-      verificationMethod: verificationMethod.id,
-      proofPurpose: "assertionMethod",
-    },
-  };
-
-  credential.proof.proofValue = await getSignature(
-    verificationMethod.id,
-    canonicalize.canonicalize(credential)
-  );
-
-  const [updatedCredential] = await db
-    .update(credentialTable)
-    .set({
-      content: credential,
-    })
-    .where(eq(credentialTable.id, id))
-    .returning();
-
-  return updatedCredential;
-}
-
-export async function claimCredential(
-  challenge: CredentialChallengeSchema
+export async function signCredential(
+  id: string,
+  authUser: AuthUser
 ): Promise<DbCredential> {
-  const query = await db
-    .select()
-    .from(credentialRequestTable)
-    .where(eq(credentialRequestTable.id, challenge.id))
-    .innerJoin(
-      credentialTable,
-      eq(credentialRequestTable.credentialId, credentialTable.id)
-    );
+  const BASE_URL = process.env.BASE_URL;
 
-  if (!query[0]) {
-    throw new CredentialRequestError("notFound");
+  if (!BASE_URL) {
+    throw new Error("MISSING_BASE_URL");
   }
 
-  const { credentialRequests, credentials } = query[0];
-
-  if (isBurned(credentialRequests)) {
-    throw new CredentialRequestError("isBurnt");
-  }
-
-  if (isExpired(credentialRequests)) {
-    throw new CredentialRequestError("isExpired");
-  }
-
-  if (!isSigned(credentials)) {
-    throw new CredentialError("notSigned");
-  }
-
-  const { holder, signature } = challenge;
-
-  if (holder.controller !== credentials.content.credentialSubject.id) {
-    throw new CredentialError("holderMismatch");
-  }
-
-  validateSignature(
-    holder,
-    signature.label,
-    signature.value,
-    //TODO: Patch this
-    credentialRequests.code!.toString()
-  );
-
-  await db
-    .update(credentialRequestTable)
-    .set({
-      code: null,
-    })
-    .where(eq(credentialRequestTable.id, credentials.id))
-    .returning();
-
-  return credentials;
-}
-
-export async function getCredentialById(
-  id: string,
-  authUser: AuthUser
-): Promise<DbCredential | null> {
-  const credential = await db.query.credentialTable.findFirst({
-    where: and(
-      eq(credentialTable.orgId, authUser.orgId),
-      eq(credentialTable.id, id)
-    ),
-  });
-
-  if (!credential) {
-    return null;
-  }
-
-  return credential;
-}
-
-export async function getFullCredentialbyId(
-  id: string,
-  authUser: AuthUser
-): Promise<DbFullCredential | null> {
   const query = await db
     .select()
     .from(credentialTable)
-    .where(
-      and(eq(credentialTable.orgId, authUser.orgId), eq(credentialTable.id, id))
-    )
+    .where(eq(credentialTable.id, id))
+    .innerJoin(orgTable, eq(orgTable.id, credentialTable.orgId))
+    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
     .innerJoin(
       formVersionTable,
       eq(formVersionTable.id, credentialTable.formVersionId)
-    )
-    .innerJoin(
-      credentialRequestTable,
-      eq(credentialRequestTable.credentialId, id)
-    )
-    .leftJoin(
-      presentationTable,
-      eq(presentationTable.challengeId, credentialRequestTable.id)
     );
 
-  if (query.length === 0) {
-    return null;
+  if (!query[0]) {
+    throw new CredentialError("NOT_FOUND");
   }
+
+  const { credentials, dids, orgs, formVersions } = query[0];
+
+  if (!credentials.holder || !credentials.claims) {
+    throw new Error("IMCOMPLETE");
+  }
+
+  const filledCredential = toVerifiableCredential(BASE_URL, {
+    ...credentials,
+    holder: credentials.holder,
+    claims: credentials.claims,
+    issuer: dids,
+    org: orgs,
+    formVersion: formVersions,
+  });
+
+  const verificationMethod = getSigningMethod(dids);
+
+  const proof: VerifiableCredentialProof = {
+    type: "DataIntegrityProof",
+    created: new Date().toISOString(),
+    cryptosuite: verificationMethod.type,
+    verificationMethod: verificationMethod.id,
+    proofPurpose: "assertionMethod",
+    proofValue: "",
+  };
+
+  const signature = await getSignature(
+    verificationMethod.id,
+    canonicalize.canonicalize({ ...filledCredential, proof })
+  );
+
+  return await db.transaction(async (tx) => {
+    const [updatedCredential] = await tx
+      .update(credentialTable)
+      .set({
+        credential: {
+          ...filledCredential,
+          proof: {
+            ...proof,
+            proofValue: signature,
+          },
+        },
+      })
+      .where(eq(credentialTable.id, id))
+      .returning();
+
+    await tx
+      .update(challengeTable)
+      .set({
+        code: Math.floor(Math.random() * 1000000),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      })
+      .where(eq(challengeTable.id, id));
+
+    await tx.insert(auditLogTable).values({
+      entityId: updatedCredential.id,
+      entityType: "credential",
+      value: updatedCredential,
+      orgId: authUser.orgId,
+      userId: authUser.id,
+      action: "update",
+    });
+
+    return updatedCredential;
+  });
 }
 
-export async function searchCredentials(
-  authUser: AuthUser,
-  query: Query<DbCredentialWithIssuer>
-): Promise<QueryResult<DbCredentialWithIssuer>> {
-  const queryResult = await db
+export async function claimCredential(
+  id: string,
+  challenge: ChallengeSchema
+): Promise<DbCredential> {
+  const query = await db
     .select()
     .from(credentialTable)
-    .where(eq(credentialTable.orgId, authUser.orgId))
-    .limit(query.pageSize)
-    .offset(query.page * query.pageSize)
-    .orderBy(asc(credentialTable.createdAt))
-    .innerJoin(
-      formVersionTable,
-      eq(credentialTable.formVersionId, formVersionTable.id)
-    )
-    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
-    .leftJoin(userTable, eq(userTable.id, didTable.userId));
+    .where(eq(credentialTable.id, id))
+    .innerJoin(challengeTable, eq(challengeTable.credentialId, id));
 
-  const [{ count: countResult }] = await db
-    .select({ count: count() })
-    .from(credentialTable)
-    .where(eq(credentialTable.orgId, authUser.orgId));
+  if (!query[0]) {
+    throw new ChallengeError("NOT_FOUND");
+  }
 
-  return {
-    items: queryResult.map(({ credentials, users, formVersions }) => ({
-      ...credentials,
-      issuer: users ?? undefined,
-      formVersion: formVersions,
-    })),
-    count: countResult,
-  };
+  const { credentials, challenges } = query[0];
+
+  if (isBurned(challenges)) {
+    throw new ChallengeError("IS_BURNT");
+  }
+
+  if (isExpired(challenges)) {
+    throw new ChallengeError("IS_EXPIRED");
+  }
+
+  if (!credentials.credential) {
+    throw new CredentialError("NOT_SIGNED");
+  }
+
+  validateSignature(
+    challenge.holder,
+    challenge.signature.label,
+    challenge.signature.value,
+    //TODO: Patch this
+    challenges.code!.toString()
+  );
+
+  await db
+    .update(challengeTable)
+    .set({ code: null })
+    .where(eq(challengeTable.id, challenges.id));
+
+  return credentials;
 }
 
 export async function deleteCredential(
@@ -376,30 +341,67 @@ export async function deleteCredential(
   });
 }
 
-function buildCredential(
-  org: DbOrg,
-  formVersion: DbFormVersion,
-  issuer: DbDID,
-  data: object,
-  validFrom?: Date,
-  validUntil?: Date
-): UnsignedCredential {
+export async function getCredentialById(
+  id: string,
+  authUser: AuthUser
+): Promise<DbCredential | null> {
+  const query = await db
+    .select()
+    .from(credentialTable)
+    .where(
+      and(eq(credentialTable.orgId, authUser.orgId), eq(credentialTable.id, id))
+    )
+    .innerJoin(
+      formVersionTable,
+      eq(credentialTable.formVersionId, formVersionTable.id)
+    )
+    .innerJoin(challengeTable, eq(challengeTable.credentialId, id));
+
+  if (!query[0]) {
+    return null;
+  }
+
+  const { formVersions, credentials, challenges } = query[0];
+
   return {
-    "@context": formVersion.credentialContext,
-    type: formVersion.credentialTypes,
-    id: `${BASE_URL}/credentials/${uuid.v7()}`,
-    title: formVersion.title,
-    description: formVersion.description ?? undefined,
-    validFrom: validFrom ? validFrom.toISOString() : undefined,
-    validUntil: validUntil ? validUntil.toISOString() : undefined,
-    issuer: {
-      name: org.name,
-      id: `${BASE_URL}/dids/${issuer.document.controller}`,
-    },
-    credentialSubject: data,
-    credentialSchema: {
-      id: `${BASE_URL}/form/${formVersion.id}`,
-      type: formVersion.types[0],
-    },
+    ...credentials,
+    formVersion: formVersions,
+    challenge: challenges,
+  };
+}
+
+export async function searchCredentials(
+  authUser: AuthUser,
+  query: Query<DbCredential>
+): Promise<QueryResult<DbCredential>> {
+  const queryResult = await db
+    .select()
+    .from(credentialTable)
+    .where(eq(credentialTable.orgId, authUser.orgId))
+    .limit(query.pageSize)
+    .offset(query.page * query.pageSize)
+    .orderBy(asc(credentialTable.createdAt))
+    .innerJoin(
+      formVersionTable,
+      eq(credentialTable.formVersionId, formVersionTable.id)
+    )
+    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
+    .leftJoin(userTable, eq(userTable.id, didTable.userId));
+
+  const [{ count: countResult }] = await db
+    .select({ count: count() })
+    .from(credentialTable)
+    .where(eq(credentialTable.orgId, authUser.orgId));
+
+  return {
+    items: queryResult.map(({ credentials, users, dids, formVersions }) => ({
+      ...credentials,
+      did: {
+        ...dids,
+        user: users,
+      },
+      formVersion: formVersions,
+    })),
+    count: countResult,
   };
 }

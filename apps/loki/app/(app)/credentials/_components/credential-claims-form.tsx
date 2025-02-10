@@ -16,19 +16,18 @@ import JsonSchemaForm from "./json-schema-form";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DbFormVersion } from "@/db/schema/form-versions";
-import { DbCredential } from "@/db/schema/credentials";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  credential: DbCredential;
+  claims: object | null;
   formVersion: DbFormVersion;
   className?: string;
   disabled?: boolean;
-  onSubmit: (content: object) => void;
+  onSubmit: (claims: object) => void;
 };
 
-export default function CredentialContentForm({
-  credential,
+export default function CredentialClaimsForm({
+  claims,
   formVersion,
   className,
   disabled,
@@ -40,9 +39,7 @@ export default function CredentialContentForm({
       credentialSubjectToZod(formVersion.credentialSubject)
     ),
     defaultValues:
-      credential.content !== null
-        ? credential.content.credentialSubject
-        : getDefaultCredentialSubject(formVersion.credentialSubject),
+      claims ?? getDefaultCredentialSubject(formVersion.credentialSubject),
   });
 
   return (

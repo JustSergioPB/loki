@@ -7,7 +7,8 @@ import { credentialTable } from "./credentials";
 import { didTable } from "./dids";
 import { formVersionTable } from "./form-versions";
 import { orgStatus, orgTiers } from "@/lib/types/org";
-import { credentialRequestTable } from "./credential-requests";
+import { challengeTable } from "./challenges";
+import { presentationTable } from "./presentations";
 
 export const orgTier = pgEnum("orgTier", orgTiers);
 export const orgStatuses = pgEnum("orgStatus", orgStatus);
@@ -29,10 +30,11 @@ export const orgTableRelations = relations(orgTable, ({ many }) => ({
   auditLogs: many(auditLogTable),
   crendetials: many(credentialTable),
   dids: many(didTable),
-  credentialsRequests: many(credentialRequestTable),
+  challenges: many(challengeTable),
   formVersions: many(formVersionTable),
   userTokens: many(userTokenTable),
   users: many(userTable),
+  presentations: many(presentationTable),
 }));
 
 export type DbOrg = typeof orgTable.$inferSelect;

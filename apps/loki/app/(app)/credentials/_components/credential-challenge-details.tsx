@@ -4,7 +4,7 @@ import Image from "next/image";
 import { CHALLENGE_STATUS_VARIANTS } from "@/lib/constants/credential-challenge.const";
 import { useTranslations } from "next-intl";
 import PageHeader from "@/components/app/page-header";
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
+import { DbChallenge } from "@/db/schema/challenges";
 import { LoadingButton } from "@/components/app/loading-button";
 import { BadgeCheck, Calendar, Clock, Database } from "lucide-react";
 import Field from "@/components/app/field";
@@ -12,34 +12,34 @@ import DateDisplay from "@/components/app/date";
 import StatusTag from "@/components/app/status-tag";
 import { useEffect, useState } from "react";
 import * as QrCode from "qrcode";
-import { renewCredentialRequestAction } from "@/lib/actions/credential-request.actions";
+import { renewChallengeAction } from "@/lib/actions/credential-request.actions";
 import { toast } from "sonner";
-import { CredentialChallengeStatus } from "@/lib/types/credential-challenge";
-import { getCredentialChallengeStatus } from "@/lib/helpers/credential-challenge.helper";
+import { ChallengeStatus } from "@/lib/types/credential-challenge";
+import { getChallengeStatus } from "@/lib/helpers/credential-challenge.helper";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  challenge: DbCredentialRequest;
+  challenge: DbChallenge;
   className?: string;
 };
 
-export default function CredentialChallengeDetails({
+export default function ChallengeDetails({
   challenge: challengeState,
   className,
 }: Props) {
-  const t = useTranslations("CredentialRequest");
+  const t = useTranslations("Challenge");
   const tGeneric = useTranslations("Generic");
   const [loading, setLoading] = useState(false);
   const [challenge, setChallenge] = useState(challengeState);
-  const [status, setStatus] = useState<CredentialChallengeStatus>("pending");
+  const [status, setStatus] = useState<ChallengeStatus>("pending");
   const [qrCode, setQrCode] = useState<string>("");
 
   useEffect(() => {
     generateQR(challenge);
-    setStatus(getCredentialChallengeStatus(challenge));
+    setStatus(getChallengeStatus(challenge));
   }, [challenge]);
 
-  function generateQR(challenge: DbCredentialRequest) {
+  function generateQR(challenge: DbChallenge) {
     QrCode.toDataURL(
       JSON.stringify({
         id: challenge.id,
@@ -54,7 +54,7 @@ export default function CredentialChallengeDetails({
   async function onClick() {
     setLoading(true);
 
-    const { success, error } = await renewCredentialRequestAction(challenge.id);
+    const { success, error } = await renewChallengeAction(challenge.id);
 
     if (success) {
       setChallenge(success.data);

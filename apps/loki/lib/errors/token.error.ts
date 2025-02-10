@@ -1,5 +1,5 @@
 export const tokenErrorMessages = [
-  "notFound",
+  "NOT_FOUND",
   "expired",
   "burnt",
   "invalidContext",

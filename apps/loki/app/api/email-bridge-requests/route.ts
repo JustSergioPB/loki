@@ -1,4 +1,4 @@
-import { createEmailCredentialRequest } from "@/lib/models/email-credential-request.model";
+import { createEmailChallenge } from "@/lib/models/email-credential-request.model";
 import { emailBridgeRequestSchema } from "@/lib/schemas/email-bridge-request.schema";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
@@ -8,9 +8,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const parsed = await emailBridgeRequestSchema.parseAsync(body);
-    const credentialRequest = await createEmailCredentialRequest(parsed);
+    const challenge = await createEmailChallenge(parsed);
 
-    return NextResponse.json({ id: credentialRequest.id }, { status: 200 });
+    return NextResponse.json({ id: challenge.id }, { status: 200 });
   } catch (error) {
     console.error(error);
     if (error instanceof ZodError) {

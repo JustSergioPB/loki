@@ -27,7 +27,7 @@
   },
   "User": {
     "alreadyExists": "User already exists",
-    "notFound": "User not found",
+    "NOT_FOUND": "User not found",
     "fullName": "Full name",
     "fullNamePlaceholder": "John Doe",
     "user": "User",
@@ -161,7 +161,7 @@
     "presentations": "Documents",
     "challenge": "Challenge"
   },
-  "CredentialRequest": {
+  "Challenge": {
     "scanTitle": "Documents QR",
     "scanSubtitle": "By scanning this QR the holder will be able to share verified documents and prove his/her identity",
     "renew": "Renew",
@@ -203,7 +203,7 @@
     "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
     "deleteLabel": "Type the form's title to confirm",
     "searchSucceeded": "Your search may have results",
-    "searchFailed": "Something went wrong with your search",
+    "SEARCH_FAILED": "Something went wrong with your search",
     "version": "Version",
     "status": "Status",
     "description": "Description",
@@ -258,7 +258,7 @@
     "reset": "Reset password"
   },
   "UserToken": {
-    "notFound": "Token not found",
+    "NOT_FOUND": "Token not found",
     "expired": "Token has expired",
     "burnt": "Token has already been used"
   },

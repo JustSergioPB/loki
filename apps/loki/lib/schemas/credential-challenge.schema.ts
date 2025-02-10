@@ -3,8 +3,7 @@ import { VerifiablePresentation } from "../types/verifiable-presentation";
 import { signatureSchema } from "./signature.schema";
 import { DIDDocument } from "../types/did";
 
-export const credentialChallengeSchema = z.object({
-  id: z.string().uuid().min(1, { message: "requiredField" }),
+export const challengeSchema = z.object({
   signature: signatureSchema,
   holder: z.custom<DIDDocument>(),
   presentations: z.array(
@@ -16,6 +15,4 @@ export const credentialChallengeSchema = z.object({
   ),
 });
 
-export type CredentialChallengeSchema = z.infer<
-  typeof credentialChallengeSchema
->;
+export type ChallengeSchema = z.infer<typeof challengeSchema>;

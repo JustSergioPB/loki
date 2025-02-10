@@ -6,11 +6,11 @@ import { authorize } from "../helpers/dal";
 import {
   createCredential,
   deleteCredential,
-  updateCredentialContent,
+  signCredential,
+  updateCredential,
 } from "../models/credential.model";
 import { DbCredential } from "@/db/schema/credentials";
 import { revalidatePath } from "next/cache";
-import { ValiditySchema } from "../schemas/validity.schema";
 
 export async function createCredentialAction(
   formVersionId: string
@@ -29,21 +29,32 @@ export async function createCredentialAction(
   }
 }
 
-export async function updateCredentialContentAction(
+export async function updateCredentialAction(
   id: string,
-  credentialSubject: object,
-  validity?: ValiditySchema
+  data: Partial<DbCredential>
 ): Promise<ActionResult<DbCredential>> {
   const t = await getTranslations("Credential");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
-    const credential = await updateCredentialContent(
-      id,
-      credentialSubject,
-      authUser,
-      validity
-    );
+
+    const credential = await updateCredential(id, data, authUser);
+
+    return { success: { data: credential, message: t("createSucceded") } };
+  } catch (error) {
+    console.error(error);
+    return { error: { message: t("createFailed") } };
+  }
+}
+
+export async function signCredentialAction(
+  id: string
+): Promise<ActionResult<DbCredential>> {
+  const t = await getTranslations("Credential");
+
+  try {
+    const authUser = await authorize(["admin", "org-admin"]);
+    const credential = await signCredential(id, authUser);
 
     return {
       success: {

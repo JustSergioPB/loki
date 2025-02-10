@@ -1,14 +1,14 @@
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
+import { DbChallenge } from "@/db/schema/challenges";
 import {
   BurnedChallengeSnapshot,
   ChallengeSnapshot,
-  CredentialChallengeStatus,
+  ChallengeStatus,
 } from "../types/credential-challenge";
 
-export function getCredentialChallengeStatus(
-  value: DbCredentialRequest
-): CredentialChallengeStatus {
-  let status: CredentialChallengeStatus = "pending";
+export function getChallengeStatus(
+  value: DbChallenge
+): ChallengeStatus {
+  let status: ChallengeStatus = "pending";
 
   if (value.expiresAt < new Date()) {
     status = "expired";
@@ -22,13 +22,13 @@ export function getCredentialChallengeStatus(
 }
 
 export function isBurned(
-  value: DbCredentialRequest
+  value: DbChallenge
 ): value is BurnedChallengeSnapshot {
   return value.code === null;
 }
 
 export function isExpired(
-  value: DbCredentialRequest
+  value: DbChallenge
 ): value is ChallengeSnapshot {
   return value.expiresAt < new Date();
 }

@@ -166,11 +166,11 @@ export async function archiveFormVersion(
   });
 
   if (!latestVersionQuery) {
-    throw new FormVersionError("latestVersionNotFound");
+    throw new FormVersionError("PREV_VER_NOT_FOUND");
   }
 
   if (getFormVersionStatus(latestVersionQuery) !== "published") {
-    throw new FormVersionError("cantBeArchived");
+    throw new FormVersionError("CANT_BE_ARCHIVED");
   }
 
   return await db.transaction(async (tx) => {
@@ -225,11 +225,11 @@ export async function publishFormVersion(
   });
 
   if (!latestVersionQuery) {
-    throw new FormVersionError("latestVersionNotFound");
+    throw new FormVersionError("PREV_VER_NOT_FOUND");
   }
 
   if (getFormVersionStatus(latestVersionQuery) !== "draft") {
-    throw new FormVersionError("cantBePublished");
+    throw new FormVersionError("CANT_BE_PUBLISHED");
   }
 
   const credentialSchema = buildCredentialSchema(latestVersionQuery);

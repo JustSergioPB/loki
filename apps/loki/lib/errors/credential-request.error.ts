@@ -1,13 +1,12 @@
-export const credentialRequestErrorMessages = [
-  "notFound",
-  "isBurnt",
-  "isExpired",
+export const challengeErrorMessages = [
+  "NOT_FOUND",
+  "IS_BURNT",
+  "IS_EXPIRED",
 ] as const;
-export type CredentialRequestErrorMessage =
-  (typeof credentialRequestErrorMessages)[number];
+export type ChallengeErrorMessage = (typeof challengeErrorMessages)[number];
 
-export class CredentialRequestError extends Error {
-  constructor(message: CredentialRequestErrorMessage) {
+export class ChallengeError extends Error {
+  constructor(message: ChallengeErrorMessage) {
     super(message);
     this.name = message;
   }

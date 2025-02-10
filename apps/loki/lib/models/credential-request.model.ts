@@ -1,31 +1,28 @@
 import { db } from "@/db";
-import {
-  credentialRequestTable,
-  DbCredentialRequest,
-} from "@/db/schema/credential-requests";
+import { challengeTable, DbChallenge } from "@/db/schema/challenges";
 import { and, eq } from "drizzle-orm";
-import { CredentialRequestError } from "../errors/credential-request.error";
+import { ChallengeError } from "../errors/credential-request.error";
 import { AuthUser } from "@/db/schema/users";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { credentialTable } from "@/db/schema/credentials";
 import { CredentialError } from "../errors/credential.error";
 import { isBurned } from "../helpers/credential-challenge.helper";
 
-export async function createCredentialRequest(
+export async function createChallenge(
   credentialId: string,
   authUser?: AuthUser
-): Promise<DbCredentialRequest> {
+): Promise<DbChallenge> {
   const credential = await db.query.credentialTable.findFirst({
     where: eq(credentialTable.id, credentialId),
   });
 
   if (!credential) {
-    throw new CredentialError("notFound");
+    throw new CredentialError("NOT_FOUND");
   }
 
   return await db.transaction(async (tx) => {
-    const [insertedCredentialRequest] = await tx
-      .insert(credentialRequestTable)
+    const [insertedChallenge] = await tx
+      .insert(challengeTable)
       .values({
         orgId: credential.orgId,
         credentialId,
@@ -34,54 +31,54 @@ export async function createCredentialRequest(
 
     if (authUser) {
       await tx.insert(auditLogTable).values({
-        entityId: insertedCredentialRequest.id,
-        entityType: "credentialRequest",
-        value: insertedCredentialRequest,
+        entityId: insertedChallenge.id,
+        entityType: "challenge",
+        value: insertedChallenge,
         orgId: authUser.orgId,
         userId: authUser.id,
         action: "create",
       });
     }
 
-    return insertedCredentialRequest;
+    return insertedChallenge;
   });
 }
 
-export async function renewCredentialRequest(
+export async function renewChallenge(
   id: string,
   authUser?: AuthUser
-): Promise<DbCredentialRequest> {
-  const credentialRequest = await db.query.credentialRequestTable.findFirst({
+): Promise<DbChallenge> {
+  const challenge = await db.query.challengeTable.findFirst({
     where: and(
-      eq(credentialRequestTable.id, id),
-      authUser ? eq(credentialRequestTable.orgId, authUser.orgId) : undefined
+      eq(challengeTable.id, id),
+      authUser ? eq(challengeTable.orgId, authUser.orgId) : undefined
     ),
   });
 
-  if (!credentialRequest) {
-    throw new CredentialRequestError("notFound");
+  if (!challenge) {
+    throw new ChallengeError("NOT_FOUND");
   }
 
-  if (isBurned(credentialRequest)) {
-    throw new CredentialRequestError("isBurnt");
+  if (isBurned(challenge)) {
+    throw new ChallengeError("IS_BURNT");
   }
 
   return db.transaction(async (tx) => {
-    const [updatedCredentialRequest] = await tx
-      .update(credentialRequestTable)
+    const [updatedChallenge] = await tx
+      .update(challengeTable)
       .set({
         code: Math.floor(Math.random() * 1000000),
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       })
-      .where(eq(credentialRequestTable.id, id))
+      .where(eq(challengeTable.id, id))
       .returning();
 
     if (authUser) {
       await tx.insert(auditLogTable).values([
         {
-          entityId: updatedCredentialRequest.id,
-          entityType: "credentialRequest",
-          value: updatedCredentialRequest,
+          entityId: updatedChallenge.id,
+          entityType: "challenge",
+          value: updatedChallenge,
           orgId: authUser.orgId,
           userId: authUser.id,
           action: "create",
@@ -89,6 +86,6 @@ export async function renewCredentialRequest(
       ]);
     }
 
-    return updatedCredentialRequest;
+    return updatedChallenge;
   });
 }

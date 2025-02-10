@@ -12,35 +12,28 @@ export type VerifiableCredentialIssuer = {
   name: string;
 };
 
+export type VerifiableCredentialSchema = {
+  id: string;
+  type: string;
+};
+
+export type VerifiableCredentialSubject = {
+  id: string;
+  [x: string]: unknown;
+};
+
 export type VerifiableCredential = {
   "@context": string[];
   type: string[];
   id: string;
   title: string;
-  description: string | undefined;
+  description?: string;
   issuer: VerifiableCredentialIssuer;
-  validFrom: string | undefined;
-  validUntil: string | undefined;
-  credentialSubject: {
-    id: string;
-    [x: string]: unknown;
-  };
-  credentialSchema: {
-    id: string;
-    type: string;
-  };
+  validFrom?: string;
+  validUntil?: string;
+  credentialSubject: VerifiableCredentialSubject;
+  credentialSchema: VerifiableCredentialSchema;
   proof: VerifiableCredentialProof;
 };
 
-export type SigningCredential = Omit<VerifiableCredential, "proof"> & {
-  proof: Partial<VerifiableCredentialProof>;
-};
-
-export type UnsignedCredential = Omit<
-  VerifiableCredential,
-  "proof" | "credentialSubject"
-> & {
-  credentialSubject: object;
-};
-
-export type IdentifiedCredential = Omit<VerifiableCredential, "proof">;
+export type FilledCredential = Omit<VerifiableCredential, "proof">;

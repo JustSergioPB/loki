@@ -13,7 +13,7 @@ import {
 import { orgTable } from "./orgs";
 import { formVersionStatuses } from "@/lib/types/form-version";
 import { credentialTable } from "./credentials";
-import { credentialRequestTable } from "./credential-requests";
+import { challengeTable } from "./challenges";
 import { formRequirementTable } from "./form-requirements";
 import { JsonObjectType } from "@/lib/types/json-schema";
 import { CredentialSchema } from "@/lib/types/credential-schema";
@@ -67,7 +67,7 @@ export const formVersionTableRelations = relations(
   formVersionTable,
   ({ one, many }) => ({
     credentials: many(credentialTable),
-    emailBridgeRequests: many(credentialRequestTable),
+    emailBridgeRequests: many(challengeTable),
     requirements: many(formRequirementTable),
     org: one(orgTable, {
       fields: [formVersionTable.orgId],

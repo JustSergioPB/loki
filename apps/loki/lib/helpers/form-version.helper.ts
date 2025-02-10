@@ -1,5 +1,5 @@
 import { DbFormVersion } from "@/db/schema/form-versions";
-import { FormVersionStatus } from "../types/form-version";
+import { FormVersionStatus, PublishedFormVersion } from "../types/form-version";
 
 export function getFormVersionStatus(value: DbFormVersion): FormVersionStatus {
   let status: FormVersionStatus = "draft";
@@ -13,4 +13,10 @@ export function getFormVersionStatus(value: DbFormVersion): FormVersionStatus {
   }
 
   return status;
+}
+
+export function isPublished(
+  value: DbFormVersion
+): value is PublishedFormVersion {
+  return value.credentialSchema !== null;
 }

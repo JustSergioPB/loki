@@ -1,21 +1,17 @@
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
+import { DbChallenge } from "@/db/schema/challenges";
 
-export const credentialChallengeStatus = [
+export const challengeStatus = [
   "used",
   "expired",
   "pending",
 ] as const;
-export type CredentialChallengeStatus =
-  (typeof credentialChallengeStatus)[number];
+export type ChallengeStatus =
+  (typeof challengeStatus)[number];
 
-export const credentialChallengeContext = ["present", "claim"] as const;
-export type CredentialChallengeContext =
-  (typeof credentialChallengeContext)[number];
-
-export type ChallengeSnapshot = Omit<DbCredentialRequest, "code"> & {
+export type ChallengeSnapshot = Omit<DbChallenge, "code"> & {
   code: number;
 };
 
-export type BurnedChallengeSnapshot = Omit<DbCredentialRequest, "code"> & {
+export type BurnedChallengeSnapshot = Omit<DbChallenge, "code"> & {
   code: null;
 };

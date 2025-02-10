@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/helpers/dal";
-import { forbidden, notFound, redirect } from "next/navigation";
+import { forbidden, NOT_FOUND, redirect } from "next/navigation";
 import { getFormVersionById } from "@/lib/models/form-version.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
@@ -52,7 +52,7 @@ export default async function Form({
   const formVersion = await getFormVersionById(id);
 
   if (!formVersion) {
-    notFound();
+    NOT_FOUND();
   }
 
   if (user.orgId !== formVersion.orgId) {

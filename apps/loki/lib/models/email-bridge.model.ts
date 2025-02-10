@@ -31,7 +31,7 @@ export async function createEmailBridge(
     .where(eq(orgTable.id, authUser.orgId));
 
   if (!orgQuery[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
   const formVersion = await createFormVersion(
@@ -61,11 +61,11 @@ export async function updateEmailBridge(
     );
 
   if (!orgQuery[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
   if (!orgQuery[0].formVersions) {
-    throw new FormVersionError("notFound");
+    throw new FormVersionError("NOT_FOUND");
   }
 
   const formVersion = await updateFormVersionContent(
@@ -96,11 +96,11 @@ export async function toggleEmailBridge(
     );
 
   if (!bridgeQuery[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
   if (value && !bridgeQuery[0].formVersions) {
-    throw new FormVersionError("notFound");
+    throw new FormVersionError("NOT_FOUND");
   }
 
   if (value && bridgeQuery[0].orgs.activeBridges.includes("email")) {

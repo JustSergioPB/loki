@@ -12,7 +12,7 @@ export const auditableEntities = [
   "formVersion",
   "privateKey",
   "credential",
-  "credentialRequest",
+  "challenge",
   "email-bridge",
 ] as const;
 export type AuditableEntity = (typeof auditableEntities)[number];

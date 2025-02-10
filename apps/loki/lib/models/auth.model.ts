@@ -22,7 +22,7 @@ export async function loginUser(data: LoginSchema): Promise<UserWithOrg> {
     .innerJoin(orgTable, eq(userTable.orgId, orgTable.id));
 
   if (queryResult.length == 0) {
-    throw new UserError("notFound");
+    throw new UserError("NOT_FOUND");
   }
 
   const passwordsMatch = bcrypt.compare(
@@ -105,7 +105,7 @@ export async function resetUserPassword(
     .innerJoin(userTokenTable, eq(userTable.id, userTokenTable.userId));
 
   if (!queryResult[0]) {
-    throw new TokenError("notFound");
+    throw new TokenError("NOT_FOUND");
   }
 
   validateToken(queryResult[0].userTokens, "reset-password");
@@ -140,7 +140,7 @@ export async function confirmUserAccount(
     );
 
   if (!queryResult[0]) {
-    throw new TokenError("notFound");
+    throw new TokenError("NOT_FOUND");
   }
 
   validateToken(queryResult[0].userTokens, "confirmation");
@@ -171,7 +171,7 @@ export async function resendUserConfirmation(email: string): Promise<void> {
   });
 
   if (!user) {
-    throw new UserError("notFound");
+    throw new UserError("NOT_FOUND");
   }
 
   await db.insert(userTokenTable).values({
@@ -187,7 +187,7 @@ export async function sendUserForgotPassword(email: string): Promise<void> {
   });
 
   if (!user) {
-    throw new UserError("notFound");
+    throw new UserError("NOT_FOUND");
   }
 
   await db.insert(userTokenTable).values({

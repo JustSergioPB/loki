@@ -1,47 +1,33 @@
 "use client";
 
-import { DbFormVersion } from "@/db/schema/form-versions";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  BadgeCheck,
-  Calendar,
-  Clock,
-  FileStack,
-  FileText,
-  PenTool,
-  QrCode,
-} from "lucide-react";
+import { Clock, FileStack, FileText, PenTool, QrCode } from "lucide-react";
 import { DbCredential } from "@/db/schema/credentials";
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
 import PageHeader from "@/components/app/page-header";
 import CredentialValidityForm from "./credential-validity-form";
-import CredentialContentForm from "./credential-content-form";
-import Field from "@/components/app/field";
-import StatusTag from "@/components/app/status-tag";
-import DateDisplay from "@/components/app/date";
-import {
-  getCredentialStatus,
-  isUnsigned,
-} from "@/lib/helpers/credential.helper";
-import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
-import { CredentialStatus } from "@/lib/types/credential";
-import CredentialChallengeDetails from "./credential-challenge-details";
+import ChallengeDetails from "./credential-challenge-details";
 import { toast } from "sonner";
+import { signCredentialAction } from "@/lib/actions/credential.actions";
+import { DbFormVersion } from "@/db/schema/form-versions";
+import { DbChallenge } from "@/db/schema/challenges";
+import { ValiditySchema } from "@/lib/schemas/validity.schema";
+import CredentialClaimsForm from "./credential-claims-form";
 
 type Props = {
-  credential: DbCredential;
-  presentationChallenge: DbCredentialRequest;
-  formVersion: DbFormVersion;
+  credential: Omit<DbCredential, "formVersion" | "challenge"> & {
+    formVersion: DbFormVersion;
+    challenge: DbChallenge;
+  };
 };
 
 const items = [
   {
-    title: "presentationChallenge",
+    title: "challenge",
     icon: QrCode,
   },
   {
@@ -60,50 +46,50 @@ const items = [
     title: "sign",
     icon: PenTool,
   },
-  {
-    title: "claimChallenge",
-    icon: QrCode,
-  },
 ];
 
 export default function CredentialFillStepper({
-  credential: credentialState,
-  challenge: challengeState,
-  presentations,
-  formVersion,
+  credential: { formVersion, challenge, ...credential },
 }: Props) {
   const t = useTranslations("Credential");
   const tStepper = useTranslations("Stepper");
-  const tGeneric = useTranslations("Generic");
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<number>(0);
-  const [credential, setCredential] = useState(credentialState);
-  const [status, setStatus] = useState<CredentialStatus>("empty");
-  const [challenge, setChallenge] = useState(challengeState);
+  const [claims, setClaims] = useState<object | null>(null);
+  const [validity, setValidity] = useState<ValiditySchema>({
+    validFrom: getValidFrom(),
+    validUntil: getValidUntil(),
+  });
 
-  useEffect(() => {
-    const newStatus = getCredentialStatus(credential);
-    let step = 0;
-    if (isUnsigned(credential)) {
-      step = 1;
-    }
-    if (challenge) {
-      step = 2;
-    }
-    setStep(step);
-    setStatus(newStatus);
-  }, [credential, challenge]);
+  function getValidFrom(): Date | undefined {
+    let validFrom = undefined;
+
+    if (formVersion.validFrom) validFrom = formVersion.validFrom;
+    if (credential.content?.validFrom)
+      validFrom = new Date(credential.content.validFrom);
+
+    return validFrom;
+  }
+
+  function getValidUntil(): Date | undefined {
+    let validUntil = undefined;
+
+    if (formVersion.validUntil) validUntil = formVersion.validUntil;
+    if (credential.content?.validUntil)
+      validUntil = new Date(credential.content.validUntil);
+
+    return validUntil;
+  }
 
   async function handleSubmit(values: object) {
     setIsLoading(true);
 
-    const { success, error } = await updateCredentialContentAction(
+    const { success, error } = await signCredentialAction(
       credential.id,
       values
     );
 
     if (success) {
-      onSubmit(success.data);
       toast.success(success.message);
     } else {
       toast.error(error.message);
@@ -141,55 +127,27 @@ export default function CredentialFillStepper({
             ))}
           </div>
         </div>
-        <div className="space-y-6">
-          <section className="space-y-4">
-            <Field
-              icon={<BadgeCheck className="size-4" />}
-              label={t("status")}
-              className="basis-1/4"
-            >
-              <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[status]}>
-                {t(`statuses.${status}`)}
-              </StatusTag>
-            </Field>
-            <Field
-              icon={<Calendar className="size-4" />}
-              label={tGeneric("createdAt")}
-              className="basis-1/4"
-            >
-              <DateDisplay date={formVersion.createdAt} />
-            </Field>
-            <Field
-              icon={<Calendar className="size-4" />}
-              label={tGeneric("updatedAt")}
-              className="basis-1/4"
-            >
-              <DateDisplay date={formVersion.updatedAt} />
-            </Field>
-          </section>
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-sm">
-              {tStepper("step")} {step + 1} {tStepper("of")} {items.length}
-            </p>
-            <Progress value={((step + 1) / items.length) * 100} />
-          </div>
+        <div className="space-y-2">
+          <p className="text-muted-foreground text-sm">
+            {tStepper("step")} {step + 1} {tStepper("of")} {items.length}
+          </p>
+          <Progress value={((step + 1) / items.length) * 100} />
         </div>
       </section>
       <section className="border-l basis-3/4 flex flex-col">
-        {step === 0 && <CredentialChallengeDetails challenge={challenge} />}
-        {step === 1 && (
-          <CredentialContentForm
-            credential={credential}
+        {step === 0 && <ChallengeDetails challenge={challenge} />}
+        {step === 2 && (
+          <CredentialClaimsForm
+            claims={claims}
             formVersion={formVersion}
-            onSubmit={handleSubmit}
+            onSubmit={(value) => setClaims(value)}
           />
         )}
-        {step === 2 && (
+        {step === 3 && (
           <CredentialValidityForm
-            credential={credential}
-            formVersion={formVersion}
+            validity={validity}
             isLoading={isLoading}
-            onSubmit={handleSubmit}
+            onSubmit={(value) => setValidity(value)}
           />
         )}
       </section>

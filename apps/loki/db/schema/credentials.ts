@@ -1,33 +1,20 @@
-import {
-  jsonb,
-  pgTable,
-  timestamp,
-  uuid,
-  varchar,
-  boolean,
-} from "drizzle-orm/pg-core";
-import { orgTable } from "./orgs";
+import { jsonb, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { DbOrg, orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
-import { DbUser } from "./users";
 import { DbFormVersion, formVersionTable } from "./form-versions";
-import { didTable } from "./dids";
-import {
-  IdentifiedCredential,
-  UnsignedCredential,
-  VerifiableCredential,
-} from "@/lib/types/verifiable-credential";
-import { DbCredentialRequest } from "./credential-requests";
+import { DbDID, didTable } from "./dids";
 import { DbPresentation } from "./presentations";
-
-type ContentType =
-  | UnsignedCredential
-  | IdentifiedCredential
-  | VerifiableCredential;
+import { DbChallenge } from "./challenges";
+import { DbUser } from "./users";
+import { VerifiableCredential } from "@/lib/types/verifiable-credential";
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  content: jsonb().$type<ContentType>(),
-  isClaimed: boolean().default(false),
+  validFrom: timestamp({ withTimezone: true }),
+  validUntil: timestamp({ withTimezone: true }),
+  holder: varchar(),
+  claims: jsonb().$type<object>(),
+  credential: jsonb().$type<VerifiableCredential>(),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),
@@ -61,16 +48,24 @@ export const credentialTableRelations = relations(
   })
 );
 
-export type DbCredential = typeof credentialTable.$inferSelect;
-
-export type DbCredentialWithIssuer = DbCredential & {
-  issuer?: DbUser;
-  formVersion: DbFormVersion;
+export type DbCredential = typeof credentialTable.$inferSelect & {
+  formVersion?: DbFormVersion;
+  presentations?: DbPresentation[];
+  challenge?: DbChallenge;
+  org?: DbOrg;
+  issuer?: DbDID & {
+    user?: DbUser;
+  };
 };
-
-export type DbFullCredential = DbCredential & {
+export type DbFilledCredential = {
+  id: string;
+  validFrom: Date | null;
+  validUntil: Date | null;
+  holder: string;
+  claims: object;
   formVersion: DbFormVersion;
-  presentationChallenge: DbCredentialRequest;
-  presentations: DbPresentation[];
-  claimChallenge?: DbCredentialRequest;
+  org: DbOrg;
+  issuer: DbDID & {
+    user?: DbUser;
+  };
 };

@@ -1,56 +1,46 @@
-import { DbCredential } from "@/db/schema/credentials";
-import {
-  CredentialStatus,
-  EmptyCredentialSnapshot,
-  IdentifiedCredentialSnapshot,
-  PendingCredentialSnapshot,
-  SignedCredentialSnapshot,
-} from "../types/credential";
+import { DbCredential, DbFilledCredential } from "@/db/schema/credentials";
+import { CredentialStatus } from "../types/credential";
+import { FilledCredential } from "../types/verifiable-credential";
 
 export function getCredentialStatus(value: DbCredential): CredentialStatus {
   let status: CredentialStatus = "empty";
 
-  if (isUnsigned(value)) {
-    status = "pending";
+  if (!value.credential) {
+    status = "unsigned";
   }
 
-  if (isIdentified(value)) {
-    status = "identified";
-  }
-
-  if (isSigned(value)) {
+  if (value.credential) {
     status = "signed";
   }
 
   return status;
 }
 
-export function isEmpty(value: DbCredential): value is EmptyCredentialSnapshot {
-  return value.content === null;
-}
+export function toVerifiableCredential(
+  baseUrl: string,
+  value: DbFilledCredential
+): FilledCredential {
+  const { formVersion, org, issuer, ...credential } = value;
 
-export function isUnsigned(
-  value: DbCredential
-): value is PendingCredentialSnapshot {
-  return (
-    value.content !== null &&
-    !Object.hasOwn(value.content.credentialSubject, "id") &&
-    !Object.hasOwn(value.content, "proof")
-  );
-}
-
-export function isIdentified(
-  value: DbCredential
-): value is IdentifiedCredentialSnapshot {
-  return (
-    value.content !== null &&
-    Object.hasOwn(value.content.credentialSubject, "id") &&
-    !Object.hasOwn(value.content, "proof")
-  );
-}
-
-export function isSigned(
-  value: DbCredential
-): value is SignedCredentialSnapshot {
-  return value.content !== null && Object.hasOwn(value.content, "proof");
+  return {
+    "@context": formVersion.credentialContext,
+    type: formVersion.credentialTypes,
+    id: `${baseUrl}/credentials/${credential.id}`,
+    title: formVersion.title,
+    description: formVersion.description ?? undefined,
+    validFrom: credential.validFrom?.toISOString(),
+    validUntil: credential.validUntil?.toISOString(),
+    issuer: {
+      name: org.name,
+      id: `${baseUrl}/dids/${issuer.document.controller}`,
+    },
+    credentialSubject: {
+      id: credential.holder,
+      ...credential.claims,
+    },
+    credentialSchema: {
+      id: `${baseUrl}/form/${formVersion.id}`,
+      type: formVersion.types[0],
+    },
+  };
 }

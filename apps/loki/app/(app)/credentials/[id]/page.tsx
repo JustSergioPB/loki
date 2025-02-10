@@ -2,7 +2,7 @@ import { Calendar, Clock, Database, BadgeCheck } from "lucide-react";
 import Field from "@/components/app/field";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
-import { notFound, redirect } from "next/navigation";
+import { NOT_FOUND, redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import CredentialActionDialog from "../_components/credential-action-dialog";
 import { getCredentialByIdWithChallenge } from "@/lib/models/credential.model";
@@ -31,7 +31,7 @@ export default async function Credential({
   const result = await getCredentialByIdWithChallenge(user, id);
 
   if (!result) {
-    notFound();
+    NOT_FOUND();
   }
 
   const [credential, challenge] = result;

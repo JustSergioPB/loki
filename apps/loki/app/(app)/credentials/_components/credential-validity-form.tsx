@@ -8,8 +8,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { DbCredential } from "@/db/schema/credentials";
-import { DbFormVersion } from "@/db/schema/form-versions";
 import { validitySchema, ValiditySchema } from "@/lib/schemas/validity.schema";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,16 +15,14 @@ import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 
 type Props = {
-  credential: DbCredential;
-  formVersion: DbFormVersion;
+  validity: ValiditySchema;
   isLoading: boolean;
   className?: string;
   onSubmit: (validity: ValiditySchema) => void;
 };
 
 export default function CredentialValidityForm({
-  credential,
-  formVersion,
+  validity,
   isLoading,
   className,
   onSubmit,
@@ -37,30 +33,10 @@ export default function CredentialValidityForm({
   const form = useForm<ValiditySchema>({
     resolver: zodResolver(validitySchema),
     defaultValues: {
-      validUntil: getValidFrom(),
-      validFrom: getValidUntil(),
+      validUntil: validity.validUntil,
+      validFrom: validity.validFrom,
     },
   });
-
-  function getValidFrom(): Date | undefined {
-    let validFrom = undefined;
-
-    if (formVersion.validFrom) validFrom = formVersion.validFrom;
-    if (credential.content?.validFrom)
-      validFrom = new Date(credential.content.validFrom);
-
-    return validFrom;
-  }
-
-  function getValidUntil(): Date | undefined {
-    let validUntil = undefined;
-
-    if (formVersion.validUntil) validUntil = formVersion.validUntil;
-    if (credential.content?.validUntil)
-      validUntil = new Date(credential.content.validUntil);
-
-    return validUntil;
-  }
 
   return (
     <Form {...form}>

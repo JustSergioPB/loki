@@ -1,6 +1,6 @@
 export const orgErrorMessages = [
   "rootNotFound",
-  "notFound",
+  "NOT_FOUND",
   "alreadyExists",
   "nonRegistered",
   "duplicateBridge",

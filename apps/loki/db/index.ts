@@ -8,7 +8,7 @@ import * as auditLogs from "./schema/audit-logs";
 import * as formVersions from "./schema/form-versions";
 import * as dids from "./schema/dids";
 import * as privateKeys from "./schema/private-keys";
-import * as credentialRequest from "./schema/credential-requests";
+import * as challenge from "./schema/challenges";
 import * as credential from "./schema/credentials";
 import * as presentation from "./schema/presentations";
 
@@ -25,7 +25,7 @@ export const db = drizzle({
     ...formVersions,
     ...dids,
     ...privateKeys,
-    ...credentialRequest,
+    ...challenge,
     ...credential,
     ...presentation,
   },

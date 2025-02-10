@@ -4,26 +4,26 @@ import { getTranslations } from "next-intl/server";
 import { ActionResult } from "../generics/action-result";
 import { authorize } from "../helpers/dal";
 import {
-  createCredentialRequest,
-  renewCredentialRequest,
+  createChallenge,
+  renewChallenge,
 } from "../models/credential-request.model";
-import { DbCredentialRequest } from "@/db/schema/credential-requests";
+import { DbChallenge } from "@/db/schema/challenges";
 
-export async function createCredentialRequestAction(
+export async function createChallengeAction(
   credentialId: string
-): Promise<ActionResult<DbCredentialRequest>> {
-  const t = await getTranslations("CredentialRequest");
+): Promise<ActionResult<DbChallenge>> {
+  const t = await getTranslations("Challenge");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
 
-    const credentialRequest = await createCredentialRequest(
+    const challenge = await createChallenge(
       credentialId,
       authUser
     );
 
     return {
-      success: { data: credentialRequest, message: t("createSucceded") },
+      success: { data: challenge, message: t("createSucceded") },
     };
   } catch (error) {
     console.error(error);
@@ -31,15 +31,15 @@ export async function createCredentialRequestAction(
   }
 }
 
-export async function renewCredentialRequestAction(
+export async function renewChallengeAction(
   id: string
-): Promise<ActionResult<DbCredentialRequest>> {
-  const t = await getTranslations("CredentialRequest");
+): Promise<ActionResult<DbChallenge>> {
+  const t = await getTranslations("Challenge");
 
   try {
     const authUser = await authorize(["admin", "org-admin"]);
 
-    const data = await renewCredentialRequest(id, authUser);
+    const data = await renewChallenge(id, authUser);
 
     return { success: { data, message: t("renewSucceded") } };
   } catch (error) {
