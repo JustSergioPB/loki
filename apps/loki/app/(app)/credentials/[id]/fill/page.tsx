@@ -22,11 +22,11 @@ export default async function CredentialFill({
     notFound();
   }
 
-  const { formVersion, challenge, ...credential } = query;
+  const { formVersion, challenge, presentations, ...credential } = query;
 
-  return formVersion && challenge ? (
+  return formVersion && challenge && presentations ? (
     <CredentialFillStepper
-      credential={{ ...credential, formVersion, challenge }}
+      credential={{ ...credential, formVersion, challenge, presentations }}
     />
   ) : (
     <></>

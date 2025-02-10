@@ -3,13 +3,13 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import CredentialDialog from "./credential-dialog";
-import { DbCredentialWithIssuer } from "@/db/schema/credentials";
 import { Badge } from "@/components/ui/badge";
 import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import StatusTag from "@/components/app/status-tag";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
+import { DbCredential } from "@/db/schema/credentials";
 
-export const credentialColumns: ColumnDef<DbCredentialWithIssuer>[] = [
+export const credentialColumns: ColumnDef<DbCredential>[] = [
   {
     accessorKey: "title",
     header: function CellHeader() {
@@ -17,7 +17,7 @@ export const credentialColumns: ColumnDef<DbCredentialWithIssuer>[] = [
       return t("titleProp");
     },
     cell: function CellCompodnent({ row }) {
-      return row.original.formVersion.title;
+      return row.original.formVersion?.title;
     },
   },
   {
@@ -29,7 +29,7 @@ export const credentialColumns: ColumnDef<DbCredentialWithIssuer>[] = [
     cell: function CellComponent({ row }) {
       return (
         <div className="flex items-center gap-1">
-          {row.original.formVersion.types.slice(1, 3).map((type, idx) => (
+          {row.original.formVersion?.types.slice(1, 3).map((type, idx) => (
             <Badge variant="secondary" key={`${type}-${idx}`}>
               {type}
             </Badge>
@@ -45,7 +45,7 @@ export const credentialColumns: ColumnDef<DbCredentialWithIssuer>[] = [
       return t("version");
     },
     cell: function CellComponent({ row }) {
-      return <Badge>V{row.original.formVersion.version}</Badge>;
+      return <Badge>V{row.original.formVersion?.version}</Badge>;
     },
   },
   {
@@ -55,7 +55,7 @@ export const credentialColumns: ColumnDef<DbCredentialWithIssuer>[] = [
       return t("issuer");
     },
     cell: function CellCompodnent({ row }) {
-      return row.original.issuer?.fullName;
+      return row.original.issuer?.user?.fullName;
     },
   },
   {

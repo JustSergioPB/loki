@@ -256,7 +256,7 @@ export async function signCredential(
       .where(eq(credentialTable.id, id))
       .returning();
 
-    await tx
+    const [updatedChallenge] = await tx
       .update(challengeTable)
       .set({
         code: Math.floor(Math.random() * 1000000),
@@ -273,7 +273,7 @@ export async function signCredential(
       action: "update",
     });
 
-    return updatedCredential;
+    return { ...updatedCredential, challenge: updatedChallenge };
   });
 }
 

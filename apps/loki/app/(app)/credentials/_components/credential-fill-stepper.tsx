@@ -1,38 +1,40 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Clock, FileStack, FileText, PenTool, QrCode } from "lucide-react";
+import { Clock, FileText, PenTool, QrCode } from "lucide-react";
 import { DbCredential } from "@/db/schema/credentials";
 import PageHeader from "@/components/app/page-header";
 import CredentialValidityForm from "./credential-validity-form";
 import ChallengeDetails from "./credential-challenge-details";
 import { toast } from "sonner";
-import { signCredentialAction } from "@/lib/actions/credential.actions";
+import {
+  signCredentialAction,
+  updateCredentialAction,
+} from "@/lib/actions/credential.actions";
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { DbChallenge } from "@/db/schema/challenges";
 import { ValiditySchema } from "@/lib/schemas/validity.schema";
 import CredentialClaimsForm from "./credential-claims-form";
+import { DbPresentation } from "@/db/schema/presentations";
+import { LoadingButton } from "@/components/app/loading-button";
 
 type Props = {
   credential: Omit<DbCredential, "formVersion" | "challenge"> & {
     formVersion: DbFormVersion;
     challenge: DbChallenge;
+    presentations: DbPresentation[];
   };
 };
 
 const items = [
   {
-    title: "challenge",
+    title: "present",
     icon: QrCode,
-  },
-  {
-    title: "presentations",
-    icon: FileStack,
   },
   {
     title: "credential",
@@ -46,50 +48,87 @@ const items = [
     title: "sign",
     icon: PenTool,
   },
+  {
+    title: "claim",
+    icon: QrCode,
+  },
 ];
 
 export default function CredentialFillStepper({
-  credential: { formVersion, challenge, ...credential },
+  credential: credentialState,
 }: Props) {
   const t = useTranslations("Credential");
   const tStepper = useTranslations("Stepper");
+  const tGeneric = useTranslations("Generic");
+  const [credential, setCredential] = useState(credentialState);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<number>(0);
-  const [claims, setClaims] = useState<object | null>(null);
-  const [validity, setValidity] = useState<ValiditySchema>({
-    validFrom: getValidFrom(),
-    validUntil: getValidUntil(),
-  });
 
-  function getValidFrom(): Date | undefined {
-    let validFrom = undefined;
+  useEffect(() => {
+    let step = 3;
 
-    if (formVersion.validFrom) validFrom = formVersion.validFrom;
-    if (credential.content?.validFrom)
-      validFrom = new Date(credential.content.validFrom);
+    if (!credential.credential && credential.challenge.code) step = 0;
+    if (!credential.challenge.code) step = 1;
+    if (credential.claims) step = 2;
+    if (credential.credential && credential.challenge.code) step = 4;
 
-    return validFrom;
-  }
+    setStep(step);
+  }, [credential]);
 
-  function getValidUntil(): Date | undefined {
-    let validUntil = undefined;
-
-    if (formVersion.validUntil) validUntil = formVersion.validUntil;
-    if (credential.content?.validUntil)
-      validUntil = new Date(credential.content.validUntil);
-
-    return validUntil;
-  }
-
-  async function handleSubmit(values: object) {
+  async function updateClaims(values: object) {
     setIsLoading(true);
 
-    const { success, error } = await signCredentialAction(
-      credential.id,
-      values
-    );
+    const { success, error } = await updateCredentialAction(credential.id, {
+      claims: values,
+    });
 
     if (success) {
+      setCredential({ ...credential, claims: success.data.claims });
+      toast.success(success.message);
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  }
+
+  async function updateValidity(values: ValiditySchema) {
+    setIsLoading(true);
+
+    const { success, error } = await updateCredentialAction(credential.id, {
+      validFrom: values.validFrom,
+      validUntil: values.validUntil,
+    });
+
+    if (success) {
+      setCredential({
+        ...credential,
+        validFrom: success.data.validFrom,
+        validUntil: success.data.validUntil,
+      });
+      toast.success(success.message);
+    } else {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  }
+
+  async function sign() {
+    setIsLoading(true);
+
+    const { success, error } = await signCredentialAction(credential.id);
+
+    if (success) {
+      if (!success.data.challenge) {
+        return toast.error("MISSING_CHALLENGE");
+      }
+
+      setCredential({
+        ...credential,
+        credential: success.data.credential,
+        challenge: success.data.challenge,
+      });
       toast.success(success.message);
     } else {
       toast.error(error.message);
@@ -135,20 +174,36 @@ export default function CredentialFillStepper({
         </div>
       </section>
       <section className="border-l basis-3/4 flex flex-col">
-        {step === 0 && <ChallengeDetails challenge={challenge} />}
-        {step === 2 && (
+        {(step === 0 || step === 4) && (
+          <ChallengeDetails challenge={credential.challenge} />
+        )}
+        {step === 1 && (
           <CredentialClaimsForm
-            claims={claims}
-            formVersion={formVersion}
-            onSubmit={(value) => setClaims(value)}
+            claims={credential.claims}
+            formVersion={credential.formVersion}
+            onSubmit={updateClaims}
+          />
+        )}
+        {step === 2 && (
+          <CredentialValidityForm
+            validFrom={credential.validFrom}
+            validUntil={credential.validUntil}
+            formVersion={credential.formVersion}
+            isLoading={isLoading}
+            onSubmit={updateValidity}
           />
         )}
         {step === 3 && (
-          <CredentialValidityForm
-            validity={validity}
-            isLoading={isLoading}
-            onSubmit={(value) => setValidity(value)}
-          />
+          <section className="flex-1 flex flex-col">
+            <pre className="flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
+              <code>{JSON.stringify(credential.claims, null, 1)}</code>
+            </pre>
+            <div className="flex justify-end py-4 px-12 gap-2">
+              <LoadingButton loading={isLoading} type="submit" onClick={sign}>
+                {tGeneric("submit")}
+              </LoadingButton>
+            </div>
+          </section>
         )}
       </section>
     </section>

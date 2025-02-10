@@ -21,7 +21,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { deleteCredentialAction } from "@/lib/actions/credential.actions";
 import { DbCredential } from "@/db/schema/credentials";
-import { isSigned } from "@/lib/helpers/credential.helper";
 
 type Action = "see" | "fill" | "delete";
 
@@ -64,7 +63,7 @@ export default function CredentialDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          {isSigned(credential) ? (
+          {credential.credential ? (
             <DropdownMenuItem
               onClick={() => router.push(`/credentials/${credential.id}`)}
             >

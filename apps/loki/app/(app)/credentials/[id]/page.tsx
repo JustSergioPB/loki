@@ -2,16 +2,16 @@ import { Calendar, Clock, Database, BadgeCheck } from "lucide-react";
 import Field from "@/components/app/field";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
-import { NOT_FOUND, redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import CredentialActionDialog from "../_components/credential-action-dialog";
-import { getCredentialByIdWithChallenge } from "@/lib/models/credential.model";
 import DateDisplay from "@/components/app/date";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import StatusTag from "@/components/app/status-tag";
 import ChallengeDetails from "../_components/credential-challenge-details";
+import { getCredentialById } from "@/lib/models/credential.model";
 
 export default async function Credential({
   params,
@@ -28,13 +28,12 @@ export default async function Credential({
     redirect("/login");
   }
 
-  const result = await getCredentialByIdWithChallenge(user, id);
+  const credential = await getCredentialById(id, user);
 
-  if (!result) {
-    NOT_FOUND();
+  if (!credential) {
+    notFound();
   }
 
-  const [credential, challenge] = result;
   const credentialStatus = getCredentialStatus(credential);
 
   return (
@@ -46,7 +45,7 @@ export default async function Credential({
         <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
           <pre className="w-full rounded-md border p-2 bg-card">
             <code className="text-xs">
-              {JSON.stringify(credential.content, null, 1)}
+              {JSON.stringify(credential.claims, null, 1)}
             </code>
           </pre>
         </div>
@@ -81,7 +80,9 @@ export default async function Credential({
             </Field>
           </section>
         </section>
-        <ChallengeDetails challenge={challenge} />
+        {credential.challenge && (
+          <ChallengeDetails challenge={credential.challenge} />
+        )}
       </section>
     </section>
   );
