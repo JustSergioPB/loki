@@ -147,7 +147,7 @@ async function buildDocument(
   type: "root" | "org" | "user",
   additionalContollers: string[] = []
 ): Promise<DIDDocument> {
-  const did = `did:uuid:${uuid.v7()}`;
+  const did = `did:loki:${uuid.v7()}`;
   const baseUrl = `${BASE_URL}/dids/${did}`;
   const verificationMethodId = `${did}#key-0`;
   const publicKey = await generateKeyPair(verificationMethodId);

@@ -24,19 +24,22 @@ type Props = {
   credential: Omit<DbCredential, "challenge"> & {
     challenge: DbChallenge;
   };
+  loading: boolean;
   className?: string;
   onSubmit: () => void;
 };
 
 export default function ChallengeDetails({
+  loading,
   action,
   credential,
   onSubmit,
   className,
 }: Props) {
-  const t = useTranslations("Credential");
+  const t = useTranslations("Challenge");
+  const tCredential = useTranslations("Credential");
   const tGeneric = useTranslations("Generic");
-  const [loading, setLoading] = useState(false);
+  const [isRenewing, setIsRenewing] = useState(false);
   const [challenge, setChallenge] = useState(credential.challenge);
   const [status, setStatus] = useState<ChallengeStatus>(
     getChallengeStatus(challenge)
@@ -61,9 +64,11 @@ export default function ChallengeDetails({
   }
 
   async function onClick() {
-    setLoading(true);
+    setIsRenewing(true);
 
     const { success, error } = await renewChallengeAction(challenge.id);
+
+    setIsRenewing(false);
 
     if (success) {
       setChallenge(success.data);
@@ -71,20 +76,20 @@ export default function ChallengeDetails({
     } else {
       toast.error(error.message);
     }
-
-    setLoading(false);
   }
 
   return (
     <section className={cn("space-y-6 flex-1 flex flex-col", className)}>
-      <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 w-1/2">
+      <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 xl:w-1/2">
         <PageHeader
-          title={t(action === "claim" ? "claimTitle" : "presentDocumentsTitle")}
-          subtitle={t(
+          title={tCredential(
+            action === "claim" ? "claimTitle" : "presentDocumentsTitle"
+          )}
+          subtitle={tCredential(
             action === "claim" ? "claimSubtitle" : "presentDocumentsDescription"
           )}
         />
-        <div className="space-y-4">
+        <div className="space-y-4 w-[250px]">
           <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
             <StatusTag variant={CHALLENGE_STATUS_VARIANTS[status]}>
               {t(`statuses.${status}`)}
@@ -96,8 +101,9 @@ export default function ChallengeDetails({
             <Skeleton className="size-[250px] rounded-md" />
           )}
           <LoadingButton
-            loading={loading}
+            loading={isRenewing}
             onClick={onClick}
+            className="w-full"
             disabled={status !== "expired"}
           >
             {t("renew")}

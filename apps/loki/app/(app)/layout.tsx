@@ -8,7 +8,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { getUser } from "@/lib/helpers/dal";
-import { forbidden } from "next/navigation";
+import { FORBIDDEN } from "next/navigation";
 
 export default async function AppLayout({
   children,
@@ -18,7 +18,7 @@ export default async function AppLayout({
   const user = await getUser();
 
   if (!user) {
-    forbidden();
+    FORBIDDEN();
   }
 
   return (

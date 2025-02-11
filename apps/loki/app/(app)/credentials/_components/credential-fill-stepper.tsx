@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  CircleCheck,
   Clock,
   FileText,
   NotepadTextDashed,
@@ -30,6 +31,7 @@ import { DbPresentation } from "@/db/schema/presentations";
 import { LoadingButton } from "@/components/app/loading-button";
 import { CredentialStatus } from "@/lib/types/credential";
 import CredentialFormSelect from "./credential-form-select";
+import { ApiErrorResult } from "@/lib/generics/api-error";
 
 type CredentialView = Omit<DbCredential, "formVersion" | "challenge"> & {
   formVersion: DbFormVersion;
@@ -123,7 +125,52 @@ export default function CredentialFillStepper({
     }
   }
 
-  async function sync(): Promise<void> {}
+  async function sync() {
+    if (!credential) {
+      return toast.error("MISSING_CREDENTIAL");
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/credentials/${credential.id}`);
+
+      const body = await response.json();
+
+      if (!response.ok) {
+        return toast.error((body as ApiErrorResult).code);
+      }
+
+      const {
+        data: { presentations, challenge, status },
+      } = body as { data: DbCredential };
+
+      console.log(challenge);
+
+      if (!challenge) {
+        return toast.error("MISSING_CHALLENGE");
+      }
+
+      if (!presentations) {
+        return toast.error("MISSING_PRESENTATIONS");
+      }
+
+      if (status === "empty") {
+        return toast.warning(t("NOT_PRESENTED"));
+      }
+
+      setCredential({
+        ...credential,
+        status,
+        presentations,
+        challenge,
+      });
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function updateClaims(values: object) {
     if (!credential) {
@@ -140,7 +187,11 @@ export default function CredentialFillStepper({
     setIsLoading(false);
 
     if (success) {
-      setCredential({ ...credential, claims: success.data.claims });
+      setCredential({
+        ...credential,
+        claims: success.data.claims,
+        status: success.data.status,
+      });
       toast.success(success.message);
     } else {
       toast.error(error.message);
@@ -160,18 +211,19 @@ export default function CredentialFillStepper({
       status: "filled",
     });
 
-    setIsLoading(false);
-
     if (success) {
       setCredential({
         ...credential,
         validFrom: success.data.validFrom,
         validUntil: success.data.validUntil,
+        status: success.data.status,
       });
       toast.success(success.message);
     } else {
       toast.error(error.message);
     }
+
+    setIsLoading(false);
   }
 
   async function sign() {
@@ -212,15 +264,20 @@ export default function CredentialFillStepper({
                 key={item.title}
                 className={cn(
                   "justify-start",
-                  index === step
-                    ? "bg-muted hover:bg-muted"
-                    : "hover:bg-transparent hover:underline"
+                  index === step ? "bg-muted hover:bg-muted" : "",
+                  index >= step
+                    ? ""
+                    : "disabled:opacity-1 text-emerald-500 font-semibold"
                 )}
                 variant="ghost"
                 onClick={() => setStep(index)}
                 disabled={step !== index}
               >
-                <item.icon />
+                {step <= index ? (
+                  <item.icon />
+                ) : (
+                  <CircleCheck className="text-emerald-500" />
+                )}
                 {t(item.title)}
               </Button>
             ))}
@@ -248,6 +305,7 @@ export default function CredentialFillStepper({
                 action="present"
                 credential={credential}
                 onSubmit={sync}
+                loading={isLoading}
               />
             )}
             {step === 2 && (
@@ -287,6 +345,7 @@ export default function CredentialFillStepper({
               <ChallengeDetails
                 action="claim"
                 credential={credential}
+                loading={isLoading}
                 onSubmit={sync}
               />
             )}

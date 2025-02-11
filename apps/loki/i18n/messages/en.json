@@ -158,13 +158,14 @@
     "fillValidityDescription": "Fill this section if you need this document either to be valid from a certain date or valid until a certain date (or both)",
     "fillContentTitle": "Fill claims",
     "presentDocumentsTitle": "Present documents",
-    "presentDocumentsDescription": "By scanning the following QR the holder will be able to send you documentation if required and identify itself",
+    "presentDocumentsDescription": "By scanning the following QR the holder will be able to send you documentation if required and identify itself. Once the holder has submitted the information you'll be able to move to the next step.",
     "signTitle": "Sign",
     "signDescription": "Review the document you're about to emit just to make sure everything alright since after signing you won't be able to modify it",
     "claimTitle": "Claim",
     "claimSubtitle": "By scanning the following QR the holder will be able to store the document in it's wallet",
     "formSelectTitle": "Select a form",
-    "formSelectDescription": "Select the form that you want to use as template for this new document"
+    "formSelectDescription": "Select the form that you want to use as template for this new document",
+    "NOT_PRESENTED": "Holder hasn't submitted identification yet."
   },
   "Challenge": {
     "scanTitle": "Documents QR",
@@ -323,6 +324,7 @@
     "loading": "Loading...",
     "goBack": "Go back",
     "back": "Back",
+    "next": "Next",
     "fill": "Fill",
     "errors": {
       "retryLater": "Please try in 5 minutes. If the error persits please contact us."

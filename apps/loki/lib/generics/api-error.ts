@@ -1,3 +1,5 @@
-export type ApiErrorResult<T> =
-  | { code: string; message: string; status: number }
-  | { data: T; status: 200 };
+export type ApiErrorResult = {
+  code: string;
+  message: string;
+  status: number;
+};

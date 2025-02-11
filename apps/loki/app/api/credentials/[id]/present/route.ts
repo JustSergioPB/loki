@@ -23,7 +23,7 @@ export async function POST(
     return NextResponse.json({ data: true }, { status: 200 });
   } catch (error) {
     console.error(error);
-    let response: ApiErrorResult<null> = {
+    let response: ApiErrorResult = {
       code: "SOMETHING_WENT_WRONG",
       message: "somethingWentWrong",
       status: 500,

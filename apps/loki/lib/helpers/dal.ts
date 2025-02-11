@@ -49,11 +49,11 @@ export async function authorize(allowedRoles: UserRole[]): Promise<AuthUser> {
   const user = await getUser();
 
   if (!user) {
-    throw new AuthError("unauthorized");
+    throw new AuthError("UNAUTHORIZED");
   }
 
   if (!allowedRoles.includes(user.role)) {
-    throw new AuthError("forbidden");
+    throw new AuthError("FORBIDDEN");
   }
 
   return user;

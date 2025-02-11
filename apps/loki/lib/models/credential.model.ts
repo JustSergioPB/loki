@@ -310,8 +310,7 @@ export async function signCredential(
 
 export async function claimCredential(
   id: string,
-  challenge: ChallengeSchema,
-  authUser: AuthUser
+  challenge: ChallengeSchema
 ): Promise<DbCredential> {
   const query = await db
     .select()
@@ -361,25 +360,6 @@ export async function claimCredential(
       .where(eq(challengeTable.id, challenges.id))
       .returning();
 
-    await tx.insert(auditLogTable).values([
-      {
-        entityId: updatedCredential.id,
-        entityType: "credential",
-        value: updatedCredential,
-        orgId: authUser.orgId,
-        userId: authUser.id,
-        action: "update",
-      },
-      {
-        entityId: updatedChallenge.id,
-        entityType: "challenge",
-        value: updatedChallenge,
-        orgId: authUser.orgId,
-        userId: authUser.id,
-        action: "update",
-      },
-    ]);
-
     return { ...updatedCredential, challenge: updatedChallenge };
   });
 }
@@ -418,7 +398,8 @@ export async function getCredentialById(
       formVersionTable,
       eq(credentialTable.formVersionId, formVersionTable.id)
     )
-    .innerJoin(challengeTable, eq(challengeTable.credentialId, id));
+    .innerJoin(challengeTable, eq(challengeTable.credentialId, id))
+    .leftJoin(presentationTable, eq(presentationTable.credentialId, id));
 
   if (!query[0]) {
     return null;
@@ -430,7 +411,9 @@ export async function getCredentialById(
     ...credentials,
     formVersion: formVersions,
     challenge: challenges,
-    presentations: [],
+    presentations: query
+      .map(({ presentations }) => presentations)
+      .filter((p) => !!p),
   };
 }
 

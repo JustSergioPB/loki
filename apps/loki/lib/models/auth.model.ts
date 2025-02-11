@@ -31,7 +31,7 @@ export async function loginUser(data: LoginSchema): Promise<UserWithOrg> {
   );
 
   if (!passwordsMatch) {
-    throw new AuthError("invalidCredentials");
+    throw new AuthError("INVALID_CREDENTIALS");
   }
 
   return {

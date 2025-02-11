@@ -51,7 +51,7 @@ export default function CredentialFormSelect({
 
   return (
     <section className={cn("space-y-6 flex-1 flex flex-col", className)}>
-      <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 w-1/2">
+      <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 xl:w-1/2">
         <PageHeader
           title={t("formSelectTitle")}
           subtitle={t("formSelectDescription")}
