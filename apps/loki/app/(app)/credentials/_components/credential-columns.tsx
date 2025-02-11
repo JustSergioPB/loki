@@ -4,7 +4,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import CredentialDialog from "./credential-dialog";
 import { Badge } from "@/components/ui/badge";
-import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import StatusTag from "@/components/app/status-tag";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import { DbCredential } from "@/db/schema/credentials";
@@ -55,7 +54,6 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
       return t("issuer");
     },
     cell: function CellCompodnent({ row }) {
-      console.log(row.original);
       return row.original.issuer?.user?.fullName;
     },
   },
@@ -67,11 +65,10 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
     },
     cell: function CellComponent({ row }) {
       const t = useTranslations("Credential");
-      const status = getCredentialStatus(row.original);
 
       return (
-        <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[status]}>
-          {t(`statuses.${status}`)}
+        <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[row.original.status]}>
+          {t(`statuses.${row.original.status}`)}
         </StatusTag>
       );
     },

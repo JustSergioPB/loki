@@ -27,6 +27,7 @@ export default async function CredentialFill({
   return formVersion && challenge && presentations ? (
     <CredentialFillStepper
       credential={{ ...credential, formVersion, challenge, presentations }}
+      formVersions={[]}
     />
   ) : (
     <></>

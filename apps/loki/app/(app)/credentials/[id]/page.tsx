@@ -7,7 +7,6 @@ import PageHeader from "@/components/app/page-header";
 import CredentialActionDialog from "../_components/credential-action-dialog";
 import DateDisplay from "@/components/app/date";
 import { GoBackButton } from "@/components/app/go-back-button";
-import { getCredentialStatus } from "@/lib/helpers/credential.helper";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import StatusTag from "@/components/app/status-tag";
 import ChallengeDetails from "../_components/credential-challenge-details";
@@ -34,8 +33,6 @@ export default async function Credential({
     notFound();
   }
 
-  const credentialStatus = getCredentialStatus(credential);
-
   return (
     <section className="flex flex-1">
       <section className="border-r basis-3/5 flex flex-col">
@@ -56,8 +53,10 @@ export default async function Credential({
           <CredentialActionDialog credential={credential} action="delete" />
           <section className="space-y-4">
             <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
-              <StatusTag variant={CREDENTIAL_STATUS_VARIANTS[credentialStatus]}>
-                {t(`statuses.${credentialStatus}`)}
+              <StatusTag
+                variant={CREDENTIAL_STATUS_VARIANTS[credential.status]}
+              >
+                {t(`statuses.${credential.status}`)}
               </StatusTag>
             </Field>
             <Field

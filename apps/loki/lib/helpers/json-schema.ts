@@ -64,8 +64,6 @@ export function getDefaultCredentialSubject(
       );
     }
   });
-
-  console.log(defaults);
   return defaults;
 }
 

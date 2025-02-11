@@ -1,7 +1,7 @@
 export const credentialStatuses = [
   "empty",
   "presented",
-  "with-content",
+  "partiallyFilled",
   "filled",
   "signed",
   "claimed",

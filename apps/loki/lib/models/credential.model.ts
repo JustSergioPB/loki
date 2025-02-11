@@ -77,7 +77,11 @@ export async function createCredential(
       action: "create",
     });
 
-    return insertedCredential;
+    return {
+      ...insertedCredential,
+      challenge: insertedChallenge,
+      formVersion: query,
+    };
   });
 }
 
@@ -116,7 +120,7 @@ export async function createCredentialPresentation(
     throw new SignatureError("INVALID");
   }
 
-  return db.transaction(async (tx) => {
+  return await db.transaction(async (tx) => {
     const [updatedChallenge] = await tx
       .update(challengeTable)
       .set({
@@ -164,7 +168,7 @@ export async function updateCredential(
   if (data.validUntil) update.validUntil = data.validUntil;
   if (
     data.status &&
-    (data.status === "with-content" || data.status === "filled")
+    (data.status === "partiallyFilled" || data.status === "filled")
   )
     update.status = data.status;
 
@@ -187,7 +191,6 @@ export async function updateCredential(
     return updatedCredential;
   });
 }
-
 
 //TODO: Update this once did is refactor so it checks for non revoked keys
 export async function signCredential(
@@ -345,7 +348,7 @@ export async function claimCredential(
     throw new SignatureError("INVALID");
   }
 
-  return db.transaction(async (tx) => {
+  return await db.transaction(async (tx) => {
     const [updatedCredential] = await tx
       .update(credentialTable)
       .set({ status: "claimed" })
@@ -446,7 +449,7 @@ export async function searchCredentials(
       formVersionTable,
       eq(credentialTable.formVersionId, formVersionTable.id)
     )
-    .innerJoin(didTable, eq(didTable.did, credentialTable.issuerId))
+    .leftJoin(didTable, eq(didTable.did, credentialTable.issuerId))
     .leftJoin(userTable, eq(userTable.id, didTable.userId));
 
   const [{ count: countResult }] = await db
@@ -457,10 +460,12 @@ export async function searchCredentials(
   return {
     items: queryResult.map(({ credentials, users, dids, formVersions }) => ({
       ...credentials,
-      issuer: {
-        ...dids,
-        user: users ?? undefined,
-      },
+      issuer: dids
+        ? {
+            ...dids,
+            user: users ?? undefined,
+          }
+        : undefined,
       formVersion: formVersions,
     })),
     count: countResult,

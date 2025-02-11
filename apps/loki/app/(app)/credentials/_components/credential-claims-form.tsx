@@ -16,11 +16,12 @@ import JsonSchemaForm from "./json-schema-form";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DbFormVersion } from "@/db/schema/form-versions";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/app/loading-button";
 
 type Props = {
   claims: object | null;
   formVersion: DbFormVersion;
+  isLoading: boolean;
   className?: string;
   disabled?: boolean;
   onSubmit: (claims: object) => void;
@@ -29,6 +30,7 @@ type Props = {
 export default function CredentialClaimsForm({
   claims,
   formVersion,
+  isLoading,
   className,
   disabled,
   onSubmit,
@@ -87,9 +89,9 @@ export default function CredentialClaimsForm({
           />
         </section>
         <section className="flex justify-end py-4 px-12 gap-2">
-          <Button type="submit" disabled={disabled}>
-            {tGeneric("submit")}
-          </Button>
+          <LoadingButton type="submit" disabled={disabled} loading={isLoading}>
+            {tGeneric("next")}
+          </LoadingButton>
         </section>
       </form>
     </Form>

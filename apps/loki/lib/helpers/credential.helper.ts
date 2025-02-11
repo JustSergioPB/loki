@@ -1,20 +1,5 @@
-import { DbCredential, DbFilledCredential } from "@/db/schema/credentials";
-import { CredentialStatus } from "../types/credential";
+import { DbFilledCredential } from "@/db/schema/credentials";
 import { FilledCredential } from "../types/verifiable-credential";
-
-export function getCredentialStatus(value: DbCredential): CredentialStatus {
-  let status: CredentialStatus = "empty";
-
-  if (!value.credential) {
-    status = "unsigned";
-  }
-
-  if (value.credential) {
-    status = "signed";
-  }
-
-  return status;
-}
 
 export function toVerifiableCredential(
   baseUrl: string,

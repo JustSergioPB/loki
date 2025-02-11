@@ -28,7 +28,6 @@ export default function JsonObjectForm({
   headerVariant,
 }: Props) {
   const { control } = useFormContext();
-
   const { properties, required } = jsonSchema;
 
   if (!properties) {
@@ -51,16 +50,39 @@ export default function JsonObjectForm({
             {children}
           </FormLabel>
           <FormControl>
-            <section className={cn("grid grid-cols-2 gap-4", className)}>
-              {Object.entries(properties).map(([key, schema]) => (
-                <JsonSchemaForm
-                  key={key}
-                  path={path ? `${path}.${key}` : key}
-                  jsonSchema={schema}
-                  className="flex-1"
-                  required={required?.includes(key) ?? false}
-                />
-              ))}
+            <section className="space-y-4">
+              <div className={cn("grid grid-cols-2 gap-4", className)}>
+                {Object.entries(properties)
+                  .filter(
+                    ([, schema]) =>
+                      schema.type !== "object" && schema.type !== "array"
+                  )
+                  .map(([key, schema]) => (
+                    <JsonSchemaForm
+                      key={key}
+                      path={path ? `${path}.${key}` : key}
+                      jsonSchema={schema}
+                      className="flex-1"
+                      required={required?.includes(key) ?? false}
+                    />
+                  ))}
+              </div>
+              <div className="space-y-4">
+                {Object.entries(properties)
+                  .filter(
+                    ([, schema]) =>
+                      schema.type === "object" || schema.type === "array"
+                  )
+                  .map(([key, schema]) => (
+                    <JsonSchemaForm
+                      key={key}
+                      path={path ? `${path}.${key}` : key}
+                      jsonSchema={schema}
+                      className="flex-1"
+                      required={required?.includes(key) ?? false}
+                    />
+                  ))}
+              </div>
             </section>
           </FormControl>
           <FormMessage />

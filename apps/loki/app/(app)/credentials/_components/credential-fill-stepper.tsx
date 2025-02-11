@@ -6,13 +6,19 @@ import { GoBackButton } from "@/components/app/go-back-button";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Clock, FileText, PenTool, QrCode } from "lucide-react";
+import {
+  Clock,
+  FileText,
+  NotepadTextDashed,
+  PenTool,
+  QrCode,
+} from "lucide-react";
 import { DbCredential } from "@/db/schema/credentials";
-import PageHeader from "@/components/app/page-header";
 import CredentialValidityForm from "./credential-validity-form";
 import ChallengeDetails from "./credential-challenge-details";
 import { toast } from "sonner";
 import {
+  createCredentialAction,
   signCredentialAction,
   updateCredentialAction,
 } from "@/lib/actions/credential.actions";
@@ -22,6 +28,8 @@ import { ValiditySchema } from "@/lib/schemas/validity.schema";
 import CredentialClaimsForm from "./credential-claims-form";
 import { DbPresentation } from "@/db/schema/presentations";
 import { LoadingButton } from "@/components/app/loading-button";
+import { CredentialStatus } from "@/lib/types/credential";
+import CredentialFormSelect from "./credential-form-select";
 
 type CredentialView = Omit<DbCredential, "formVersion" | "challenge"> & {
   formVersion: DbFormVersion;
@@ -30,33 +38,48 @@ type CredentialView = Omit<DbCredential, "formVersion" | "challenge"> & {
 };
 
 type Props = {
-  credential: CredentialView;
+  credential: CredentialView | null;
+  formVersions: DbFormVersion[];
+};
+
+const STEP_MAP: Record<CredentialStatus, number> = {
+  empty: 1,
+  presented: 2,
+  partiallyFilled: 3,
+  filled: 4,
+  signed: 5,
+  claimed: 6,
 };
 
 const items = [
   {
-    title: "present",
+    title: "formSelectTitle",
+    icon: NotepadTextDashed,
+  },
+  {
+    title: "presentDocumentsTitle",
     icon: QrCode,
   },
   {
-    title: "fill",
+    title: "fillContentTitle",
     icon: FileText,
   },
   {
-    title: "setValidity",
+    title: "fillValidityTitle",
     icon: Clock,
   },
   {
-    title: "sign",
+    title: "signTitle",
     icon: PenTool,
   },
   {
-    title: "claim",
+    title: "claimTitle",
     icon: QrCode,
   },
 ];
 
 export default function CredentialFillStepper({
+  formVersions,
   credential: credentialState,
 }: Props) {
   const t = useTranslations("Credential");
@@ -64,31 +87,54 @@ export default function CredentialFillStepper({
   const tGeneric = useTranslations("Generic");
   const [credential, setCredential] = useState(credentialState);
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<number>(getStep(credentialState));
+  const [step, setStep] = useState<number>(
+    credential ? STEP_MAP[credential.status] : 0
+  );
 
   useEffect(() => {
-    const newStep = getStep(credential);
-    setStep(newStep);
+    setStep(credential ? STEP_MAP[credential.status] : 0);
   }, [credential]);
 
-  function getStep(credential: CredentialView): number {
-    let step = 0;
+  async function create(formVersionId: string) {
+    setIsLoading(true);
 
-    console.log(credential);
+    const { success, error } = await createCredentialAction(formVersionId);
 
-    if (!credential.challenge.code) step = 1;
-    if (credential.claims) step = 2;
-    if (credential.isFilled) step = 3;
-    if (credential.credential && credential.challenge.code) step = 4;
+    setIsLoading(false);
 
-    return step;
+    if (success) {
+      if (!success.data.formVersion) {
+        return toast.error("MISSING_FORM");
+      }
+
+      if (!success.data.challenge) {
+        return toast.error("MISSING_CHALLENGE");
+      }
+
+      setCredential({
+        ...success.data,
+        formVersion: success.data.formVersion,
+        challenge: success.data.challenge,
+        presentations: [],
+      });
+      toast.success(success.message);
+    } else {
+      toast.error(error.message);
+    }
   }
 
+  async function sync(): Promise<void> {}
+
   async function updateClaims(values: object) {
+    if (!credential) {
+      return toast.error("MISSING_CREDENTIAL");
+    }
+
     setIsLoading(true);
 
     const { success, error } = await updateCredentialAction(credential.id, {
       claims: values,
+      status: "partiallyFilled",
     });
 
     setIsLoading(false);
@@ -102,12 +148,16 @@ export default function CredentialFillStepper({
   }
 
   async function updateValidity(values: ValiditySchema) {
+    if (!credential) {
+      return toast.error("MISSING_CREDENTIAL");
+    }
+
     setIsLoading(true);
 
     const { success, error } = await updateCredentialAction(credential.id, {
       validFrom: values.validFrom,
       validUntil: values.validUntil,
-      isFilled: true,
+      status: "filled",
     });
 
     setIsLoading(false);
@@ -125,6 +175,10 @@ export default function CredentialFillStepper({
   }
 
   async function sign() {
+    if (!credential) {
+      return toast.error("MISSING_CREDENTIAL");
+    }
+
     setIsLoading(true);
 
     const { success, error } = await signCredentialAction(credential.id);
@@ -152,10 +206,6 @@ export default function CredentialFillStepper({
       <section className="basis-1/4 p-6 flex flex-col">
         <div className="space-y-6 flex-1">
           <GoBackButton variant="ghost" size="sm" />
-          <PageHeader
-            title={t("createTitle")}
-            subtitle={t("createDescription")}
-          />
           <div className="flex flex-col space-y-2">
             {items.map((item, index) => (
               <Button
@@ -184,36 +234,63 @@ export default function CredentialFillStepper({
         </div>
       </section>
       <section className="border-l basis-3/4 flex flex-col">
-        {(step === 0 || step === 4) && (
-          <ChallengeDetails credential={credential} />
-        )}
-        {step === 1 && (
-          <CredentialClaimsForm
-            claims={credential.claims}
-            formVersion={credential.formVersion}
-            onSubmit={updateClaims}
-          />
-        )}
-        {step === 2 && (
-          <CredentialValidityForm
-            validFrom={credential.validFrom}
-            validUntil={credential.validUntil}
-            formVersion={credential.formVersion}
+        {step === 0 && (
+          <CredentialFormSelect
+            formVersions={formVersions}
+            onSubmit={create}
             isLoading={isLoading}
-            onSubmit={updateValidity}
           />
         )}
-        {step === 3 && (
-          <section className="flex-1 flex flex-col">
-            <pre className="flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
-              <code>{JSON.stringify(credential.claims, null, 1)}</code>
-            </pre>
-            <div className="flex justify-end py-4 px-12 gap-2">
-              <LoadingButton loading={isLoading} type="submit" onClick={sign}>
-                {tGeneric("submit")}
-              </LoadingButton>
-            </div>
-          </section>
+        {credential && (
+          <>
+            {step === 1 && (
+              <ChallengeDetails
+                action="present"
+                credential={credential}
+                onSubmit={sync}
+              />
+            )}
+            {step === 2 && (
+              <CredentialClaimsForm
+                claims={credential.claims}
+                formVersion={credential.formVersion}
+                isLoading={isLoading}
+                onSubmit={updateClaims}
+              />
+            )}
+            {step === 3 && (
+              <CredentialValidityForm
+                validFrom={credential.validFrom}
+                validUntil={credential.validUntil}
+                formVersion={credential.formVersion}
+                isLoading={isLoading}
+                onSubmit={updateValidity}
+              />
+            )}
+            {step === 4 && (
+              <section className="flex-1 flex flex-col">
+                <pre className="flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
+                  <code>{JSON.stringify(credential.claims, null, 1)}</code>
+                </pre>
+                <div className="flex justify-end py-4 px-12 gap-2">
+                  <LoadingButton
+                    loading={isLoading}
+                    type="submit"
+                    onClick={sign}
+                  >
+                    {tGeneric("next")}
+                  </LoadingButton>
+                </div>
+              </section>
+            )}
+            {step === 5 && (
+              <ChallengeDetails
+                action="claim"
+                credential={credential}
+                onSubmit={sync}
+              />
+            )}
+          </>
         )}
       </section>
     </section>

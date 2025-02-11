@@ -124,7 +124,7 @@ export default function CredentialValidityForm({
         </section>
         <section className="flex justify-end py-4 px-12 gap-2">
           <LoadingButton loading={isLoading} type="submit">
-            {tGeneric("submit")}
+            {tGeneric("next")}
           </LoadingButton>
         </section>
       </form>

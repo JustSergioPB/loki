@@ -6,6 +6,9 @@ export const CREDENTIAL_STATUS_VARIANTS: Record<
   StatusTagVariant
 > = {
   empty: "inactive",
-  signed: "success",
-  unsigned: "warning",
+  signed: "tertiary",
+  presented: "warning",
+  partiallyFilled: "warning",
+  filled: "secondary",
+  claimed: "success",
 };

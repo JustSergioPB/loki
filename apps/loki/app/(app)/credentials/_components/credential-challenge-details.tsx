@@ -20,14 +20,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DbCredential } from "@/db/schema/credentials";
 
 type Props = {
+  action: "claim" | "present";
   credential: Omit<DbCredential, "challenge"> & {
     challenge: DbChallenge;
   };
   className?: string;
+  onSubmit: () => void;
 };
 
-export default function ChallengeDetails({ credential, className }: Props) {
-  const t = useTranslations("Challenge");
+export default function ChallengeDetails({
+  action,
+  credential,
+  onSubmit,
+  className,
+}: Props) {
+  const t = useTranslations("Credential");
+  const tGeneric = useTranslations("Generic");
   const [loading, setLoading] = useState(false);
   const [challenge, setChallenge] = useState(credential.challenge);
   const [status, setStatus] = useState<ChallengeStatus>(
@@ -70,27 +78,35 @@ export default function ChallengeDetails({ credential, className }: Props) {
   return (
     <section className={cn("space-y-6 flex-1 flex flex-col", className)}>
       <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 w-1/2">
-        <PageHeader title={t("scanTitle")} subtitle={t("scanSubtitle")} />
-        <div className="space-y-4">
-          {qrCode ? (
-            <Image src={qrCode} alt={t("qrCode")} width={250} height={250} />
-          ) : (
-            <Skeleton className="size-[250px] rounded-md" />
+        <PageHeader
+          title={t(action === "claim" ? "claimTitle" : "presentDocumentsTitle")}
+          subtitle={t(
+            action === "claim" ? "claimSubtitle" : "presentDocumentsDescription"
           )}
+        />
+        <div className="space-y-4">
           <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
             <StatusTag variant={CHALLENGE_STATUS_VARIANTS[status]}>
               {t(`statuses.${status}`)}
             </StatusTag>
           </Field>
+          {qrCode ? (
+            <Image src={qrCode} alt={t("qrCode")} width={250} height={250} />
+          ) : (
+            <Skeleton className="size-[250px] rounded-md" />
+          )}
+          <LoadingButton
+            loading={loading}
+            onClick={onClick}
+            disabled={status !== "expired"}
+          >
+            {t("renew")}
+          </LoadingButton>
         </div>
       </section>
       <div className="flex justify-end py-4 px-12 gap-2 border-t">
-        <LoadingButton
-          loading={loading}
-          onClick={onClick}
-          disabled={status !== "expired"}
-        >
-          {t("renew")}
+        <LoadingButton loading={loading} onClick={onSubmit}>
+          {tGeneric("next")}
         </LoadingButton>
       </div>
     </section>

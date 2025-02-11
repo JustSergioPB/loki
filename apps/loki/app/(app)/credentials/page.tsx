@@ -8,7 +8,9 @@ import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
 import { searchCredentials } from "@/lib/models/credential.model";
 import { credentialColumns } from "./_components/credential-columns";
-import CredentialCreateDialog from "./_components/credential-create-dialog";
+import { buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
+import { CirclePlus } from "lucide-react";
 
 export default async function Credentials({
   searchParams,
@@ -29,7 +31,10 @@ export default async function Credentials({
   return (
     <Page>
       <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6">
-        <CredentialCreateDialog orgId={user.orgId} />
+        <Link className={buttonVariants()} href="/credentials/new">
+          <CirclePlus />
+          {t("credential")}
+        </Link>
       </PageHeader>
       <DataTable
         columns={credentialColumns}
