@@ -14,5 +14,6 @@ export const auditableEntities = [
   "credential",
   "challenge",
   "email-bridge",
+  "presentation"
 ] as const;
 export type AuditableEntity = (typeof auditableEntities)[number];

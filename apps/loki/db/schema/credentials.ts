@@ -1,4 +1,11 @@
-import { jsonb, pgTable, timestamp, uuid, varchar, boolean } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { DbOrg, orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DbFormVersion, formVersionTable } from "./form-versions";
@@ -7,6 +14,9 @@ import { DbPresentation } from "./presentations";
 import { DbChallenge } from "./challenges";
 import { DbUser } from "./users";
 import { VerifiableCredential } from "@/lib/types/verifiable-credential";
+import { credentialStatuses } from "@/lib/types/credential";
+
+export const credentialStatus = pgEnum("credentialStatus", credentialStatuses);
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
@@ -15,13 +25,11 @@ export const credentialTable = pgTable("credentials", {
   holder: varchar(),
   claims: jsonb().$type<object>(),
   credential: jsonb().$type<VerifiableCredential>(),
-  isFilled: boolean().default(false),
+  status: credentialStatus().notNull().default("empty"),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),
-  issuerId: varchar()
-    .notNull()
-    .references(() => didTable.did, { onDelete: "cascade" }),
+  issuerId: varchar().references(() => didTable.did, { onDelete: "cascade" }),
   orgId: uuid()
     .notNull()
     .references(() => orgTable.id, { onDelete: "cascade" }),
