@@ -14,6 +14,7 @@ export default async function NewCredential() {
     orgId: user.orgId,
     page: 0,
     pageSize: 500,
+    status: "published",
   });
 
   return (

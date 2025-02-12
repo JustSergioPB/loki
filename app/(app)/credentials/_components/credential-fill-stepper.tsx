@@ -32,6 +32,8 @@ import { LoadingButton } from "@/components/app/loading-button";
 import { CredentialStatus } from "@/lib/types/credential";
 import CredentialFormSelect from "./credential-form-select";
 import { ApiErrorResult } from "@/lib/generics/api-error";
+import PageHeader from "@/components/app/page-header";
+import { useRouter } from "next/router";
 
 type CredentialView = Omit<DbCredential, "formVersion" | "challenge"> & {
   formVersion: DbFormVersion;
@@ -93,6 +95,8 @@ export default function CredentialFillStepper({
     credential ? STEP_MAP[credential.status] : 0
   );
 
+  const router = useRouter();
+
   useEffect(() => {
     setStep(credential ? STEP_MAP[credential.status] : 0);
   }, [credential]);
@@ -105,18 +109,20 @@ export default function CredentialFillStepper({
     setIsLoading(false);
 
     if (success) {
-      if (!success.data.formVersion) {
+      const { formVersion, challenge, ...rest } = success.data;
+
+      if (!formVersion) {
         return toast.error("MISSING_FORM");
       }
 
-      if (!success.data.challenge) {
+      if (!challenge) {
         return toast.error("MISSING_CHALLENGE");
       }
 
       setCredential({
-        ...success.data,
-        formVersion: success.data.formVersion,
-        challenge: success.data.challenge,
+        ...rest,
+        formVersion,
+        challenge,
         presentations: [],
       });
       toast.success(success.message);
@@ -142,10 +148,8 @@ export default function CredentialFillStepper({
       }
 
       const {
-        data: { presentations, challenge, status },
+        data: { presentations, challenge, ...rest },
       } = body as { data: DbCredential };
-
-      console.log(challenge);
 
       if (!challenge) {
         return toast.error("MISSING_CHALLENGE");
@@ -155,13 +159,17 @@ export default function CredentialFillStepper({
         return toast.error("MISSING_PRESENTATIONS");
       }
 
-      if (status === "empty") {
+      if (credential.status === "empty") {
         return toast.warning(t("NOT_PRESENTED"));
+      }
+
+      if (credential.status === "claimed") {
+        return router.push("/credentials");
       }
 
       setCredential({
         ...credential,
-        status,
+        ...rest,
         presentations,
         challenge,
       });
@@ -189,8 +197,7 @@ export default function CredentialFillStepper({
     if (success) {
       setCredential({
         ...credential,
-        claims: success.data.claims,
-        status: success.data.status,
+        ...success.data,
       });
       toast.success(success.message);
     } else {
@@ -214,9 +221,7 @@ export default function CredentialFillStepper({
     if (success) {
       setCredential({
         ...credential,
-        validFrom: success.data.validFrom,
-        validUntil: success.data.validUntil,
-        status: success.data.status,
+        ...success.data,
       });
       toast.success(success.message);
     } else {
@@ -238,14 +243,16 @@ export default function CredentialFillStepper({
     setIsLoading(false);
 
     if (success) {
-      if (!success.data.challenge) {
+      const { challenge } = success.data;
+
+      if (!challenge) {
         return toast.error("MISSING_CHALLENGE");
       }
 
       setCredential({
         ...credential,
-        credential: success.data.credential,
-        challenge: success.data.challenge,
+        ...success.data,
+        challenge,
       });
       toast.success(success.message);
     } else {
@@ -327,10 +334,16 @@ export default function CredentialFillStepper({
             )}
             {step === 4 && (
               <section className="flex-1 flex flex-col">
-                <pre className="flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
-                  <code>{JSON.stringify(credential.claims, null, 1)}</code>
-                </pre>
-                <div className="flex justify-end py-4 px-12 gap-2">
+                <section className="flex-auto overflow-y-auto h-0 flex flex-col p-12 xl:w-2/3 space-y-6">
+                  <PageHeader
+                    title={t("signTitle")}
+                    subtitle={t("signDescription")}
+                  />
+                  <pre className="text-sm">
+                    <code>{JSON.stringify(credential.claims, null, 1)}</code>
+                  </pre>
+                </section>
+                <div className="flex justify-end py-4 px-12 gap-2 border-t">
                   <LoadingButton
                     loading={isLoading}
                     type="submit"

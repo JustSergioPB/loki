@@ -28,7 +28,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
     cell: function CellComponent({ row }) {
       return (
         <div className="flex items-center gap-1">
-          {row.original.formVersion?.types.slice(1, 3).map((type, idx) => (
+          {row.original.formVersion?.types.slice(0, 2).map((type, idx) => (
             <Badge variant="secondary" key={`${type}-${idx}`}>
               {type}
             </Badge>

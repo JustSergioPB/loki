@@ -23,6 +23,7 @@ import * as canonicalize from "json-canonicalize";
 import { VerifiableCredentialProof } from "../types/verifiable-credential";
 import { getSigningMethod } from "../helpers/did.helper";
 import { SignatureError } from "../errors/signature.error";
+import { DidError } from "../errors/did.error";
 
 export async function createCredential(
   formVersionId: string,
@@ -208,7 +209,6 @@ export async function signCredential(
     .from(credentialTable)
     .where(eq(credentialTable.id, id))
     .innerJoin(orgTable, eq(orgTable.id, credentialTable.orgId))
-    .innerJoin(didTable, eq(didTable.userId, authUser.id))
     .innerJoin(
       formVersionTable,
       eq(formVersionTable.id, credentialTable.formVersionId)
@@ -218,7 +218,15 @@ export async function signCredential(
     throw new CredentialError("NOT_FOUND");
   }
 
-  const { credentials, dids, orgs, formVersions } = query[0];
+  const issuer = await db.query.didTable.findFirst({
+    where: eq(didTable.userId, authUser.id),
+  });
+
+  if (!issuer) {
+    throw new DidError("USER_DID_NOT_FOUND");
+  }
+
+  const { credentials, orgs, formVersions } = query[0];
 
   if (!credentials.holder || !credentials.claims) {
     throw new Error("IMCOMPLETE");
@@ -228,12 +236,12 @@ export async function signCredential(
     ...credentials,
     holder: credentials.holder,
     claims: credentials.claims,
-    issuer: dids,
+    issuer,
     org: orgs,
     formVersion: formVersions,
   });
 
-  const verificationMethod = getSigningMethod(dids);
+  const verificationMethod = getSigningMethod(issuer);
 
   const proof: VerifiableCredentialProof = {
     type: "DataIntegrityProof",
@@ -261,7 +269,7 @@ export async function signCredential(
           },
         },
         status: "signed",
-        issuerId: dids.did,
+        issuerId: issuer.did,
       })
       .where(eq(credentialTable.id, id))
       .returning();
@@ -269,7 +277,7 @@ export async function signCredential(
     const updatedPresentations = await tx
       .update(presentationTable)
       .set({ content: null })
-      .where(eq(credentialTable.id, presentationTable.credentialId))
+      .where(eq(presentationTable.credentialId, id))
       .returning();
 
     const [updatedChallenge] = await tx

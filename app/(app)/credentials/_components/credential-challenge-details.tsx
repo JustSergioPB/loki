@@ -80,7 +80,7 @@ export default function ChallengeDetails({
 
   return (
     <section className={cn("space-y-6 flex-1 flex flex-col", className)}>
-      <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 xl:w-1/2">
+      <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 xl:w-2/3">
         <PageHeader
           title={tCredential(
             action === "claim" ? "claimTitle" : "presentDocumentsTitle"
@@ -112,7 +112,7 @@ export default function ChallengeDetails({
       </section>
       <div className="flex justify-end py-4 px-12 gap-2 border-t">
         <LoadingButton loading={loading} onClick={onSubmit}>
-          {tGeneric("next")}
+          {tGeneric(action === "claim" ? "finish" : "next")}
         </LoadingButton>
       </div>
     </section>

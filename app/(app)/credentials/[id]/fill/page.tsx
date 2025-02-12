@@ -24,6 +24,8 @@ export default async function CredentialFill({
 
   const { formVersion, challenge, presentations, ...credential } = query;
 
+  console.log(query);
+
   return formVersion && challenge && presentations ? (
     <CredentialFillStepper
       credential={{ ...credential, formVersion, challenge, presentations }}

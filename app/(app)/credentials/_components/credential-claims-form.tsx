@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DbFormVersion } from "@/db/schema/form-versions";
 import { LoadingButton } from "@/components/app/loading-button";
+import PageHeader from "@/components/app/page-header";
 
 type Props = {
   claims: object | null;
@@ -50,10 +51,12 @@ export default function CredentialClaimsForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className={cn("flex-1 flex flex-col", className)}
       >
-        <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
+        <section className="space-y-6 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b xl:w-2/3">
           <section className="space-y-2">
-            <h1 className="text-2xl font-bold">{formVersion.title}</h1>
-            <p className="text-muted-foreground">{formVersion.description}</p>
+            <PageHeader
+              title={formVersion.title}
+              subtitle={formVersion.description ?? undefined}
+            />
             <div className="flex items-center gap-1">
               {formVersion.types.map((type, idx) => (
                 <Badge variant="secondary" key={`${type}-${idx}`}>

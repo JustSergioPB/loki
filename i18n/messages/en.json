@@ -159,8 +159,8 @@
     "fillContentTitle": "Fill claims",
     "presentDocumentsTitle": "Present documents",
     "presentDocumentsDescription": "By scanning the following QR the holder will be able to send you documentation if required and identify itself. Once the holder has submitted the information you'll be able to move to the next step.",
-    "signTitle": "Sign",
-    "signDescription": "Review the document you're about to emit just to make sure everything alright since after signing you won't be able to modify it",
+    "signTitle": "Review and sign",
+    "signDescription": "Review the document you're about to emit just to make sure everything alright since after signing you won't be able to modify it.",
     "claimTitle": "Claim",
     "claimSubtitle": "By scanning the following QR the holder will be able to store the document in it's wallet",
     "formSelectTitle": "Select a form",
@@ -326,6 +326,7 @@
     "back": "Back",
     "next": "Next",
     "fill": "Fill",
+    "finish": "Finish",
     "errors": {
       "retryLater": "Please try in 5 minutes. If the error persits please contact us."
     }

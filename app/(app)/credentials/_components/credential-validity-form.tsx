@@ -1,4 +1,5 @@
 import { LoadingButton } from "@/components/app/loading-button";
+import PageHeader from "@/components/app/page-header";
 import { DatetimePicker } from "@/components/ui/datetime-picker";
 import {
   Form,
@@ -69,10 +70,11 @@ export default function CredentialValidityForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className={cn("flex-1 flex flex-col", className)}
       >
-        <section className="space-y-4 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b">
-          <p className="font-semibold text-xl leading-none">
-            {t("validityTitle")}
-          </p>
+        <section className="space-y-4 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b xl:w-2/3">
+          <PageHeader
+            title={t("fillValidityTitle")}
+            subtitle={t("fillValidityDescription")}
+          />
           <div className="flex gap-4">
             <FormField
               control={form.control}
