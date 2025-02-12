@@ -79,7 +79,7 @@
     "deleteSucceded": "Org deleted successfully",
     "deleteFailed": "We couldn't delete the organization. Please try again later",
     "seeTitle": "Organization details",
-    "seeDescription": "This dialog contains the information of the organization and it's certificates",
+    "seeDescription": "This dialog contains the information of the organization",
     "tier": "Tier",
     "tiers": {
       "unbound": "Unbound",

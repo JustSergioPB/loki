@@ -2,11 +2,11 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
-import CredentialDialog from "./credential-dialog";
 import { Badge } from "@/components/ui/badge";
 import StatusTag from "@/components/app/status-tag";
 import { CREDENTIAL_STATUS_VARIANTS } from "@/lib/constants/credential.const";
 import { DbCredential } from "@/db/schema/credentials";
+import CredentialActionsDialog from "./credential-actions-dialog";
 
 export const credentialColumns: ColumnDef<DbCredential>[] = [
   {
@@ -76,7 +76,7 @@ export const credentialColumns: ColumnDef<DbCredential>[] = [
   {
     id: "actions",
     cell: function CellComponent({ row }) {
-      return <CredentialDialog credential={row.original} />;
+      return <CredentialActionsDialog credential={row.original} />;
     },
   },
 ];

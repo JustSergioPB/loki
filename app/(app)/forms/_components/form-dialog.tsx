@@ -106,42 +106,39 @@ export default function FormDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          {status === "draft" && (
-            <DropdownMenuItem
-              onClick={() => router.push(`/forms/${formVersion.id}/edit`)}
-            >
-              <Pencil />
-              {tGeneric("edit")}
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem
             onClick={() => router.push(`/forms/${formVersion.id}`)}
           >
             <ArrowRight />
             {tGeneric("see")}
           </DropdownMenuItem>
-          {status === "draft" && (
-            <DropdownMenuItem
-              onClick={() => {
-                setAction("publish");
-                setOpen(true);
-              }}
-            >
-              <Rss />
-              {t("publish")}
-            </DropdownMenuItem>
-          )}
-          {status === "published" && (
-            <DropdownMenuItem
-              onClick={() => {
-                setAction("archive");
-                setOpen(true);
-              }}
-            >
-              <Archive />
-              {t("archive")}
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            disabled={status !== "draft"}
+            onClick={() => router.push(`/forms/${formVersion.id}/edit`)}
+          >
+            <Pencil />
+            {tGeneric("edit")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={status !== "draft"}
+            onClick={() => {
+              setAction("publish");
+              setOpen(true);
+            }}
+          >
+            <Rss />
+            {t("publish")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={status !== "published"}
+            onClick={() => {
+              setAction("archive");
+              setOpen(true);
+            }}
+          >
+            <Archive />
+            {t("archive")}
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-500"
             onClick={() => {

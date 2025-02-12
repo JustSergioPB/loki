@@ -21,10 +21,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { deleteCredentialAction } from "@/lib/actions/credential.actions";
 import { DbCredential } from "@/db/schema/credentials";
+import CredentialDetails from "./credential-details";
 
 type Action = "see" | "fill" | "delete";
 
-export default function CredentialDialog({
+export default function CredentialActionsDialog({
   credential,
 }: {
   credential: DbCredential;
@@ -63,22 +64,22 @@ export default function CredentialDialog({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{tGeneric("actions")}</DropdownMenuLabel>
-          {credential.credential ? (
-            <DropdownMenuItem
-              onClick={() => router.push(`/credentials/${credential.id}`)}
-            >
-              <ArrowRight />
-              {tGeneric("see")}
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem
-              onClick={() => router.push(`/credentials/${credential.id}/fill`)}
-            >
-              <NotebookPen />
-              {tGeneric("fill")}
-            </DropdownMenuItem>
-          )}
-
+          <DropdownMenuItem
+            onClick={() => {
+              setAction("see");
+              setOpen(true);
+            }}
+          >
+            <ArrowRight />
+            {tGeneric("see")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={credential.status === "claimed"}
+            onClick={() => router.push(`/credentials/${credential.id}/fill`)}
+          >
+            <NotebookPen />
+            {tGeneric("fill")}
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="text-red-500"
             onClick={() => {
@@ -96,15 +97,19 @@ export default function CredentialDialog({
           <DialogTitle>{t(`${action}Title`)}</DialogTitle>
           <DialogDescription>{t(`${action}Description`)}</DialogDescription>
         </DialogHeader>
-        <ConfirmDialog
-          keyword={credential.id}
-          label={t("deleteLabel")}
-          className={action === "delete" ? "block" : "hidden"}
-          onSubmit={onDelete}
-          loading={isLoading}
-          id={credential.id}
-          variant="danger"
-        />
+        {action === "see" ? (
+          <CredentialDetails credential={credential} />
+        ) : (
+          <ConfirmDialog
+            keyword={credential.id}
+            label={t("deleteLabel")}
+            className={action === "delete" ? "block" : "hidden"}
+            onSubmit={onDelete}
+            loading={isLoading}
+            id={credential.id}
+            variant="danger"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
