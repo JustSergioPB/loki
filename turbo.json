@@ -12,6 +12,13 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "typecheck": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "dependsOn": ["^build"]
     }
   }
 }

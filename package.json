@@ -9,11 +9,29 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "prepare": "husky",
+    "pre-push": "turbo run test typecheck --filter=[HEAD^1]"
   },
   "devDependencies": {
+    "@commitlint/cli": "19.7.1",
+    "@commitlint/config-conventional": "19.7.1",
+    "husky": "9.1.7",
+    "lint-staged": "15.4.3",
     "prettier": "3.2.5",
     "turbo": "2.0.3"
+  },
+  "lint-staged": {
+    "apps/**/*.{js,ts,jsx,tsx}": [
+      "eslint --fix"
+    ],
+    "packages/**/*.{js,ts,jsx,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "packageManager": "npm@10.5.0",
   "engines": {
