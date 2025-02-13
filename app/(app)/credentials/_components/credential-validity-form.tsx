@@ -70,7 +70,7 @@ export default function CredentialValidityForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className={cn("flex-1 flex flex-col", className)}
       >
-        <section className="space-y-4 flex-auto overflow-y-auto h-0 flex flex-col p-12 border-b xl:w-2/3">
+        <section className="space-y-4 flex-auto overflow-y-auto h-0 flex flex-col p-12 xl:w-2/3">
           <PageHeader
             title={t("fillValidityTitle")}
             subtitle={t("fillValidityDescription")}
@@ -124,7 +124,7 @@ export default function CredentialValidityForm({
             />
           </div>
         </section>
-        <section className="flex justify-end py-4 px-12 gap-2">
+        <section className="flex justify-end py-4 px-12 gap-2 border-t">
           <LoadingButton loading={isLoading} type="submit">
             {tGeneric("next")}
           </LoadingButton>

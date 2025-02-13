@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   CircleCheck,
   Clock,
-  FileText,
+  FileSearch,
   NotepadTextDashed,
   PenTool,
   QrCode,
@@ -33,7 +33,7 @@ import { CredentialStatus } from "@/lib/types/credential";
 import CredentialFormSelect from "./credential-form-select";
 import { ApiErrorResult } from "@/lib/generics/api-error";
 import PageHeader from "@/components/app/page-header";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 type CredentialView = Omit<DbCredential, "formVersion" | "challenge"> & {
   formVersion: DbFormVersion;
@@ -66,7 +66,7 @@ const items = [
   },
   {
     title: "fillContentTitle",
-    icon: FileText,
+    icon: FileSearch,
   },
   {
     title: "fillValidityTitle",
@@ -159,11 +159,11 @@ export default function CredentialFillStepper({
         return toast.error("MISSING_PRESENTATIONS");
       }
 
-      if (credential.status === "empty") {
+      if (rest.status === "empty") {
         return toast.warning(t("NOT_PRESENTED"));
       }
 
-      if (credential.status === "claimed") {
+      if (rest.status === "claimed") {
         return router.push("/credentials");
       }
 
@@ -319,6 +319,7 @@ export default function CredentialFillStepper({
               <CredentialClaimsForm
                 claims={credential.claims}
                 formVersion={credential.formVersion}
+                presentations={credential.presentations}
                 isLoading={isLoading}
                 onSubmit={updateClaims}
               />

@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/helpers/dal";
-import { FORBIDDEN, notFound, redirect } from "next/navigation";
+import { forbidden, notFound, redirect } from "next/navigation";
 import { getFormVersionById } from "@/lib/models/form-version.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
@@ -56,7 +56,7 @@ export default async function Form({
   }
 
   if (user.orgId !== formVersion.orgId) {
-    FORBIDDEN();
+    forbidden();
   }
 
   const {

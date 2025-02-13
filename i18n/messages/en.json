@@ -156,7 +156,7 @@
     "searchFormNotFound": "Form not found",
     "fillValidityTitle": "Set validity",
     "fillValidityDescription": "Fill this section if you need this document either to be valid from a certain date or valid until a certain date (or both)",
-    "fillContentTitle": "Fill claims",
+    "fillContentTitle": "Verify documents and fill",
     "presentDocumentsTitle": "Present documents",
     "presentDocumentsDescription": "By scanning the following QR the holder will be able to send you documentation if required and identify itself. Once the holder has submitted the information you'll be able to move to the next step.",
     "signTitle": "Review and sign",
