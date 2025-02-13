@@ -4,6 +4,8 @@ export const statusTagVariants = [
   "success",
   "error",
   "warning",
+  "secondary",
+  "tertiary",
   "inactive",
 ] as const;
 export type StatusTagVariant = (typeof statusTagVariants)[number];
@@ -24,6 +26,14 @@ export default function StatusTag({ variant, children }: Props) {
     case "warning":
       bg = "bg-amber-100";
       textColor = "text-amber-500";
+      break;
+    case "secondary":
+      bg = "bg-purple-100";
+      textColor = "text-purple-500";
+      break;
+    case "tertiary":
+      bg = "bg-blue-100";
+      textColor = "text-blue-500";
       break;
     case "error":
       bg = "bg-red-100";

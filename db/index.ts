@@ -6,10 +6,11 @@ import * as userTokens from "./schema/user-tokens";
 import * as users from "./schema/users";
 import * as auditLogs from "./schema/audit-logs";
 import * as formVersions from "./schema/form-versions";
-import * as forms from "./schema/forms";
 import * as dids from "./schema/dids";
 import * as privateKeys from "./schema/private-keys";
-import * as emailBridgeRequest from "./schema/credential-requests";
+import * as challenge from "./schema/challenges";
+import * as credential from "./schema/credentials";
+import * as presentation from "./schema/presentations";
 
 const connectionString = process.env.DATABASE_URL!;
 export const client = postgres(connectionString, { prepare: false });
@@ -21,10 +22,11 @@ export const db = drizzle({
     ...userTokens,
     ...users,
     ...auditLogs,
-    ...forms,
     ...formVersions,
     ...dids,
     ...privateKeys,
-    ...emailBridgeRequest,
+    ...challenge,
+    ...credential,
+    ...presentation,
   },
 });

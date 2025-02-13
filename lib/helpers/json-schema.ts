@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { JsonObjectType, JsonSchemaType } from "../types/json-schema";
+import {
+  JsonArrayType,
+  JsonBooleanType,
+  JsonNullType,
+  JsonNumberType,
+  JsonObjectType,
+  JsonSchemaType,
+  JsonStringType,
+} from "../types/json-schema";
 
 export function credentialSubjectToZod(
   credentialSubject: JsonObjectType
@@ -64,8 +72,6 @@ export function getDefaultCredentialSubject(
       );
     }
   });
-
-  console.log(defaults);
   return defaults;
 }
 
@@ -208,4 +214,308 @@ function buildObjectSchema(
   }
 
   return zodSchema;
+}
+
+export function validateString(
+  schema: JsonStringType,
+  value: string | undefined,
+  required: boolean
+): boolean {
+  if (required && value === undefined) {
+    return false;
+  }
+  // Check type
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  // Check enum
+  if (schema.enum && !schema.enum.includes(value)) {
+    return false;
+  }
+
+  // Check const
+  if (schema.const && value !== schema.const) {
+    return false;
+  }
+
+  // Check minLength
+  if (schema.minLength && value.length < schema.minLength) {
+    return false;
+  }
+
+  // Check maxLength
+  if (schema.maxLength && value.length > schema.maxLength) {
+    return false;
+  }
+
+  // Check pattern
+  if (schema.pattern) {
+    const regex = new RegExp(schema.pattern);
+    if (!regex.test(value)) {
+      return false;
+    }
+  }
+
+  // Check format
+  if (schema.format) {
+    switch (schema.format) {
+      case "datetime":
+        return !isNaN(Date.parse(value));
+      case "date":
+        return /^\d{4}-\d{2}-\d{2}$/.test(value);
+      case "time":
+        return /^\d{2}:\d{2}:\d{2}$/.test(value);
+      case "email":
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      case "uri":
+        try {
+          new URL(value);
+          return true;
+        } catch {
+          return false;
+        }
+      case "uuid":
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          value
+        );
+    }
+  }
+
+  return true;
+}
+
+export function validateBoolean(
+  schema: JsonBooleanType,
+  value: boolean | undefined,
+  required: boolean
+): boolean {
+  // Check if required
+  if (required && value === undefined) {
+    return false;
+  }
+
+  // If value is undefined and not required, it's valid
+  if (value === undefined) {
+    return true;
+  }
+
+  // Check type
+  if (typeof value !== "boolean") {
+    return false;
+  }
+
+  // Check const
+  if (schema.const !== undefined && value !== schema.const) {
+    return false;
+  }
+
+  // Check enum
+  if (schema.enum !== undefined && !schema.enum.includes(value)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function validateNumber(
+  schema: JsonNumberType,
+  value: number | undefined,
+  required: boolean
+): boolean {
+  // Check if required
+  if (required && value === undefined) {
+    return false;
+  }
+
+  // If value is undefined and not required, it's valid
+  if (value === undefined) {
+    return true;
+  }
+
+  // Check type - must be number and integer
+  if (
+    typeof value !== "number" ||
+    (schema.type === "integer" && !Number.isInteger(value)) ||
+    (schema.type === "number" && !Number.isNaN(value))
+  ) {
+    return false;
+  }
+
+  // Check minimum
+  if (schema.minimum !== undefined && value < schema.minimum) {
+    return false;
+  }
+
+  // Check maximum
+  if (schema.maximum !== undefined && value > schema.maximum) {
+    return false;
+  }
+
+  // Check exclusiveMinimum
+  if (
+    schema.exclusiveMinimum !== undefined &&
+    value <= schema.exclusiveMinimum
+  ) {
+    return false;
+  }
+
+  // Check exclusiveMaximum
+  if (
+    schema.exclusiveMaximum !== undefined &&
+    value >= schema.exclusiveMaximum
+  ) {
+    return false;
+  }
+
+  // Check multipleOf
+  if (schema.multipleOf !== undefined) {
+    if (value % schema.multipleOf !== 0) {
+      return false;
+    }
+  }
+
+  // Check const
+  if (schema.const !== undefined && value !== schema.const) {
+    return false;
+  }
+
+  // Check enum
+  if (schema.enum !== undefined && !schema.enum.includes(value)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function validateNull(
+  schema: JsonNullType,
+  value: null | undefined,
+  required: boolean
+): boolean {
+  // Check if required
+  if (required && value === undefined) {
+    return false;
+  }
+
+  // If value is undefined and not required, it's valid
+  if (value === undefined) {
+    return true;
+  }
+
+  // Check type - must be null
+  if (value !== null) {
+    return false;
+  }
+
+  return true;
+}
+
+export function validateObject(
+  schema: JsonObjectType,
+  value: Record<string, unknown> | undefined,
+  required: boolean
+): boolean {
+  // Check if required
+  if (required && value === undefined) {
+    return false;
+  }
+
+  // Check type
+  if (typeof value !== "object") {
+    return false;
+  }
+
+  // Validate defined properties
+  if (schema.properties) {
+    return Object.keys(schema.properties)
+      .map((key) =>
+        validateValue(
+          value[key],
+          schema.properties![key],
+          schema.required?.includes(key) ?? false
+        )
+      )
+      .every((v) => v);
+  }
+
+  return true;
+}
+
+export function validateArray(
+  schema: JsonArrayType,
+  value: unknown[] | undefined,
+  required: boolean
+): boolean {
+  // Check if required
+  if (required && value === undefined) {
+    return false;
+  }
+
+  // If value is undefined and not required, it's valid
+  if (value === undefined) {
+    return true;
+  }
+
+  // Check type
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  // Check minItems
+  if (schema.minItems !== undefined && value.length < schema.minItems) {
+    return false;
+  }
+
+  // Check maxItems
+  if (schema.maxItems !== undefined && value.length > schema.maxItems) {
+    return false;
+  }
+
+  // Validate items
+  if (schema.items) {
+    return value
+      .map((v) => validateValue(v, schema.items!, true))
+      .every((v) => v);
+  }
+
+  return true;
+}
+
+export function validateValue(
+  value: unknown,
+  schema: JsonSchemaType,
+  required: boolean
+): boolean {
+  let isValid = false;
+
+  switch (schema.type) {
+    case "string":
+      isValid = validateString(schema, value as string, required);
+      break;
+    case "null":
+      isValid = validateNull(schema, value as null, required);
+      break;
+    case "boolean":
+      isValid = validateBoolean(schema, value as boolean, required);
+      break;
+    case "number":
+      isValid = validateNumber(schema, value as number, required);
+      break;
+    case "integer":
+      isValid = validateNumber(schema, value as number, required);
+      break;
+    case "object":
+      isValid = validateObject(
+        schema,
+        value as Record<string, unknown>,
+        required
+      );
+      break;
+    case "array":
+      isValid = validateArray(schema, value as unknown[], required);
+      break;
+  }
+
+  return isValid;
 }

@@ -23,6 +23,7 @@ interface TagsInputProps extends React.HTMLAttributes<HTMLDivElement> {
   placeholder?: string;
   maxItems?: number;
   minItems?: number;
+  disabled?: boolean;
 }
 
 interface TagsInputContextProps {
@@ -224,7 +225,16 @@ export const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
             break;
         }
       },
-      [activeIndex, value, dir, inputValue, RemoveValue, selectedValue, isValueSelected, onValueChangeHandler]
+      [
+        activeIndex,
+        value,
+        dir,
+        inputValue,
+        RemoveValue,
+        selectedValue,
+        isValueSelected,
+        onValueChangeHandler,
+      ]
     );
 
     const mousePreventDefault = React.useCallback((e: React.MouseEvent) => {
@@ -266,7 +276,7 @@ export const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
             <Badge
               tabIndex={activeIndex !== -1 ? 0 : activeIndex}
               key={item}
-              aria-disabled={disableButton}
+              aria-disabled={disableButton || props.disabled}
               data-active={activeIndex === index}
               className={cn(
                 "relative px-1 rounded flex items-center gap-1 data-[active='true']:ring-2 data-[active='true']:ring-muted-foreground truncate aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"

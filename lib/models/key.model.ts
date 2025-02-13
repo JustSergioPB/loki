@@ -131,3 +131,26 @@ export async function decrypt(
 
   return JSON.parse(decrypted.toString());
 }
+
+export async function getSignature(
+  label: string,
+  message: string
+): Promise<string> {
+  const [privateKey] = await db
+    .select()
+    .from(privateKeyTable)
+    .where(eq(privateKeyTable.label, label));
+
+  if (!privateKey) {
+    throw new Error("privateKeyNotFound");
+  }
+
+  const key = crypto.createPrivateKey({
+    type: "pkcs8",
+    format: "pem",
+    key: privateKey.pem,
+    passphrase: process.env.PK_PASSPHRASE!,
+  });
+
+  return crypto.sign(null, Buffer.from(message), key).toString("base64");
+}

@@ -1,4 +1,4 @@
-import { orgColumns } from "./columns";
+import { didColumns } from "./_components/did-columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
@@ -30,7 +30,7 @@ export default async function DIDs({
     <Page>
       <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6" />
       <DataTable
-        columns={orgColumns}
+        columns={didColumns}
         data={queryResult.items}
         count={queryResult.count}
         page={query.page}

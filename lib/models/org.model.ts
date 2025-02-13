@@ -82,7 +82,7 @@ export async function verifyOrg(
     );
 
   if (!queryResult[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
   const updatedOrg = await db.transaction(async (tx) => {

@@ -1,9 +1,8 @@
 import { db } from "@/db/index";
 import { auditLogTable } from "@/db/schema/audit-logs";
 import { didTable } from "@/db/schema/dids";
-import { credentialRequestTable } from "@/db/schema/credential-requests";
+import { challengeTable } from "@/db/schema/challenges";
 import { formVersionTable } from "@/db/schema/form-versions";
-import { formTable } from "@/db/schema/forms";
 import { orgTable } from "@/db/schema/orgs";
 import { privateKeyTable } from "@/db/schema/private-keys";
 import { userTokenTable } from "@/db/schema/user-tokens";
@@ -16,11 +15,10 @@ async function main() {
     userTokenTable,
     userTable,
     auditLogTable,
-    formTable,
     formVersionTable,
     didTable,
     privateKeyTable,
-    credentialRequestTable,
+    challengeTable,
   });
 }
 

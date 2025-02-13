@@ -1,23 +1,35 @@
-import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { orgTable } from "./orgs";
+import {
+  jsonb,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+import { DbOrg, orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
-import { DbUser } from "./users";
 import { DbFormVersion, formVersionTable } from "./form-versions";
-import { didTable } from "./dids";
-import { credentialStatus } from "@/lib/types/credential";
+import { DbDID, didTable } from "./dids";
+import { DbPresentation } from "./presentations";
+import { DbChallenge } from "./challenges";
+import { DbUser } from "./users";
+import { VerifiableCredential } from "@/lib/types/verifiable-credential";
+import { credentialStatuses } from "@/lib/types/credential";
 
-export const credentialStatuses = pgEnum("credentialStatus", credentialStatus);
+export const credentialStatus = pgEnum("credentialStatus", credentialStatuses);
 
 export const credentialTable = pgTable("credentials", {
   id: uuid().primaryKey().defaultRandom(),
-  encryptedContent: varchar().notNull(),
-  status: credentialStatuses().notNull().default("pending"),
+  validFrom: timestamp({ withTimezone: true }),
+  validUntil: timestamp({ withTimezone: true }),
+  holder: varchar(),
+  claims: jsonb().$type<object>(),
+  credential: jsonb().$type<VerifiableCredential>(),
+  status: credentialStatus().notNull().default("empty"),
   formVersionId: uuid()
     .notNull()
     .references(() => formVersionTable.id, { onDelete: "cascade" }),
-  issuerId: varchar()
-    .notNull()
-    .references(() => didTable.did, { onDelete: "cascade" }),
+  issuerId: varchar().references(() => didTable.did, { onDelete: "cascade" }),
   orgId: uuid()
     .notNull()
     .references(() => orgTable.id, { onDelete: "cascade" }),
@@ -45,9 +57,24 @@ export const credentialTableRelations = relations(
   })
 );
 
-export type DbCredential = typeof credentialTable.$inferSelect;
-
-export type CredentialWithIssuer = DbCredential & {
-  issuer?: DbUser;
+export type DbCredential = typeof credentialTable.$inferSelect & {
+  formVersion?: DbFormVersion;
+  presentations?: DbPresentation[];
+  challenge?: DbChallenge;
+  org?: DbOrg;
+  issuer?: DbDID & {
+    user?: DbUser;
+  };
+};
+export type DbFilledCredential = {
+  id: string;
+  validFrom: Date | null;
+  validUntil: Date | null;
+  holder: string;
+  claims: object;
   formVersion: DbFormVersion;
+  org: DbOrg;
+  issuer: DbDID & {
+    user?: DbUser;
+  };
 };

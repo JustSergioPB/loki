@@ -1,18 +1,10 @@
-import {
-  pgTable,
-  timestamp,
-  uuid,
-  varchar,
-  boolean,
-  jsonb,
-} from "drizzle-orm/pg-core";
+import { pgTable, timestamp, uuid, varchar, jsonb } from "drizzle-orm/pg-core";
 import { DbUser, userTable } from "./users";
 import { DbOrg, orgTable } from "./orgs";
 import { relations } from "drizzle-orm";
 import { DIDDocument } from "@/lib/types/did";
 
 export const didTable = pgTable("dids", {
-  isActive: boolean().notNull().default(true),
   did: varchar().primaryKey().notNull(),
   document: jsonb().notNull().$type<DIDDocument>(),
   userId: uuid().references(() => userTable.id, { onDelete: "cascade" }),

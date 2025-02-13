@@ -1,7 +1,7 @@
 export const authErrorMessages = [
-  "unauthorized",
-  "forbidden",
-  "invalidCredentials",
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "INVALID_CREDENTIALS",
 ] as const;
 export type AuthErrorMessage = (typeof authErrorMessages)[number];
 

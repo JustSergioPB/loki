@@ -1,4 +1,4 @@
-import { orgColumns } from "./columns";
+import { orgColumns } from "./_components/org-columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
@@ -27,11 +27,7 @@ export default async function Orgs({
 
   return (
     <Page>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        className="p-6"
-      />
+      <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6" />
       <DataTable
         columns={orgColumns}
         data={queryResult.items}

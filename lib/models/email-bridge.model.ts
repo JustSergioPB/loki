@@ -10,11 +10,14 @@ import {
   BridgeType,
   bridgeTypes,
 } from "../types/bridge";
-import { createForm, publishForm, updateForm } from "./form.model";
+import {
+  createFormVersion,
+  publishFormVersion,
+  updateFormVersionContent,
+} from "./form-version.model";
 import { DbFormVersion, formVersionTable } from "@/db/schema/form-versions";
-import { formTable } from "@/db/schema/forms";
-import { FormError } from "../errors/form.error";
 import { FormSchema } from "../schemas/form.schema";
+import { FormVersionError } from "../errors/form-version.error";
 
 const EMAIL_BRIDGE_TITLE = "Email bridge";
 
@@ -28,15 +31,15 @@ export async function createEmailBridge(
     .where(eq(orgTable.id, authUser.orgId));
 
   if (!orgQuery[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
-  const formVersion = await createForm(
+  const formVersion = await createFormVersion(
     authUser,
     buildForm(domains, orgQuery[0].name)
   );
 
-  await publishForm(authUser, formVersion.formId);
+  await publishFormVersion(authUser, formVersion.id);
 
   return formVersion;
 }
@@ -50,28 +53,28 @@ export async function updateEmailBridge(
     .from(orgTable)
     .where(eq(orgTable.id, authUser.orgId))
     .innerJoin(
-      formTable,
+      formVersionTable,
       and(
-        eq(orgTable.id, formTable.orgId),
-        like(formTable.title, EMAIL_BRIDGE_TITLE)
+        eq(orgTable.id, formVersionTable.orgId),
+        like(formVersionTable.title, EMAIL_BRIDGE_TITLE)
       )
     );
 
   if (!orgQuery[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
-  if (!orgQuery[0].forms) {
-    throw new FormError("notFound");
+  if (!orgQuery[0].formVersions) {
+    throw new FormVersionError("NOT_FOUND");
   }
 
-  const formVersion = await updateForm(
+  const formVersion = await updateFormVersionContent(
     authUser,
-    orgQuery[0].forms.id,
+    orgQuery[0].formVersions.id,
     buildForm(domains, orgQuery[0].orgs.name)
   );
 
-  await publishForm(authUser, formVersion.id);
+  await publishFormVersion(authUser, formVersion.id);
 
   return formVersion;
 }
@@ -85,19 +88,19 @@ export async function toggleEmailBridge(
     .from(orgTable)
     .where(eq(orgTable.id, authUser.orgId))
     .innerJoin(
-      formTable,
+      formVersionTable,
       and(
-        eq(orgTable.id, formTable.orgId),
-        like(formTable.title, EMAIL_BRIDGE_TITLE)
+        eq(orgTable.id, formVersionTable.orgId),
+        like(formVersionTable.title, EMAIL_BRIDGE_TITLE)
       )
     );
 
   if (!bridgeQuery[0]) {
-    throw new OrgError("notFound");
+    throw new OrgError("NOT_FOUND");
   }
 
-  if (value && !bridgeQuery[0].forms) {
-    throw new FormError("notFound");
+  if (value && !bridgeQuery[0].formVersions) {
+    throw new FormVersionError("NOT_FOUND");
   }
 
   if (value && bridgeQuery[0].orgs.activeBridges.includes("email")) {
@@ -107,11 +110,14 @@ export async function toggleEmailBridge(
   let activeBridges: BridgeType[] = [];
 
   if (value) {
-    activeBridges = [...bridgeQuery[0].orgs.activeBridges, "email"];
+    activeBridges = [
+      ...(bridgeQuery[0].orgs.activeBridges as BridgeType[]),
+      "email",
+    ];
   } else {
     const emailIndex = bridgeQuery[0].orgs.activeBridges.indexOf("email");
     bridgeQuery[0].orgs.activeBridges.splice(emailIndex, 1);
-    activeBridges = [...bridgeQuery[0].orgs.activeBridges];
+    activeBridges = [...bridgeQuery[0].orgs.activeBridges] as BridgeType[];
   }
 
   await db.transaction(async (tx) => {
@@ -141,9 +147,7 @@ export async function searchBridgesByOrg(orgId: string): Promise<Bridge[]> {
     type: bridge,
     formVersion:
       bridgeQuery.find(({ formVersions }) =>
-        formVersions?.credentialSchema.properties.type.const?.includes(
-          BRIDGE_CREDENTIAL_TYPE[bridge]
-        )
+        formVersions?.types.includes(BRIDGE_CREDENTIAL_TYPE[bridge])
       )?.formVersions ?? undefined,
   }));
 }
@@ -152,8 +156,8 @@ function buildForm(domains: string[], orgName: string): FormSchema {
   return {
     title: EMAIL_BRIDGE_TITLE,
     description: `This credential proves that the email belongs to ${orgName}`,
-    type: ["Bridge", BRIDGE_CREDENTIAL_TYPE["email"]],
-    content: {
+    types: ["Bridge", BRIDGE_CREDENTIAL_TYPE["email"]],
+    credentialSubject: {
       properties: {
         email: {
           type: "string",

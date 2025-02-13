@@ -6,19 +6,24 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-const GoBackButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (props, ref) => {
-    const router = useRouter();
-    const t = useTranslations("Generic");
+const GoBackButton = React.forwardRef<
+  HTMLButtonElement,
+  ButtonProps & { href?: string }
+>((props, ref) => {
+  const router = useRouter();
+  const t = useTranslations("Generic");
 
-    return (
-      <Button {...props} ref={ref} onClick={() => router.back()}>
-        <ArrowLeft className="size-4" />
-        {t("goBack")}
-      </Button>
-    );
-  }
-);
+  return (
+    <Button
+      {...props}
+      ref={ref}
+      onClick={() => (props.href ? router.push(props.href) : router.back())}
+    >
+      <ArrowLeft className="size-4" />
+      {props.size !== "icon" && t("goBack")}
+    </Button>
+  );
+});
 
 GoBackButton.displayName = "GoBackButton";
 

@@ -47,7 +47,7 @@ export async function updateUser(
   });
 
   if (!user) {
-    throw new UserError("notFound");
+    throw new UserError("NOT_FOUND");
   }
 
   return await db.transaction(async (tx) => {

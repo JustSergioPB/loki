@@ -1,4 +1,4 @@
-import { userColumns } from "./columns";
+import { userColumns } from "./_components/user-columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
@@ -7,8 +7,8 @@ import { getParams } from "@/lib/helpers/search-params";
 import { redirect } from "next/navigation";
 import PageHeader from "@/components/app/page-header";
 import Page from "@/components/app/page";
-import NewUser from "./new";
 import { searchUsers } from "@/lib/models/user.model";
+import UserCreateDialog from "./_components/user-create-dialog";
 
 export default async function Users({
   searchParams,
@@ -28,12 +28,8 @@ export default async function Users({
 
   return (
     <Page>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        className="p-6"
-      >
-        <NewUser>{t("user")}</NewUser>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6">
+        <UserCreateDialog />
       </PageHeader>
       <DataTable
         columns={userColumns}

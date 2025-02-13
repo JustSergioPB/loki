@@ -8,7 +8,7 @@ import { orgTable } from "@/db/schema/orgs";
 import { OrgError } from "../errors/org.error";
 import { generateKeyPair } from "./key.model";
 import * as uuid from "uuid";
-import { DIDError } from "../errors/did.error";
+import { DidError } from "../errors/did.error";
 import { Query } from "../generics/query";
 import { QueryResult } from "../generics/query-result";
 
@@ -63,7 +63,7 @@ export async function createOrgDID(orgId: string): Promise<DbDID> {
   }
 
   if (!rootOrgQuery[0].dids) {
-    throw new DIDError("missingRootDID");
+    throw new DidError("ROOT_DID_NOT_FOUND");
   }
 
   const didDocument = await buildDocument("org", [rootOrgQuery[0].dids.did]);
@@ -147,7 +147,7 @@ async function buildDocument(
   type: "root" | "org" | "user",
   additionalContollers: string[] = []
 ): Promise<DIDDocument> {
-  const did = `did:uuid:${uuid.v7()}`;
+  const did = `did:loki:${uuid.v7()}`;
   const baseUrl = `${BASE_URL}/dids/${did}`;
   const verificationMethodId = `${did}#key-0`;
   const publicKey = await generateKeyPair(verificationMethodId);

@@ -25,10 +25,13 @@ export const verifySession = cache(async () => {
 
 export const getUser = cache(async () => {
   const session = await verifySession();
-  if (!session) return null;
+  if (!session) {
+    (await cookies()).delete("session");
+    return null;
+  }
 
-  try {
-    return await db.query.userTable.findFirst({
+  return (
+    (await db.query.userTable.findFirst({
       where: eq(userTable.id, session.userId),
       // Explicitly return the columns you need rather than the whole user object
       columns: {
@@ -38,22 +41,19 @@ export const getUser = cache(async () => {
         role: true,
         orgId: true,
       },
-    });
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+    })) ?? null
+  );
 });
 
 export async function authorize(allowedRoles: UserRole[]): Promise<AuthUser> {
   const user = await getUser();
 
   if (!user) {
-    throw new AuthError("unauthorized");
+    throw new AuthError("UNAUTHORIZED");
   }
 
   if (!allowedRoles.includes(user.role)) {
-    throw new AuthError("forbidden");
+    throw new AuthError("FORBIDDEN");
   }
 
   return user;

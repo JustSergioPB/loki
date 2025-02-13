@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import BridgeDialog from "./dialog";
+import BridgeDialog from "./_components/bridge-dialog";
 import { searchBridgesByOrg } from "@/lib/models/email-bridge.model";
 
 export default async function Bridges() {

@@ -1,20 +1,26 @@
 import { getUser } from "@/lib/helpers/dal";
-import { searchForms } from "@/lib/models/form.model";
+import { searchFormVersions } from "@/lib/models/form-version.model";
 import { redirect } from "next/navigation";
-import CredentialForm from "./form";
+import CredentialFillStepper from "../_components/credential-fill-stepper";
 
-export default async function CreateCredential() {
+export default async function NewCredential() {
   const user = await getUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const formVersions = await searchForms(user, {
+  const formVersions = await searchFormVersions({
+    orgId: user.orgId,
     page: 0,
-    pageSize: 100,
+    pageSize: 500,
     status: "published",
   });
 
-  return <CredentialForm formVersions={formVersions.items} />;
+  return (
+    <CredentialFillStepper
+      formVersions={formVersions.items}
+      credential={null}
+    />
+  );
 }

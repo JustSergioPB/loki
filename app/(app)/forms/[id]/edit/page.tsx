@@ -1,7 +1,7 @@
 import { getUser } from "@/lib/helpers/dal";
-import FormForm from "../../form";
-import { notFound, redirect } from "next/navigation";
-import { getFormById } from "@/lib/models/form.model";
+import { forbidden, notFound, redirect } from "next/navigation";
+import { getFormVersionById } from "@/lib/models/form-version.model";
+import FormEditForm from "../../_components/form-edit-form";
 
 export default async function EditForm({
   params,
@@ -14,12 +14,15 @@ export default async function EditForm({
   if (!user) {
     redirect("/login");
   }
-
-  const formVersion = await getFormById(user, id);
+  const formVersion = await getFormVersionById(id);
 
   if (!formVersion) {
     notFound();
   }
 
-  return <FormForm formVersion={formVersion} />;
+  if (user.orgId !== formVersion.orgId) {
+    forbidden();
+  }
+
+  return <FormEditForm formVersion={formVersion} />;
 }

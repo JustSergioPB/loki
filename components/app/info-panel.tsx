@@ -14,6 +14,7 @@ export default function InfoPanel({
   label,
   type,
   message,
+  className,
 }: InfoPanelProps) {
   let icon = <TriangleAlert className="size-4" />;
   let bg = "bg-red-100";
@@ -31,7 +32,8 @@ export default function InfoPanel({
         "p-2 rounded-md text-sm gap-1",
         bg,
         text,
-        type === "vertical" ? "flex flex-col" : "inline-flex items-center"
+        type === "vertical" ? "flex flex-col" : "inline-flex items-center",
+        className
       )}
     >
       <span className="flex items-center gap-1">

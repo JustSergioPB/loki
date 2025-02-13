@@ -1,28 +1,30 @@
 import { getUser } from "@/lib/helpers/dal";
-import { notFound, redirect } from "next/navigation";
-import { getFormById } from "@/lib/models/form.model";
+import { forbidden, notFound, redirect } from "next/navigation";
+import { getFormVersionById } from "@/lib/models/form-version.model";
 import { GoBackButton } from "@/components/app/go-back-button";
 import { getTranslations } from "next-intl/server";
-import PageHeader from "@/components/app/page-header";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Calendar,
-  Clock,
-  Database,
   Pencil,
   History,
   BadgeCheck,
+  AlarmClockOff,
+  AlarmClock,
 } from "lucide-react";
 import Link from "next/link";
-import PublishFormVersion from "./publish";
-import ArchiveFormVersion from "./archive";
-import DeleteFormVersion from "./delete";
 import DateDisplay from "@/components/app/date";
 import Field from "@/components/app/field";
 import { Badge } from "@/components/ui/badge";
 import StatusTag, { StatusTagVariant } from "@/components/app/status-tag";
-import { FormVersionStatus } from "@/lib/types/form";
+import { FormVersionStatus } from "@/lib/types/form-version";
+import JsonSchemaField from "../_components/json-schema-field";
+import { SearchParams } from "@/lib/generics/search-params";
+import FormTabs from "../_components/form-tabs";
+import PageHeader from "@/components/app/page-header";
+import FormActionDialog from "../_components/form-action-dialog";
+import { getFormVersionStatus } from "@/lib/helpers/form-version.helper";
 
 const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
   draft: "warning",
@@ -32,10 +34,13 @@ const FORM_STATUS_VARIANTS: Record<FormVersionStatus, StatusTagVariant> = {
 
 export default async function Form({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: SearchParams;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const user = await getUser();
   const t = await getTranslations("FormVersion");
   const tGeneric = await getTranslations("Generic");
@@ -44,75 +49,156 @@ export default async function Form({
     redirect("/login");
   }
 
-  const formVersion = await getFormById(user, id);
+  const formVersion = await getFormVersionById(id);
 
   if (!formVersion) {
     notFound();
   }
 
+  if (user.orgId !== formVersion.orgId) {
+    forbidden();
+  }
+
+  const {
+    title,
+    description,
+    types,
+    credentialSubject,
+    validFrom,
+    validUntil,
+  } = formVersion;
+
+  const activeTab = typeof tab !== "string" ? "content" : tab;
+  const status = getFormVersionStatus(formVersion);
+
   return (
-    <section className="flex flex-1">
-      <section className="border-r basis-3/5 flex flex-col">
-        <div className="px-6 py-4 border-b">
-          <GoBackButton variant="ghost" size="sm" />
-        </div>
-        <div className="p-6 bg-muted flex-auto overflow-y-auto h-0">
-          <pre className="w-full rounded-md border p-2 bg-card">
-            <code className="text-xs">
-              {JSON.stringify(formVersion.credentialSchema, null, 1)}
-            </code>
-          </pre>
-        </div>
-      </section>
-      <section className="basis-2/5 flex flex-col">
-        <section className="p-6 space-y-6">
-          <PageHeader title={t("seeTitle")} />
-          <div className="flex items-center gap-2">
+    <section className="flex flex-col flex-1">
+      <header className="px-6 py-4 flex justify-between border-b">
+        <GoBackButton variant="ghost" href="/forms" />
+        <section className="flex items-center gap-2">
+          {status === "draft" && (
             <Link
-              href={`/forms/${formVersion.formId}/edit`}
+              href={`/forms/${formVersion.id}/edit`}
               className={cn(buttonVariants({ size: "sm" }))}
             >
               <Pencil className="size-3" />
               {tGeneric("edit")}
             </Link>
-            {formVersion.status === "draft" && (
-              <PublishFormVersion formVersion={formVersion} />
-            )}
-            {formVersion.status === "published" && (
-              <ArchiveFormVersion formVersion={formVersion} />
-            )}
-            <DeleteFormVersion formVersion={formVersion} />
-          </div>
+          )}
+          {status === "draft" && (
+            <FormActionDialog formVersion={formVersion} action="publish" />
+          )}
+          {status === "published" && (
+            <FormActionDialog formVersion={formVersion} action="archive" />
+          )}
+          <FormActionDialog formVersion={formVersion} action="delete" />
+        </section>
+      </header>
+      <div className="flex flex-1">
+        <aside className="basis-1/4 p-6 space-y-6 border-r flex flex-col justify-between">
+          <FormTabs />
           <section className="space-y-4">
-            <Field icon={<BadgeCheck className="size-4" />} label={t("status")}>
-              <StatusTag variant={FORM_STATUS_VARIANTS[formVersion.status]}>
-                {t(`statuses.${formVersion.status}`)}
+            <Field
+              icon={<BadgeCheck className="size-4" />}
+              label={t("status")}
+              className="basis-1/4"
+            >
+              <StatusTag variant={FORM_STATUS_VARIANTS[status]}>
+                {t(`statuses.${status}`)}
               </StatusTag>
             </Field>
-            <Field icon={<History className="size-4" />} label={t("version")}>
-              <Badge>V{0}</Badge>
+            <Field
+              icon={<History className="size-4" />}
+              label={t("version")}
+              className="basis-1/4"
+            >
+              <Badge>V{formVersion.version}</Badge>
             </Field>
             <Field
-              icon={<Database className="size-4" />}
-              label={tGeneric("id")}
+              icon={<Calendar className="size-4" />}
+              label={tGeneric("createdAt")}
+              className="basis-1/4"
             >
-              {formVersion.id}
+              <DateDisplay date={formVersion.createdAt} />
             </Field>
             <Field
               icon={<Calendar className="size-4" />}
               label={tGeneric("updatedAt")}
+              className="basis-1/4"
             >
               <DateDisplay date={formVersion.updatedAt} />
             </Field>
-            <Field
-              icon={<Clock className="size-4" />}
-              label={tGeneric("createdAt")}
-            >
-              <DateDisplay date={formVersion.createdAt} />
-            </Field>
           </section>
+        </aside>
+        <section
+          className={cn(
+            "basis-3/4 flex-col space-y-12 p-12 overflow-y-auto",
+            activeTab === "content" ? "flex" : "hidden"
+          )}
+        >
+          <section>
+            <h1 className="text-2xl font-semibold">{title}</h1>
+            <p className="text-muted-foreground mb-2">{description}</p>
+            <div className="flex items-center gap-1">
+              {types.map((type, idx) => (
+                <Badge variant="secondary" key={`${type}-${idx}`}>
+                  {type}
+                </Badge>
+              ))}
+            </div>
+          </section>
+          {Object.entries(credentialSubject.properties ?? {})
+            .filter(([key]) => key !== "id")
+            .map(([key, schema]) => (
+              <JsonSchemaField key={key} path={key} jsonSchema={schema} />
+            ))}
         </section>
-      </section>
+        <section
+          className={cn(
+            "basis-3/4 flex-col space-y-12 p-12 overflow-y-auto",
+            activeTab === "validity" ? "flex" : "hidden"
+          )}
+        >
+          <PageHeader
+            title={t("validityTitle")}
+            subtitle={t("validitySubtitle")}
+          />
+          {validFrom || validUntil ? (
+            <div className="space-y-2">
+              <Field
+                icon={<AlarmClock className="size-4" />}
+                label={t("validFrom")}
+                className="basis-1/4"
+              >
+                <DateDisplay date={formVersion.validFrom} />
+              </Field>
+              <Field
+                icon={<AlarmClock className="size-4" />}
+                label={t("validUntil")}
+                className="basis-1/4"
+              >
+                <DateDisplay date={formVersion.validUntil} />
+              </Field>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+              <div className="flex flex-col items-center space-y-1">
+                <AlarmClockOff className="size-6" />
+                <p className="text-lg font-semibold">No validity configured</p>
+              </div>
+              <Button disabled={status !== "draft"}>
+                <Link
+                  href={`forms/${formVersion.id}/edit?tab=validity`}
+                  className="flex items-center gap-2"
+                >
+                  <Pencil />
+                  Configure
+                </Link>
+              </Button>
+            </div>
+          )}
+        </section>
+      </div>
     </section>
   );
 }

@@ -27,7 +27,7 @@
   },
   "User": {
     "alreadyExists": "User already exists",
-    "notFound": "User not found",
+    "NOT_FOUND": "User not found",
     "fullName": "Full name",
     "fullNamePlaceholder": "John Doe",
     "user": "User",
@@ -79,7 +79,7 @@
     "deleteSucceded": "Org deleted successfully",
     "deleteFailed": "We couldn't delete the organization. Please try again later",
     "seeTitle": "Organization details",
-    "seeDescription": "This dialog contains the information of the organization and it's certificates",
+    "seeDescription": "This dialog contains the information of the organization",
     "tier": "Tier",
     "tiers": {
       "unbound": "Unbound",
@@ -129,35 +129,47 @@
     "title": "Welcome!"
   },
   "Credential": {
-    "title": "Credentials",
-    "subtitle": "Handle everything related to credentials in here. You can delete and see credentials's data here.",
+    "title": "Documents",
+    "subtitle": "Handle everything related to certified documents in here. You can delete and see documents's data here.",
     "issuer": "Issuer",
-    "deleteTitle": "Delete credential",
-    "deleteDescription": "This credential will be deleted from the database but the holder will still keep the copy, you'll loose control over it, consider revoking it instead",
-    "deleteLabel": "Type the credential's id to confirm",
-    "seeTitle": "Credential details",
-    "seeDescription": "This page contains the information of the credential",
+    "deleteTitle": "Delete document",
+    "deleteDescription": "This document will be deleted from the database but the holder will still keep the copy, you'll loose control over it, consider revoking it instead",
+    "deleteLabel": "Type the document's id to confirm",
+    "seeTitle": "Document details",
+    "seeDescription": "This page contains the information of the document",
     "proof": "Proof",
     "holder": "Holder",
     "status": "Status",
     "statuses": {
-      "pending": "Pending",
-      "signed": "Signed"
+      "empty": "Not filled",
+      "presented": "Holder presented",
+      "partiallyFilled": "Content filled",
+      "filled": "Filled",
+      "signed": "Signed",
+      "claimed": "Claimed"
     },
-    "credential": "Credential",
-    "createTitle": "Create credential",
+    "credential": "Document",
+    "createTitle": "Create document",
     "createDescription": "Select the form template you want to use, fill the data and generate a QR that can be scanned by the holder",
-    "selectDescription": "Select the form that you want to use as template",
-    "fillTitle": "2. Fill the credential data",
     "searchForm": "Select a form...",
-    "searchFormPlaceholder": "Credential ID...",
+    "searchFormPlaceholder": "Voter ID...",
     "searchFormNotFound": "Form not found",
-    "validityTitle": "Validity",
-    "validitySubtitle": "Fill this section if you need this credential either to be valid from a certain date or valid until a certain date (or both)"
+    "fillValidityTitle": "Set validity",
+    "fillValidityDescription": "Fill this section if you need this document either to be valid from a certain date or valid until a certain date (or both)",
+    "fillContentTitle": "Verify documents and fill",
+    "presentDocumentsTitle": "Present documents",
+    "presentDocumentsDescription": "By scanning the following QR the holder will be able to send you documentation if required and identify itself. Once the holder has submitted the information you'll be able to move to the next step.",
+    "signTitle": "Review and sign",
+    "signDescription": "Review the document you're about to emit just to make sure everything alright since after signing you won't be able to modify it.",
+    "claimTitle": "Claim",
+    "claimSubtitle": "By scanning the following QR the holder will be able to store the document in it's wallet",
+    "formSelectTitle": "Select a form",
+    "formSelectDescription": "Select the form that you want to use as template for this new document",
+    "NOT_PRESENTED": "Holder hasn't submitted identification yet."
   },
-  "CredentialRequest": {
-    "scanTitle": "Challenge QR",
-    "scanSubtitle": "By scanning this QR the holder will be able to claim the credential",
+  "Challenge": {
+    "scanTitle": "Documents QR",
+    "scanSubtitle": "By scanning this QR the holder will be able to share verified documents and prove his/her identity",
     "renew": "Renew",
     "status": "Status",
     "statuses": {
@@ -169,7 +181,7 @@
   },
   "Bridge": {
     "title": "Bridges",
-    "subtitle": "Handle everything related to bridges in here. You can configure them and toggle on/off them. Bridges allow your holders to generate credentials from Web2 data.",
+    "subtitle": "Handle everything related to bridges in here. You can configure them and toggle on/off them. Bridges allow your holders to generate documents from Web2 data.",
     "bridges": {
       "email": {
         "editTitle": "Configure email bridge",
@@ -177,18 +189,18 @@
         "emailBridgeWillBePublished": "Submiting the form will create and publish a form version for this bridge.",
         "domains": "Domains",
         "title": "Email",
-        "description": "This bridge allows a holder to claim that it belongs to your organization through a credential that contains their organization email."
+        "description": "This bridge allows a holder to claim that it belongs to your organization through a document that contains their organization email."
       }
     }
   },
-  "Form": {
+  "FormVersion": {
     "title": "Forms",
     "subtitle": "Handle everything related to your organization's forms in here. You can create, edit, see, delete, publish and archive your forms.",
     "form": "Form",
     "titleProp": "Title",
     "titlePlaceholder": "Organization user",
-    "createTitle": "Create form",
-    "createDescription": "Fill the form bellow to create a new form",
+    "createTitle": "New form",
+    "createDescription": "A form allows the issuers from your organization to emit documents using a template",
     "editTitle": "Edit form",
     "editDescription": "Edit the form bellow to update it's contents",
     "seeTitle": "Form details",
@@ -197,18 +209,17 @@
     "deleteDescription": "Everything related to this form will be deleted, consider archiving the form instead",
     "deleteLabel": "Type the form's title to confirm",
     "searchSucceeded": "Your search may have results",
-    "searchFailed": "Something went wrong with your search"
-  },
-  "FormVersion": {
+    "SEARCH_FAILED": "Something went wrong with your search",
     "version": "Version",
     "status": "Status",
     "description": "Description",
-    "descriptionPlaceholder": "This credential claims that the user belongs to the organization...",
+    "descriptionPlaceholder": "This document claims that the user belongs to the organization...",
     "content": "Content",
     "contentPlaceholder": "'{ }'",
     "formNotInDraft": "This form is not in draft, modifying it will create new version that can be later published.",
     "dontEditBridge": "Don't edit this form manually, if you want to edit this form do it in the bridge section.",
     "statuses": {
+      "empty": "Not filled",
       "draft": "Draft",
       "published": "Published",
       "archived": "Archived"
@@ -218,20 +229,20 @@
     "publish": "Publish",
     "archive": "Archive",
     "publishTitle": "Publish form",
-    "publishDescription": "The latest version of this form will be published in the blockchain allowing you to emit and validate credentials based on it.",
+    "publishDescription": "The latest version of this form will be published in the blockchain allowing you to emit and validate documents based on it.",
     "publishLabel": "Type the form's title to confirm",
     "archiveTitle": "Archive form",
-    "archiveDescription": "This form version will be archived which means it won't be possible to emit new credentials using this one, you can still validate content using it.",
+    "archiveDescription": "This form version will be archived which means it won't be possible to emit new documents using this one, you can still validate content using it.",
     "archiveLabel": "Type the form's title to confirm",
     "validFrom": "Valid from",
     "validUntil": "Valid until",
     "validityTitle": "Validity",
-    "validitySubtitle": "Configure validity dates if you want the credentials generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered.",
-    "seeTitle": "Form details"
+    "validitySubtitle": "Configure validity dates if you want the documents generated from this form to be valid from a certain date or to be valid until a certain date. You can leave this blank if if prefered.",
+    "delete": "Delete"
   },
   "ConfirmAccount": {
     "title": "Confirm your account",
-    "subtitle": "Fill the form below and start issuing credentials",
+    "subtitle": "Fill the form below and start issuing documents",
     "failed": "Account confirmation failed",
     "succeded": "Account confirmed successfully",
     "sendLink": "Request new confirmation link",
@@ -253,7 +264,7 @@
     "reset": "Reset password"
   },
   "UserToken": {
-    "notFound": "Token not found",
+    "NOT_FOUND": "Token not found",
     "expired": "Token has expired",
     "burnt": "Token has already been used"
   },
@@ -311,12 +322,19 @@
     "warningMessage": "This action is irreversible, please be sure",
     "verify": "Verify",
     "loading": "Loading...",
-    "goBack": "Go back"
+    "goBack": "Go back",
+    "back": "Back",
+    "next": "Next",
+    "fill": "Fill",
+    "finish": "Finish",
+    "errors": {
+      "retryLater": "Please try in 5 minutes. If the error persits please contact us."
+    }
   },
   "Navigation": {
     "home": "Home",
     "dashboard": "Dashboard",
-    "credentials": "Credentials",
+    "credentials": "Documents",
     "management": "Management",
     "orgs": "Orgs",
     "certificates": "Certificates",
@@ -326,5 +344,9 @@
     "wall": "Wall",
     "administration": "Administration",
     "dids": "DIDs"
+  },
+  "Stepper": {
+    "of": "of",
+    "step": "Step"
   }
 }

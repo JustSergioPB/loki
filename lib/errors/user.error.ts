@@ -1,5 +1,5 @@
 export const userErrorMessages = [
-  "notFound",
+  "NOT_FOUND",
   "alreadyExists",
   "missingPosition",
 ] as const;

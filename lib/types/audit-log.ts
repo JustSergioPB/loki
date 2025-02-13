@@ -9,11 +9,11 @@ export const auditableEntities = [
   "org-did",
   "user-did",
   "did",
-  "form",
   "formVersion",
   "privateKey",
   "credential",
-  "credentialRequest",
+  "challenge",
   "email-bridge",
+  "presentation"
 ] as const;
 export type AuditableEntity = (typeof auditableEntities)[number];

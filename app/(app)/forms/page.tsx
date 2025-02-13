@@ -1,4 +1,4 @@
-import { formColumns } from "./columns";
+import { formColumns } from "./_components/form-columns";
 import { getTranslations } from "next-intl/server";
 import { getUser } from "@/lib/helpers/dal";
 import { DataTable } from "@/components/app/data-table";
@@ -10,7 +10,7 @@ import Page from "@/components/app/page";
 import Link from "next/link";
 import { CirclePlus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { searchForms } from "@/lib/models/form.model";
+import { searchFormVersions } from "@/lib/models/form-version.model";
 
 export default async function Forms({
   searchParams,
@@ -19,22 +19,18 @@ export default async function Forms({
 }) {
   const query = await getParams(searchParams);
 
-  const t = await getTranslations("Form");
+  const t = await getTranslations("FormVersion");
   const user = await getUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const queryResult = await searchForms(user, query);
+  const queryResult = await searchFormVersions({ ...query, orgId: user.orgId });
 
   return (
     <Page>
-      <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
-        className="p-6"
-      >
+      <PageHeader title={t("title")} subtitle={t("subtitle")} className="p-6">
         <Link className={buttonVariants()} href="/forms/new">
           <CirclePlus />
           {t("form")}
