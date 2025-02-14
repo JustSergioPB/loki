@@ -1,6 +1,6 @@
 {
   "name": "loki",
-  "version": "0.1.0",
+  "version": "0.14.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "migrate:prod": "drizzle-kit generate",
-    "migrate:dev": "drizzle-kit push",
+    "migrate:db": "drizzle-kit push",
+    "studio:db": "drizzle-kit studio",
     "seed:db": "npx tsx scripts/seed-db.ts",
     "reset:db": "npx tsx scripts/reset-db.ts",
     "test": "vitest run",

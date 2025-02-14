@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16.4
+    container_name: loki_db
+    env_file:
+      - ./config/.env
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  client:
+    image: loki:0.14.0
+    container_name: loki_client
+    env_file:
+      - ./config/.env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - HOSTNAME=${HOSTNAME}
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
